@@ -4,6 +4,11 @@
 
 0.1.0 — complete first implementation, verified on Godot 4.7.2 on 2026-10-03.
 
+## Delivery
+
+- Build commit d2bac79 was pushed to origin/main on 2026-10-03 at the designer's request.
+- Before pushing, tools/kit.ps1 test returned exit 0: all six scenarios passed repeat and save/reload again. Evidence: reports/push-test.log and reports/<scenario>/20261003-1103*/report.json.
+
 ## What exists
 
 - Reusable typed addon under addons/agent_kit, with one Kit autoload and an EditorPlugin that registers it.

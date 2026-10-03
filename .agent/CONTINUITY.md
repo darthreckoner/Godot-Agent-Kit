@@ -7,5 +7,5 @@
 - Required scenarios and kit_integrity pass repeat and save/reload. Windowed A/B and overlay screenshots have been inspected.
 - Empty-project installation, manifest edit refusal and Kit/manual-clock boot have passed.
 - Final map/lint/dump/tests, windowed compare, installation and physical-key/overlay verification passed; STATE.md records exact evidence paths.
-- Build is ready for its local 0.1.0 commit, including GAME_MAP.md. No push was requested.
+- Build commit d2bac79, including GAME_MAP.md, was pushed to origin/main at the designer's request. All six scenarios passed repeat/save-reload again before pushing; reports/push-test.log records delivery verification.
 - Human feel acceptance remains pending. Sandbox engine starts report an inaccessible Windows certificate store; offline runs proceed.
