@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="KitFeelSequence" load_steps=4 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/feel/feel_sequence.gd" id="1"]
+[ext_resource type="Script" path="res://addons/agent_kit/feel/feel_stage.gd" id="stage"]
+[ext_resource type="Resource" path="res://game/feel/stages/ship_moved_0.tres" id="s0"]
+[resource]
+script = ExtResource("1")
+id = &"ship_moved"
+description = "ship moved"
+trigger_event = &"ship_moved"
+stages = Array[ExtResource("stage")]([ExtResource("s0")])

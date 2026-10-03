@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="KitActionDef" load_steps=5 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/actions/action_def.gd" id="1"]
+[ext_resource type="Script" path="res://game/rules/sell_and_refuel.gd" id="2"]
+[ext_resource type="Script" path="res://addons/agent_kit/actions/condition.gd" id="3"]
+
+[sub_resource type="Resource" id="c0"]
+script = ExtResource("3")
+rule_id = &"economy.at_dock"
+description = "Move within the dock's trading range."
+kind = "in_range"
+field = "position"
+tuning_key = "economy.dock_range"
+target_param = "dock"
+
+[resource]
+script = ExtResource("1")
+id = &"sell_and_refuel"
+description = "Sell all ore and buy a full energy refill at the dock."
+handler = ExtResource("2")
+requires = Array[ExtResource("3")]([SubResource("c0")])
+tuning_set = &"economy"
+events_on_success = Array[StringName]([&"dock_success"])
+events_on_reject = Array[StringName]([&"dock_rejected"])

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="KitFeelStage" load_steps=3 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/feel/feel_stage.gd" id="1"]
+[ext_resource type="AudioStream" path="res://game/feel/audio/heavy.wav" id="2"]
+[resource]
+script = ExtResource("1")
+id = &"feel_mine_hit_heavy_2"
+description = "Heavy impact presentation."
+stage_name = "Heavy impact"
+duration = 0.35
+shake_amplitude = 0.35
+flash_color = Color(1, 0.83, 0.47, 1)
+screen_flash = 0.25
+sound_marker_sec = 0.09
+sound = ExtResource("2")

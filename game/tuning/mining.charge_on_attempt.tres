@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="MiningTuning" load_steps=2 format=3]
+[ext_resource type="Script" path="res://game/tuning/mining_tuning.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"mining"
+description = "Mining rules and charge policy."
+charge_on_attempt = 1

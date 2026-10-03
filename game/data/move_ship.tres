@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="KitActionDef" load_steps=4 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/actions/action_def.gd" id="1"]
+[ext_resource type="Script" path="res://game/rules/move_ship.gd" id="2"]
+[ext_resource type="Script" path="res://addons/agent_kit/actions/condition.gd" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"move_ship"
+description = "Move the ship using fixed-tick acceleration and braking."
+handler = ExtResource("2")
+requires = Array[ExtResource("3")]([])
+tuning_set = &"ship"
+events_on_success = Array[StringName]([&"ship_moved"])
+events_on_reject = Array[StringName]([&"dock_rejected"])

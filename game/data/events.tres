@@ -1,0 +1,5 @@
+[gd_resource type="Resource" script_class="KitEventRegistry" load_steps=2 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/events/event_registry.gd" id="1"]
+[resource]
+script = ExtResource("1")
+declarations = {"mine_hit": {"fields": ["entity", "actor", "action"], "description": "The tool contacted a rock."}, "rock_break": {"fields": ["entity", "actor", "action"], "description": "A rock broke and yielded ore."}, "mine_rejected": {"fields": ["entity", "actor", "action"], "description": "A mining check failed."}, "cargo_clipped": {"fields": ["entity", "actor", "action"], "description": "Cargo filled and excess ore was clipped."}, "ship_moved": {"fields": ["entity", "actor", "action"], "description": "Flight input changed position or velocity."}, "dock_success": {"fields": ["entity", "actor", "action"], "description": "Cargo was sold and energy refilled."}, "dock_rejected": {"fields": ["entity", "actor", "action"], "description": "Docking or refuelling requirements failed."}}

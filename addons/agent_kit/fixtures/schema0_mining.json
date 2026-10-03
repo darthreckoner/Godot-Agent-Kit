@@ -1,0 +1,804 @@
+{
+  "checksum_sha256": "0d2a38bc5f89ddce2cd9aa9489d8d515adbeb641abfdc14fba0a65b4d1cc9a00",
+  "created": "fixture",
+  "kit_version": "0.0.0",
+  "payload": {
+    "actions": {
+      "pending": [],
+      "policies": {
+        "mine": {
+          "charge": 0,
+          "overflow": 1
+        },
+        "move_ship": {
+          "charge": 0,
+          "overflow": 0
+        },
+        "probe": {
+          "charge": 0,
+          "overflow": 0
+        },
+        "sell_and_refuel": {
+          "charge": 0,
+          "overflow": 0
+        }
+      },
+      "sequence": 6
+    },
+    "clock": {
+      "accumulator": 0,
+      "mode": 1,
+      "tick": 1,
+      "tick_rate": 30
+    },
+    "events": [],
+    "feel": {
+      "cargo_clipped": "res://game/feel/cargo_clipped.tres",
+      "dock_rejected": "res://game/feel/dock_rejected.tres",
+      "dock_success": "res://game/feel/dock_success.tres",
+      "mine_hit": "res://game/feel/mine_hit.tres",
+      "mine_rejected": "res://game/feel/mine_rejected.tres",
+      "rock_break": "res://game/feel/rock_break.tres",
+      "ship_moved": "res://game/feel/ship_moved.tres"
+    },
+    "log": [
+      {
+        "action": "probe",
+        "actor": "ship:player",
+        "checks": [
+          {
+            "message": "ship:player.energy would go below its minimum.",
+            "passed": false,
+            "rule_id": "transaction.valid_changes"
+          }
+        ],
+        "deltas": [],
+        "events": [],
+        "input_source": "scenario",
+        "outcome": "rejected",
+        "params": {
+          "probe": "negative"
+        },
+        "rng_draws": [],
+        "seq": 1,
+        "tick": 0
+      },
+      {
+        "action": "probe",
+        "actor": "ship:player",
+        "checks": [
+          {
+            "message": "ship:player.cargo would exceed capacity.",
+            "passed": false,
+            "rule_id": "transaction.valid_changes"
+          }
+        ],
+        "deltas": [],
+        "events": [],
+        "input_source": "scenario",
+        "outcome": "rejected",
+        "params": {
+          "probe": "overflow"
+        },
+        "rng_draws": [],
+        "seq": 2,
+        "tick": 0
+      },
+      {
+        "action": "probe",
+        "actor": "ship:player",
+        "checks": [
+          {
+            "message": "This attempt would yield nothing; no cost was charged.",
+            "passed": false,
+            "rule_id": "action.has_yield"
+          }
+        ],
+        "deltas": [],
+        "events": [],
+        "input_source": "scenario",
+        "outcome": "rejected",
+        "params": {
+          "probe": "mutate"
+        },
+        "rng_draws": [],
+        "seq": 3,
+        "tick": 0
+      },
+      {
+        "action": "probe",
+        "actor": "ship:player",
+        "checks": [],
+        "deltas": [
+          {
+            "after": {
+              "position": [
+                2,
+                0,
+                0
+              ],
+              "type": "dock"
+            },
+            "before": {},
+            "cost_only": false,
+            "description": "rule/add_record",
+            "entity": "dock:temporary",
+            "field": "",
+            "fields": {
+              "position": [
+                2,
+                0,
+                0
+              ]
+            },
+            "kind": "add_record",
+            "reason": "rule/add_record",
+            "type": "dock"
+          },
+          {
+            "after": {},
+            "before": {
+              "position": [
+                -5,
+                0,
+                0
+              ],
+              "type": "dock"
+            },
+            "cost_only": false,
+            "description": "rule/remove_record",
+            "entity": "dock:home",
+            "field": "",
+            "fields": {},
+            "kind": "remove_record",
+            "reason": "rule/remove_record",
+            "type": ""
+          }
+        ],
+        "events": [],
+        "input_source": "scenario",
+        "outcome": "success",
+        "params": {
+          "probe": "add_remove"
+        },
+        "rng_draws": [],
+        "seq": 4,
+        "tick": 0
+      },
+      {
+        "action": "probe",
+        "actor": "ship:player",
+        "checks": [
+          {
+            "message": "A planned change could not be applied: credits changes by +5.90 because of rule/audited_rng.",
+            "passed": false,
+            "rule_id": "transaction.valid_changes"
+          }
+        ],
+        "deltas": [],
+        "events": [],
+        "input_source": "scenario",
+        "outcome": "rejected",
+        "params": {
+          "probe": "rng"
+        },
+        "rng_draws": [
+          {
+            "after": "-8957793917491430677",
+            "before": "-2515709130487650052",
+            "raw_draw": 1497524724,
+            "stream": "probe"
+          },
+          {
+            "after": "-3729436383704157458",
+            "before": "-8957793917491430677",
+            "raw_draw": 2717087220,
+            "stream": "probe"
+          },
+          {
+            "after": "-4294430508710999947",
+            "before": "-3729436383704157458",
+            "raw_draw": 3844414659,
+            "stream": "probe"
+          }
+        ],
+        "seq": 5,
+        "tick": 1
+      },
+      {
+        "action": "probe",
+        "actor": "ship:player",
+        "checks": [
+          {
+            "message": "A planned change could not be applied: credits changes by +5.90 because of rule/audited_rng.",
+            "passed": false,
+            "rule_id": "transaction.valid_changes"
+          }
+        ],
+        "deltas": [],
+        "events": [],
+        "input_source": "scenario",
+        "outcome": "rejected",
+        "params": {
+          "probe": "rng"
+        },
+        "rng_draws": [
+          {
+            "after": "-8957793917491430677",
+            "before": "-2515709130487650052",
+            "raw_draw": 1497524724,
+            "stream": "probe"
+          },
+          {
+            "after": "-3729436383704157458",
+            "before": "-8957793917491430677",
+            "raw_draw": 2717087220,
+            "stream": "probe"
+          },
+          {
+            "after": "-4294430508710999947",
+            "before": "-3729436383704157458",
+            "raw_draw": 3844414659,
+            "stream": "probe"
+          }
+        ],
+        "seq": 6,
+        "tick": 1
+      }
+    ],
+    "records": {
+      "dock:temporary": {
+        "position": [
+          2,
+          0,
+          0
+        ],
+        "type": "dock"
+      },
+      "rock:000": {
+        "hardness": 1,
+        "health": 4,
+        "ore_amount": 3,
+        "ore_type": "iron",
+        "position": [
+          4.5,
+          0,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:001": {
+        "hardness": 1,
+        "health": 4,
+        "ore_amount": 3,
+        "ore_type": "iron",
+        "position": [
+          5.7,
+          0,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:002": {
+        "hardness": 1,
+        "health": 4,
+        "ore_amount": 3,
+        "ore_type": "iron",
+        "position": [
+          6.9,
+          0,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:003": {
+        "hardness": 1,
+        "health": 4,
+        "ore_amount": 3,
+        "ore_type": "iron",
+        "position": [
+          8.1,
+          0,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:004": {
+        "hardness": 1,
+        "health": 4,
+        "ore_amount": 3,
+        "ore_type": "iron",
+        "position": [
+          9.3,
+          0,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:005": {
+        "hardness": 1,
+        "health": 4,
+        "ore_amount": 3,
+        "ore_type": "iron",
+        "position": [
+          4.5,
+          1.2,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:006": {
+        "hardness": 1,
+        "health": 4,
+        "ore_amount": 3,
+        "ore_type": "iron",
+        "position": [
+          5.7,
+          1.2,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:007": {
+        "hardness": 1,
+        "health": 4,
+        "ore_amount": 3,
+        "ore_type": "iron",
+        "position": [
+          6.9,
+          1.2,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:008": {
+        "hardness": 1,
+        "health": 4,
+        "ore_amount": 3,
+        "ore_type": "iron",
+        "position": [
+          8.1,
+          1.2,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:009": {
+        "hardness": 1,
+        "health": 4,
+        "ore_amount": 3,
+        "ore_type": "iron",
+        "position": [
+          9.3,
+          1.2,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:010": {
+        "hardness": 2,
+        "health": 4,
+        "ore_amount": 2,
+        "ore_type": "stone",
+        "position": [
+          4.5,
+          2.4,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:011": {
+        "hardness": 2,
+        "health": 4,
+        "ore_amount": 2,
+        "ore_type": "stone",
+        "position": [
+          5.7,
+          2.4,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:012": {
+        "hardness": 2,
+        "health": 4,
+        "ore_amount": 2,
+        "ore_type": "stone",
+        "position": [
+          6.9,
+          2.4,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:013": {
+        "hardness": 2,
+        "health": 4,
+        "ore_amount": 2,
+        "ore_type": "stone",
+        "position": [
+          8.1,
+          2.4,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:014": {
+        "hardness": 2,
+        "health": 4,
+        "ore_amount": 2,
+        "ore_type": "stone",
+        "position": [
+          9.3,
+          2.4,
+          0
+        ],
+        "type": "rock"
+      },
+      "rock:015": {
+        "hardness": 2,
+        "health": 4,
+        "ore_amount": 2,
+        "ore_type": "stone",
+        "position": [
+          4.5,
+          0,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:016": {
+        "hardness": 2,
+        "health": 4,
+        "ore_amount": 2,
+        "ore_type": "stone",
+        "position": [
+          5.7,
+          0,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:017": {
+        "hardness": 2,
+        "health": 4,
+        "ore_amount": 2,
+        "ore_type": "stone",
+        "position": [
+          6.9,
+          0,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:018": {
+        "hardness": 2,
+        "health": 4,
+        "ore_amount": 2,
+        "ore_type": "stone",
+        "position": [
+          8.1,
+          0,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:019": {
+        "hardness": 2,
+        "health": 4,
+        "ore_amount": 2,
+        "ore_type": "stone",
+        "position": [
+          9.3,
+          0,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:020": {
+        "hardness": 4,
+        "health": 4,
+        "ore_amount": 1,
+        "ore_type": "gold",
+        "position": [
+          4.5,
+          1.2,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:021": {
+        "hardness": 4,
+        "health": 4,
+        "ore_amount": 1,
+        "ore_type": "gold",
+        "position": [
+          5.7,
+          1.2,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:022": {
+        "hardness": 4,
+        "health": 4,
+        "ore_amount": 1,
+        "ore_type": "gold",
+        "position": [
+          6.9,
+          1.2,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:023": {
+        "hardness": 4,
+        "health": 4,
+        "ore_amount": 1,
+        "ore_type": "gold",
+        "position": [
+          8.1,
+          1.2,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:024": {
+        "hardness": 4,
+        "health": 4,
+        "ore_amount": 1,
+        "ore_type": "gold",
+        "position": [
+          9.3,
+          1.2,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:025": {
+        "hardness": 4,
+        "health": 4,
+        "ore_amount": 1,
+        "ore_type": "gold",
+        "position": [
+          4.5,
+          2.4,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:026": {
+        "hardness": 4,
+        "health": 4,
+        "ore_amount": 1,
+        "ore_type": "gold",
+        "position": [
+          5.7,
+          2.4,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:027": {
+        "hardness": 4,
+        "health": 4,
+        "ore_amount": 1,
+        "ore_type": "gold",
+        "position": [
+          6.9,
+          2.4,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:028": {
+        "hardness": 4,
+        "health": 4,
+        "ore_amount": 1,
+        "ore_type": "gold",
+        "position": [
+          8.1,
+          2.4,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "rock:029": {
+        "hardness": 4,
+        "health": 4,
+        "ore_amount": 1,
+        "ore_type": "gold",
+        "position": [
+          9.3,
+          2.4,
+          1.4
+        ],
+        "type": "rock"
+      },
+      "ship:player": {
+        "cargo": {
+          "gold": 0,
+          "iron": 0,
+          "stone": 0
+        },
+        "cargo_capacity": 12,
+        "credits": 20,
+        "energy": 40,
+        "energy_max": 40,
+        "mine_ready_at": 0,
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "type": "ship",
+        "velocity": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "rng": {
+      "cosmetic": {
+        "seed": "304407743039261613",
+        "state": "4347021960036284923"
+      },
+      "run_seed": "20261003",
+      "streams": {}
+    },
+    "tuning": {
+      "economy": {
+        "dock_range": 3,
+        "gold_price": 12,
+        "iron_price": 5,
+        "refuel_price": 0.5,
+        "stone_price": 2
+      },
+      "feel_cargo_clipped_0": {
+        "duration": 0.18,
+        "screen_flash": 0.08,
+        "shake_amplitude": 0.02,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_dock_rejected_0": {
+        "duration": 0.14,
+        "screen_flash": 0,
+        "shake_amplitude": 0.02,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_dock_success_0": {
+        "duration": 0.25,
+        "screen_flash": 0.1,
+        "shake_amplitude": 0.015,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_mine_hit_0": {
+        "duration": 0.05,
+        "screen_flash": 0,
+        "shake_amplitude": 0,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_mine_hit_1": {
+        "duration": 0.04,
+        "screen_flash": 0,
+        "shake_amplitude": 0,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_mine_hit_2": {
+        "duration": 0.16,
+        "screen_flash": 0.1,
+        "shake_amplitude": 0.1,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0.04
+      },
+      "feel_mine_hit_3": {
+        "duration": 0.22,
+        "screen_flash": 0,
+        "shake_amplitude": 0,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_mine_hit_heavy_0": {
+        "duration": 0.16,
+        "screen_flash": 0,
+        "shake_amplitude": 0,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_mine_hit_heavy_1": {
+        "duration": 0.08,
+        "screen_flash": 0,
+        "shake_amplitude": 0.05,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_mine_hit_heavy_2": {
+        "duration": 0.35,
+        "screen_flash": 0.25,
+        "shake_amplitude": 0.35,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0.09
+      },
+      "feel_mine_hit_heavy_3": {
+        "duration": 0.35,
+        "screen_flash": 0,
+        "shake_amplitude": 0.08,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_mine_rejected_0": {
+        "duration": 0.12,
+        "screen_flash": 0,
+        "shake_amplitude": 0.035,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_rock_break_0": {
+        "duration": 0.18,
+        "screen_flash": 0.16,
+        "shake_amplitude": 0.2,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_rock_break_1": {
+        "duration": 0.35,
+        "screen_flash": 0,
+        "shake_amplitude": 0,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "feel_ship_moved_0": {
+        "duration": 0.033333,
+        "screen_flash": 0,
+        "shake_amplitude": 0,
+        "shake_frequency": 20,
+        "sound_marker_sec": 0
+      },
+      "kit": {
+        "flash_decay": 2.5,
+        "log_capacity": 512,
+        "tick_rate": 30
+      },
+      "mining": {
+        "charge_on_attempt": 0,
+        "cooldown": 0.3,
+        "energy_cost": 4,
+        "gold_yield": 1,
+        "hard_threshold": 4,
+        "iron_yield": 3,
+        "medium_threshold": 2,
+        "range": 8,
+        "rock_health": 4,
+        "soft_threshold": 1,
+        "stone_yield": 2,
+        "tool_power": 2
+      },
+      "presentation": {
+        "camera_distance": 17,
+        "camera_fov": 55,
+        "camera_max": 35,
+        "camera_min": 8,
+        "flight_pulse_decay": 3,
+        "orbit_sensitivity": 0.007,
+        "pulse_decay": 3,
+        "shake_decay": 1.8,
+        "toast_duration": 3,
+        "zoom_step": 1
+      },
+      "ship": {
+        "accel": 7,
+        "cargo_capacity": 12,
+        "energy_max": 40,
+        "speed": 4,
+        "starting_credits": 20
+      }
+    }
+  },
+  "schema_version": 0
+}

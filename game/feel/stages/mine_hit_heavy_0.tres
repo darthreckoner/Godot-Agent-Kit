@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="KitFeelStage" load_steps=2 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/feel/feel_stage.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"feel_mine_hit_heavy_0"
+description = "Windup presentation."
+stage_name = "Windup"
+duration = 0.16
+shake_amplitude = 0
+flash_color = Color(1, 0.83, 0.47, 1)
+screen_flash = 0
+sound_marker_sec = 0

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="KitRecordType" load_steps=2 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/core/record_type.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"ship"
+array_lengths = {"position": 3, "velocity": 3}
+description = "The player's authoritative ship."
+fields = {"position": "array", "velocity": "array", "energy": "float", "energy_max": "float", "cargo": "dictionary", "cargo_capacity": "float", "credits": "float", "mine_ready_at": "float"}
+limits = {"energy": {"min": 0, "max_field": "energy_max"}, "energy_max": {"min": 1}, "cargo": {"min": 0, "max_field": "cargo_capacity", "aggregate": true}, "cargo_capacity": {"min": 1}, "credits": {"min": 0}, "mine_ready_at": {"min": 0}}

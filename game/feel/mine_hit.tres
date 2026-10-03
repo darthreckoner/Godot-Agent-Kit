@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="KitFeelSequence" load_steps=7 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/feel/feel_sequence.gd" id="1"]
+[ext_resource type="Script" path="res://addons/agent_kit/feel/feel_stage.gd" id="stage"]
+[ext_resource type="Resource" path="res://game/feel/stages/mine_hit_0.tres" id="s0"]
+[ext_resource type="Resource" path="res://game/feel/stages/mine_hit_1.tres" id="s1"]
+[ext_resource type="Resource" path="res://game/feel/stages/mine_hit_2.tres" id="s2"]
+[ext_resource type="Resource" path="res://game/feel/stages/mine_hit_3.tres" id="s3"]
+[resource]
+script = ExtResource("1")
+id = &"mine_hit"
+description = "mine hit"
+trigger_event = &"mine_hit"
+stages = Array[ExtResource("stage")]([ExtResource("s0"), ExtResource("s1"), ExtResource("s2"), ExtResource("s3")])

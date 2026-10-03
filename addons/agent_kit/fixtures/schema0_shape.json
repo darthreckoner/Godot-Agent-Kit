@@ -1,0 +1,1 @@
+{"schema_version":0,"migration":"v0_to_v1.gd","payload_field_before":"records","payload_field_after":"world","note":"The integrity scenario constructs a full checksummed fixture using this shape."}

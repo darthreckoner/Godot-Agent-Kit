@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="KitFeelSequence" load_steps=5 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/feel/feel_sequence.gd" id="1"]
+[ext_resource type="Script" path="res://addons/agent_kit/feel/feel_stage.gd" id="stage"]
+[ext_resource type="Resource" path="res://game/feel/stages/rock_break_0.tres" id="s0"]
+[ext_resource type="Resource" path="res://game/feel/stages/rock_break_1.tres" id="s1"]
+[resource]
+script = ExtResource("1")
+id = &"rock_break"
+description = "rock break"
+trigger_event = &"rock_break"
+stages = Array[ExtResource("stage")]([ExtResource("s0"), ExtResource("s1")])

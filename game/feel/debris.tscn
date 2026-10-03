@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3]
+[ext_resource type="Script" path="res://game/feel/debris.gd" id="1"]
+[sub_resource type="StandardMaterial3D" id="mat"]
+albedo_color = Color(0.98, 0.67, 0.25, 1)
+shading_mode = 0
+[sub_resource type="BoxMesh" id="mesh"]
+material = SubResource("mat")
+size = Vector3(0.09, 0.09, 0.09)
+[node name="Debris" type="CPUParticles3D"]
+script = ExtResource("1")
+emitting = true
+amount = 18
+lifetime = 0.65
+one_shot = true
+explosiveness = 1.0
+mesh = SubResource("mesh")
+direction = Vector3(-1, 0.8, 0)
+spread = 80.0
+initial_velocity_min = 1.2
+initial_velocity_max = 3.0
+gravity = Vector3(0, -1.5, 0)

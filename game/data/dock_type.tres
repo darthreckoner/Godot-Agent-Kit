@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="KitRecordType" load_steps=2 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/core/record_type.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dock"
+array_lengths = {"position": 3}
+description = "A trading and refuelling location."
+fields = {"position": "array"}
+limits = {}

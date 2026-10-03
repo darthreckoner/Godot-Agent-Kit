@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="KitActionDef" load_steps=7 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/actions/action_def.gd" id="1"]
+[ext_resource type="Script" path="res://game/rules/mine.gd" id="2"]
+[ext_resource type="Script" path="res://addons/agent_kit/actions/condition.gd" id="3"]
+
+[sub_resource type="Resource" id="c0"]
+script = ExtResource("3")
+rule_id = &"mining.in_range"
+description = "The target must be within mining range."
+kind = "in_range"
+field = "position"
+tuning_key = "mining.range"
+target_param = "target"
+
+[sub_resource type="Resource" id="c1"]
+script = ExtResource("3")
+rule_id = &"mining.cooldown"
+description = "Wait for the mining tool cooldown."
+kind = "cooldown_ready"
+field = "mine_ready_at"
+tuning_key = ""
+target_param = "target"
+
+[sub_resource type="Resource" id="c2"]
+script = ExtResource("3")
+rule_id = &"mining.energy"
+description = "There must be enough energy for this hit."
+kind = "has_resource"
+field = "energy"
+tuning_key = "mining.energy_cost"
+target_param = "target"
+
+[resource]
+script = ExtResource("1")
+id = &"mine"
+description = "Hit a selected rock; pay energy and collect ore on break."
+handler = ExtResource("2")
+requires = Array[ExtResource("3")]([SubResource("c0"), SubResource("c1"), SubResource("c2")])
+tuning_set = &"mining"
+events_on_success = Array[StringName]([&"mine_hit"])
+events_on_reject = Array[StringName]([&"mine_rejected"])
+events_on_clip = Array[StringName]([&"cargo_clipped"])
+overflow_policy = 1

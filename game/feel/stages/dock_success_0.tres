@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="KitFeelStage" load_steps=3 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/feel/feel_stage.gd" id="1"]
+[ext_resource type="AudioStream" path="res://game/feel/audio/dock.wav" id="2"]
+[resource]
+script = ExtResource("1")
+id = &"feel_dock_success_0"
+description = "Trade complete presentation."
+stage_name = "Trade complete"
+duration = 0.25
+shake_amplitude = 0.015
+flash_color = Color(1, 0.83, 0.47, 1)
+screen_flash = 0.1
+sound_marker_sec = 0
+sound = ExtResource("2")
