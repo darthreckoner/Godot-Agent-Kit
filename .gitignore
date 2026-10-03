@@ -1,0 +1,10 @@
+# Godot generated cache
+.godot/
+
+# Generated scenario reports and exports
+/reports/
+/build/
+/exports/
+
+# Machine-specific Godot executable path
+/kit.local.json
