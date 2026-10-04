@@ -4,6 +4,7 @@
 
 0.3.0 — ticket 10 (editable controls) implemented on 2026-10-04, verified on Windows with Godot 4.7.2. Save schema remains 1.
 Implementation branch: codex/ticket-10-editable-controls, created from clean b1c81d8e10df5e9782eed783cc3c59f4c6efe641. The designer reported a passing playtest and authorized commit, push and merge on 2026-10-04. The earlier implementation and playtest history are retained below.
+Delivery: implementation commit b30a1252b237f5f90018941dce5b0068642dcbb5 was pushed and merged through [PR #3](https://github.com/darthreckoner/Godot-Agent-Kit/pull/3) at 114e7fedf002cb8e4c6f33a4c17adf9f5b4e0270 on 2026-10-04. GitHub reports MERGED, and local main was fast-forwarded to fetched origin/main. The checkout is on main.
 
 ## Ticket 10 delivery and verification (2026-10-04)
 
@@ -209,7 +210,7 @@ Original build (2026-10-03):
 
 ## Next steps
 
-0. Commit, push and merge the accepted ticket 10 implementation. Future play scenarios should press named controls and start from declaration defaults.
+0. Ticket 10 is merged and accepted. Future play scenarios should press named controls and start from declaration defaults.
 
 1. Reconcile the separately recorded ticket 11 and kit-distribution work before beginning the next ticket.
 2. Record the preferred charge policy and feel direction; patch through scoped tickets after review against DESIGN.md.
