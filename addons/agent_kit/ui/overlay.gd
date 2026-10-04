@@ -5,7 +5,9 @@ var _tuning_panel: PanelContainer
 var _entities: ItemList
 var _fields: ItemList
 var _why_fields: OptionButton
-var _why_entities: OptionButton
+var _why_entity_button: Button
+var _why_entity_popup: PopupPanel
+var _why_entity_list: ItemList
 var _why: RichTextLabel
 var _refusal_box: PanelContainer
 var _refusal_text: Label
@@ -223,11 +225,20 @@ func _build_inspector() -> void:
 	var pickers: HBoxContainer = HBoxContainer.new()
 	why_tab.add_child(pickers)
 	_label("Thing", pickers)
-	_why_entities = OptionButton.new()
-	_why_entities.custom_minimum_size.x = 260
-	pickers.add_child(_why_entities)
-	_why_entities.item_selected.connect(func(index: int) -> void:
-		_selected = StringName(_why_entities.get_item_text(index))
+	# A short scrolling list under the button: long worlds must not cover the screen.
+	_why_entity_button = _button("", pickers, func() -> void:
+		var origin: Vector2 = _why_entity_button.get_screen_position() + Vector2(0, _why_entity_button.size.y + 2)
+		_why_entity_popup.popup(Rect2i(Vector2i(origin), Vector2i(int(_why_entity_button.size.x), 340)))
+		_why_entity_list.ensure_current_is_visible())
+	_why_entity_button.custom_minimum_size.x = 260
+	_why_entity_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_why_entity_popup = PopupPanel.new()
+	_why_entity_button.add_child(_why_entity_popup)
+	_why_entity_list = ItemList.new()
+	_why_entity_popup.add_child(_why_entity_list)
+	_why_entity_list.item_selected.connect(func(index: int) -> void:
+		_why_entity_popup.hide()
+		_selected = _why_entity_list.get_item_metadata(index)
 		_refresh_inspector())
 	_label("  Value", pickers)
 	_why_fields = OptionButton.new()
@@ -282,17 +293,25 @@ func _play_variant(picker: OptionButton) -> void:
 
 func _refresh_inspector() -> void:
 	_entities.clear()
-	_why_entities.clear()
+	_why_entity_list.clear()
+	if _selected.is_empty() and not Kit.world.ids().is_empty():
+		_selected = Kit.world.ids()[0]
+	var kind: String = ""
 	for id: StringName in Kit.world.ids():
 		_entities.add_item(str(id))
-		_why_entities.add_item(str(id))
 		if id == _selected:
 			_entities.select(_entities.item_count - 1)
-			_why_entities.select(_why_entities.item_count - 1)
-	if _selected.is_empty() and _entities.item_count > 0:
-		_selected = StringName(_entities.get_item_text(0))
-		_entities.select(0)
-		_why_entities.select(0)
+		# Group the Why picker by record type, e.g. "Dock", "Rock", "Ship".
+		if str(Kit.world.record(id).get("type", "")) != kind:
+			kind = str(Kit.world.record(id).get("type", ""))
+			var heading: int = _why_entity_list.add_item(kind.capitalize())
+			_why_entity_list.set_item_selectable(heading, false)
+			_why_entity_list.set_item_custom_fg_color(heading, ACCENT)
+		var item: int = _why_entity_list.add_item("    " + str(id))
+		_why_entity_list.set_item_metadata(item, id)
+		if id == _selected:
+			_why_entity_list.select(item)
+	_why_entity_button.text = "%s  ▾" % _selected
 	_refresh_fields()
 	for picker: OptionButton in [_a, _b]:
 		picker.clear()

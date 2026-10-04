@@ -10,6 +10,8 @@ UI fix only; no public API, file format or save schema change, so VERSION stays 
 - F1 Log tab: it was always empty for the same `contains("")` reason. Empty filters now show every action. Each line names the action's inputs (e.g. its target), and refused actions list the failed rule and its message underneath.
 - Overlay look: one shared theme. Buttons are outlined; the main action (Apply) is filled; tuning group headers are banded rows with an accent bar; help text is quieter and smaller; section labels use the accent colour; inputs, lists and tabs are boxed.
 - F1 Why tab: it has its own Thing and Value pickers, so it no longer depends on the World tab's selection. A notice at its top always explains the newest refused action, whatever is selected, with a button to show the thing it was aimed at.
+- `KitWorld.ids()` now really returns IDs in alphabetical order, as DESIGN.md promises. Sorting StringNames directly in Godot is not alphabetical. Only the overlay and the testbed view call it; no rule outcome changes.
+- F1 Why: the Thing picker is a short scrolling list opening under its button, grouped by record type (Dock, Rock, Ship), instead of a popup that covered the screen.
 - F1 Log tab: consecutive repeats of the same action, actor and outcome with nothing refused collapse to one "×N" line, so flight no longer buries refusals.
 - F1 Why tab: refused actions change nothing, so they were only listed under the actor. Why now also lists the 10 newest actions aimed at the selected entity, with their refusal reasons. Selecting a rock answers "why can't I mine this?".
 

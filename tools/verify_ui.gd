@@ -95,6 +95,19 @@ func _run() -> void:
 	var show_button: Button = Kit.overlay.get("_refusal_show")
 	_checks.append(KitScenario.assertion("Why answers the newest refusal whatever is selected.", moved and refused.outcome == "rejected" and notice.visible and notice_text.text.contains("Refused by mining.tool_vs_hardness") and show_button.visible and show_button.text == "Show rock:020"))
 	_checks.append(KitScenario.assertion("Refusal notice screenshot saved.", await _shot("why_notice")))
+	var picker: Button = Kit.overlay.get("_why_entity_button")
+	var popup: PopupPanel = Kit.overlay.get("_why_entity_popup")
+	var listing: ItemList = Kit.overlay.get("_why_entity_list")
+	picker.pressed.emit()
+	await get_tree().process_frame
+	var ids: Array[StringName] = Kit.world.ids()
+	_checks.append(KitScenario.assertion("The Thing list is alphabetical, grouped by kind and fits under its button.", ids[0] == &"dock:home" and ids[1] == &"rock:000" and ids[-1] == &"ship:player" and listing.get_item_text(0) == "Dock" and not listing.is_item_selectable(0) and popup.visible and popup.size.y <= 340, popup.size, Vector2i(int(picker.size.x), 340)))
+	_checks.append(KitScenario.assertion("Thing list screenshot saved.", await _shot("why_thing_list")))
+	for index: int in range(listing.item_count):
+		if listing.get_item_metadata(index) == &"ship:player":
+			listing.select(index)
+			listing.item_selected.emit(index)
+	_checks.append(KitScenario.assertion("Picking from the Thing list selects it and closes the list.", Kit.overlay.get("_selected") == &"ship:player" and not popup.visible and picker.text.begins_with("ship:player")))
 	show_button.pressed.emit()
 	_checks.append(KitScenario.assertion("Why on a rock explains a refused hit on it.", Kit.overlay.get("_selected") == &"rock:020" and why.get_parsed_text().contains("Refused by mining.tool_vs_hardness")))
 	_checks.append(KitScenario.assertion("Refused-hit screenshot saved.", await _shot("why_refused")))

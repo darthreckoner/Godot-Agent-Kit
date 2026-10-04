@@ -63,12 +63,15 @@ The designer's first playtest found three testbed problems. All three are fixed 
 - F1 Why still didn't answer "why can't I mine gold?", because it showed whatever the World tab had selected (dock:home). Why now has its own pickers, plus a notice that always explains the newest refusal. The Log tab collapses flight repeats.
 - Light vs heavy impact: the designer found the difference clearly visible, but expected heavy to do more damage. It doesn't, by design: feel variants never change rule outcomes, and the compare run proves it. This is a labelling problem. "B: impact A/B", "Heavy impact." and "Impact: mine hit" read like a stronger tool, not a presentation-only A/B. Open ticket: label it as looks-only in the HUD, toast and hints.
 
+- F1 Why's Thing dropdown covered the whole screen and listed rocks out of order (rock:000, then 029 down to 001). Godot's StringName sort is not alphabetical, so KitWorld.ids() broke its documented sorted order. Fixed (see CHANGELOG). The picker is now a short scrolling list under its button, grouped Dock/Rock/Ship.
+
 ## Verification
 
 Playtest patch (2026-10-04, Linux sandbox, Godot 4.7.2 official build, PowerShell 7.4.6):
 - tools/kit.ps1 test: exit 0; all seven scenarios passed with repeat and midpoint save/reload.
 - tools/kit.ps1 compare feel_change_is_scoped mine_hit mine_hit_heavy: exit 0; A/B constraints identical.
 - tools/kit.ps1 lint and map: exit 0. GAME_MAP.md regenerated.
+- After the Thing-picker fix: tools/kit.ps1 test (7/7), compare and lint pass. tools/verify_ui.tscn passes 24/24, with new checks that the list is alphabetical, grouped and fits under its button, and that picking closes it and selects the thing. Screenshot inspected.
 - After round 3: tools/kit.ps1 test (7/7), compare and lint pass. tools/verify_ui.tscn passes 21/21, with new checks that the refusal notice answers while dock:home is selected and that its Show button selects the rock. The harness now waits for feel sounds before quitting: round 2's run had reported a clunk.wav "resource still in use" at shutdown, an artifact of the harness quitting mid-sound. A windowed probe confirmed: orbiting 120° left the nose at 0°, W eased the nose 1→5→10→19→…→142→146→165°, and A/S left it alone. F1/F2 screenshots inspected.
 - After round 2: tools/kit.ps1 test (7/7), compare and lint pass; tools/verify_ui.tscn passes 19/19. New checks: Why on a rock explains a refused hit, the Log tab lists refusals with no filter typed, plus a refusal screenshot. A windowed probe showed the nose staying at 45° during A-strafe and S-reverse, no beam on Enter, and the gold refusal message wrapping on screen.
 - tools/verify_ui.tscn under Xvfb (round 1): all 16 UI checks passed, including 5 new ones: F2 lists every group, the cursor is in search, clicking a group opens it, a no-match search says so, and the empty panel is screenshotted. Against the old overlay.gd the four new behaviour checks fail; the screenshot check passes either way. Screenshots were inspected.
@@ -95,6 +98,7 @@ Original build (2026-10-03):
 ## Known issues / designer acceptance
 
 - Test gap behind both playtest rounds: scenarios call rules directly, and verify_ui typed a search before looking at F1/F2. So "unplayable flight", "empty F2", "empty Log" and "no answer for a refusal" all shipped green. Proposed kit work: input-driven play scenarios (physical keys, camera, screenshots) as a first-class scenario mode, plus default-state checks for every overlay panel and tab. Until then, every view change gets a windowed probe and inspected screenshots.
+- Kit ticket (determinism risk): KitRng.end_action sorts stream names with Array.sort() on StringNames, which is not alphabetical. The order of rng_draws in action records could differ between engine runs or builds when one action draws from several streams. No rule outcome depends on it today. Fix it with a text sort, plus a scenario that draws from two streams.
 - F1 Log is flooded by move_ship records while flying (one per tick); use the action filter, e.g. "mine".
 
 - Playtest patch: the Space latch and the auto-retarget choice (nearest live rock, measured from the ship) are untested by a human. Camera-relative flight means W changes direction when the camera orbits; that is intended, but needs feel acceptance.

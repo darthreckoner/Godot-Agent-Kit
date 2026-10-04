@@ -12,7 +12,8 @@ func ids() -> Array[StringName]:
 	var result: Array[StringName] = []
 	for id: Variant in _records:
 		result.append(StringName(id))
-	result.sort()
+	# Sorting StringNames directly is not alphabetical in Godot; compare their text.
+	result.sort_custom(func(a: StringName, b: StringName) -> bool: return str(a) < str(b))
 	return result
 
 func record(id: StringName) -> Dictionary:
