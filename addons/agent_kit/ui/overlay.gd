@@ -144,6 +144,7 @@ func _build_inspector() -> void:
 	_outcome_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	filters.add_child(_outcome_filter)
 	_timeline = _rich(log_tab)
+	_timeline.scroll_following = true
 	var events_tab: VBoxContainer = VBoxContainer.new()
 	events_tab.name = "Events"
 	tabs.add_child(events_tab)
@@ -232,13 +233,47 @@ func _refresh_why() -> void:
 			if not check.passed:
 				_why.append_text("[color=#ffba76]%s: %s[/color]\n" % [check.rule_id, check.message])
 		_why.append_text("\n")
+	# A refused action changes nothing, so it only shows up here, under the thing it was aimed at.
+	var aimed: Array[Dictionary] = []
+	for record: Dictionary in Kit.log.records():
+		if record.actor != str(_selected) and record.params.values().has(str(_selected)):
+			aimed.append(record)
+	if aimed.is_empty():
+		return
+	_why.append_text("\n[b]Actions aimed at %s (newest first)[/b]\n\n" % _selected)
+	aimed.reverse()
+	for record: Dictionary in aimed.slice(0, 10):
+		_why.append_text("%s\n" % _log_line(record))
+		for reason: String in _refusals(record):
+			_why.append_text("[color=#ffba76]%s[/color]\n" % reason)
+		_why.append_text("\n")
+
+func _log_line(record: Dictionary) -> String:
+	var line: String = "Tick %d · #%d · %s by %s" % [record.tick, record.seq, record.action, record.actor]
+	for key: String in record.params:
+		line += " · %s %s" % [key, str(record.params[key])]
+	return line + " · %s · %s" % [record.outcome.replace("_", " "), record.input_source]
+
+func _refusals(record: Dictionary) -> Array[String]:
+	var reasons: Array[String] = []
+	for check: Dictionary in record.checks:
+		if not check.passed:
+			reasons.append("Refused by %s: %s" % [check.rule_id, check.message])
+	if record.outcome == "attempted_no_yield":
+		reasons.append("Cost paid under the ON_ATTEMPT charge policy; the attempt yielded nothing.")
+	return reasons
 
 func _refresh_log() -> void:
 	_timeline.clear()
+	# Godot's contains("") is false, so an empty filter must be treated as "show all".
 	for record: Dictionary in Kit.log.records():
-		if not str(record.action).contains(_action_filter.text) or not str(record.outcome).contains(_outcome_filter.text):
+		if not _action_filter.text.is_empty() and not str(record.action).contains(_action_filter.text):
 			continue
-		_timeline.append_text("Tick %d · #%d · %s · %s · %s\n" % [record.tick, record.seq, record.action, record.outcome, record.input_source])
+		if not _outcome_filter.text.is_empty() and not str(record.outcome).contains(_outcome_filter.text):
+			continue
+		_timeline.append_text("%s\n" % _log_line(record))
+		for reason: String in _refusals(record):
+			_timeline.append_text("    [color=#ffba76]%s[/color]\n" % reason)
 	_event_text.clear()
 	for event: Dictionary in Kit.events.history:
 		_event_text.append_text("Tick %d · %s\n%s\n\n" % [event.tick, event.name, JSON.stringify(event.payload)])
@@ -270,7 +305,7 @@ func _build_tuning() -> void:
 	_knob_rows = VBoxContainer.new()
 	_knob_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_knob_rows)
-	_status = _label("Sliders are live trials. Apply saves; Discard restores.", column)
+	_status = _label("Moving a slider is a live trial. Each open group has Apply (save to its file) and Discard (undo trials) at its top.", column)
 	_button("Close tuning", column, func() -> void: _tuning_panel.hide())
 
 func _search_style(border: Color) -> StyleBoxFlat:
@@ -330,32 +365,7 @@ func _refresh_tuning() -> void:
 		header.set_meta("tuning_group", id)
 		if not open:
 			continue
-		for knob: String in rows:
-			var metadata: Dictionary = resource.metadata(knob)
-			var row: HBoxContainer = HBoxContainer.new()
-			_knob_rows.add_child(row)
-			var title: Label = _label("%s (%s)" % [knob.capitalize(), metadata.get("unit", "")], row)
-			title.custom_minimum_size.x = 265
-			title.tooltip_text = metadata.get("help", "")
-			var slider: HSlider = HSlider.new()
-			slider.min_value = metadata.min
-			slider.max_value = metadata.max
-			slider.step = metadata.step
-			slider.value = float(resource.get(knob))
-			slider.custom_minimum_size.x = 260
-			slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			slider.tooltip_text = "%s\nRange: %s–%s %s" % [metadata.get("help", ""), metadata.min, metadata.max, metadata.get("unit", "")]
-			row.add_child(slider)
-			var value_label: Label = _label("", row)
-			value_label.custom_minimum_size.x = 180
-			var update: Callable = func(next: float) -> void:
-				Kit.tuning.trial("%s.%s" % [id, knob], next)
-				var trial: bool = Kit.tuning.is_trial(id, knob)
-				value_label.text = "%.2f%s%s" % [next, " · Trial" if trial else "", " · Restart needed" if metadata.get("restart", false) else ""]
-				title.modulate = Color(1, 0.8, 0.35) if trial else Color.WHITE
-			slider.value_changed.connect(update)
-			update.call(slider.value)
-			_label("%s  Range: %s–%s %s" % [metadata.get("help", ""), metadata.min, metadata.max, metadata.get("unit", "")], _knob_rows).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		# Apply/Discard sit at the top of the group so they stay in view on long groups.
 		var buttons: HBoxContainer = HBoxContainer.new()
 		_knob_rows.add_child(buttons)
 		_button("Apply " + str(id), buttons, func() -> void:
@@ -372,6 +382,30 @@ func _refresh_tuning() -> void:
 		_button("Save as variant", buttons, func() -> void:
 			var error: Error = Kit.tuning.save_variant(id, variant.text)
 			_status.text = "Variant saved." if error == OK else "Could not save variant: " + error_string(error))
+		for knob: String in rows:
+			var metadata: Dictionary = resource.metadata(knob)
+			var row: HBoxContainer = HBoxContainer.new()
+			_knob_rows.add_child(row)
+			var title: Label = _label("%s (%s)" % [knob.capitalize(), metadata.get("unit", "")], row)
+			title.custom_minimum_size.x = 265
+			var slider: HSlider = HSlider.new()
+			slider.min_value = metadata.min
+			slider.max_value = metadata.max
+			slider.step = metadata.step
+			slider.value = float(resource.get(knob))
+			slider.custom_minimum_size.x = 260
+			slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.add_child(slider)
+			var value_label: Label = _label("", row)
+			value_label.custom_minimum_size.x = 180
+			var update: Callable = func(next: float) -> void:
+				Kit.tuning.trial("%s.%s" % [id, knob], next)
+				var trial: bool = Kit.tuning.is_trial(id, knob)
+				value_label.text = "%.2f%s%s" % [next, " · Trial" if trial else "", " · Restart needed" if metadata.get("restart", false) else ""]
+				title.modulate = Color(1, 0.8, 0.35) if trial else Color.WHITE
+			slider.value_changed.connect(update)
+			update.call(slider.value)
+			_label("%s  Range: %s–%s %s" % [metadata.get("help", ""), metadata.min, metadata.max, metadata.get("unit", "")], _knob_rows).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if _knob_rows.get_child_count() == 0:
 		_label("Nothing matches \"%s\". Try a word like range, energy, speed or camera, or press Clear to see every group." % _search.text, _knob_rows).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 

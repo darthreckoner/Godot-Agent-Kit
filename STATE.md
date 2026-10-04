@@ -48,13 +48,22 @@ The designer's first playtest found three testbed problems. All three are fixed 
 - Placeholder sounds are locally generated tones. Stage numbers and feedback fades are tunable resources; primitive meshes, colors and particle assets are authored Godot presentation resources.
 - Stage variants are standalone .tres resources assigned to FeelSequences in Godot. F1 A/B supports registered sequence variants; the testbed registers light/heavy mining sequences.
 
+## Playtest round 2 (2026-10-04)
+
+- Flight: A/D turned the nose and S spun the ship 180°. Now the nose points away from the camera, so A/D strafe and S backs up. Once stopped within reach, the nose turns to the selected rock.
+- Enter fired a yellow "shot". The drill beam reused the tool glow that dock feedback also raises. It now has its own glow, raised only by mine_hit.
+- "Why can't I mine the yellow rocks?" F1 could not answer it (see CHANGELOG Unreleased): the Log tab was always empty, and Why on a rock never showed refusals. Both are fixed. The game also says it directly: the target line warns "too hard: tool power 2.0 is below hardness 4.0", and the refusal message names tuning/mining.tool_power. Messages now wrap and centre, so long ones fit on screen.
+- Design note for the designer: with default tuning (tool_power 2, hard_threshold 4), gold can never be mined. The lab has no tool upgrade, so gold only becomes minable by raising mining.tool_power in F2.
+- F2: Apply/Discard moved to the top of each open group; tooltips removed (see CHANGELOG).
+
 ## Verification
 
 Playtest patch (2026-10-04, Linux sandbox, Godot 4.7.2 official build, PowerShell 7.4.6):
 - tools/kit.ps1 test: exit 0; all seven scenarios passed with repeat and midpoint save/reload.
 - tools/kit.ps1 compare feel_change_is_scoped mine_hit mine_hit_heavy: exit 0; A/B constraints identical.
 - tools/kit.ps1 lint and map: exit 0. GAME_MAP.md regenerated.
-- tools/verify_ui.tscn under Xvfb: all 16 UI checks passed, including 5 new ones: F2 lists every group, the cursor is in search, clicking a group opens it, a no-match search says so, and the empty panel is screenshotted. Against the old overlay.gd the four new behaviour checks fail; the screenshot check passes either way. Screenshots were inspected.
+- After round 2: tools/kit.ps1 test (7/7), compare and lint pass; tools/verify_ui.tscn passes 19/19. New checks: Why on a rock explains a refused hit, the Log tab lists refusals with no filter typed, plus a refusal screenshot. A windowed probe showed the nose staying at 45° during A-strafe and S-reverse, no beam on Enter, and the gold refusal message wrapping on screen.
+- tools/verify_ui.tscn under Xvfb (round 1): all 16 UI checks passed, including 5 new ones: F2 lists every group, the cursor is in search, clicking a group opens it, a no-match search says so, and the empty panel is screenshotted. Against the old overlay.gd the four new behaviour checks fail; the screenshot check passes either way. Screenshots were inspected.
 - A throwaway windowed probe (not committed) drove the real lab with physical keys. Results:
   - W+D flew nose-first toward the rocks.
   - A launch-point hit was rejected with "Fly closer".
@@ -76,6 +85,9 @@ Original build (2026-10-03):
 - Earlier failed scenario reports are preserved alongside passing reruns. A physical-input UI harness synchronization failure is preserved under reports/ui-reruns/20261003-physical-input-failure; waiting for the input frame corrected the harness and the rerun passed.
 
 ## Known issues / designer acceptance
+
+- Test gap behind both playtest rounds: scenarios call rules directly, and verify_ui typed a search before looking at F1/F2. So "unplayable flight", "empty F2", "empty Log" and "no answer for a refusal" all shipped green. Proposed kit work: input-driven play scenarios (physical keys, camera, screenshots) as a first-class scenario mode, plus default-state checks for every overlay panel and tab. Until then, every view change gets a windowed probe and inspected screenshots.
+- F1 Log is flooded by move_ship records while flying (one per tick); use the action filter, e.g. "mine".
 
 - Playtest patch: the Space latch and the auto-retarget choice (nearest live rock, measured from the ship) are untested by a human. Camera-relative flight means W changes direction when the camera orbits; that is intended, but needs feel acceptance.
 - An F5 save written before the playtest patch also stores live tuning. Loading it brings back mining.range 8 as a live trial; Discard in F2 restores 2.5.

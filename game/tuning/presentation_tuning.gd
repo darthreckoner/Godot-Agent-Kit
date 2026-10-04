@@ -11,7 +11,7 @@ const KNOBS: Dictionary = {
 	"pulse_decay": {"help": "How quickly the mining tool glow settles."},
 	"flight_pulse_decay": {"help": "How quickly the thruster feedback settles after flight input."},
 	"toast_duration": {"help": "How long rejection and cargo messages remain visible."},
-	"ship_turn_rate": {"help": "How quickly the ship model turns to face where it flies or the rock it is mining. Looks only; flight rules ignore it."},
+	"ship_turn_rate": {"help": "How quickly the ship model turns to point away from the camera, or at the rock it is mining. Looks only; flight rules ignore it."},
 	"camera_start_yaw": {"help": "Starting orbit angle around the ship. -90 sits directly behind the ship, looking past its nose at the rocks; 0 looks at its side.", "restart": true}
 }
 @export_range(8, 35, 0.25, "suffix:m") var camera_distance: float = 17.0

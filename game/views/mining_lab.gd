@@ -16,6 +16,7 @@ var _ring_in_reach: StandardMaterial3D
 var _ring_out_of_reach: StandardMaterial3D
 var _beam: MeshInstance3D
 var _beam_target: StringName = &""
+var _beam_glow: float = 0.0
 var _target: StringName = &"rock:000"
 var _yaw: float = 0.0
 var _ship_yaw: float = 0.0
@@ -183,7 +184,14 @@ func _build_hud() -> void:
 	_caption.add_theme_font_size_override("font_size", 18)
 	root.add_child(_caption)
 	_toast = Label.new()
-	_toast.position = Vector2(360, 560)
+	_toast.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_toast.offset_left = 120
+	_toast.offset_right = -120
+	_toast.offset_top = -180
+	_toast.offset_bottom = -96
+	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_toast.add_theme_font_size_override("font_size", 22)
 	_toast.add_theme_color_override("font_color", Color(1, 0.77, 0.34))
 	root.add_child(_toast)
@@ -296,6 +304,7 @@ func _retarget() -> void:
 func _on_event(name: StringName, payload: Dictionary) -> void:
 	if name == &"mine_hit":
 		_pulse = 1.0
+		_beam_glow = 1.0
 		_beam_target = StringName(payload.get("entity", ""))
 		if payload.get("broke", false):
 			_space_ready = false
@@ -360,6 +369,9 @@ func _refresh() -> void:
 		_selection.position = _rock_views[_target].node.position + Vector3(0, -0.5, 0)
 		(_selection.mesh as TorusMesh).material = _ring_in_reach if in_reach else _ring_out_of_reach
 		var reach_text: String = "in drill reach" if in_reach else "fly %.1f m closer" % maxf(0.1, ceilf((distance - reach) * 10.0) / 10.0)
+		var power: float = float(Kit.tuning.value("mining.tool_power"))
+		if float(rock.hardness) > power:
+			reach_text += " · too hard: tool power %.1f is below hardness %.1f" % [power, rock.hardness]
 		_target_label.text = "Target %s · %s · hardness %.1f · health %.1f · %s\n%s" % [_target, rock.ore_type, rock.hardness, rock.health, reach_text, policy]
 
 func _process(delta: float) -> void:
@@ -369,6 +381,7 @@ func _process(delta: float) -> void:
 	_presentation_time += feel_delta
 	_shake = move_toward(_shake, 0.0, feel_delta * float(Kit.tuning.value("presentation.shake_decay")))
 	_pulse = move_toward(_pulse, 0.0, feel_delta * float(Kit.tuning.value("presentation.pulse_decay")))
+	_beam_glow = move_toward(_beam_glow, 0.0, feel_delta * float(Kit.tuning.value("presentation.pulse_decay")))
 	_flight_pulse = move_toward(_flight_pulse, 0.0, feel_delta * float(Kit.tuning.value("presentation.flight_pulse_decay")))
 	_thruster.scale = Vector3(1.0, 1.0 + _flight_pulse, 1.0 + _flight_pulse)
 	_camera.fov = float(Kit.tuning.value("presentation.camera_fov"))
@@ -383,15 +396,14 @@ func _process(delta: float) -> void:
 	_face(delta)
 	_update_beam()
 
-# The ship model turns to face where it flies, or the selected rock once it is within reach. Looks only.
+# The nose points away from the camera, so A/D strafe and S backs up. Once stopped within reach,
+# the nose turns to the selected rock. Looks only.
 func _face(delta: float) -> void:
 	var velocity: Array = Kit.world.field(&"ship:player", "velocity")
-	var aim: Vector3 = Vector3(velocity[0], 0.0, velocity[2])
-	if aim.length() < 0.3:
-		aim = Vector3.ZERO
-		if _alive(_target) and _target_distance() <= float(Kit.tuning.value("mining.range")):
-			aim = _rock_position(_target) - _ship_position()
-			aim.y = 0.0
+	var aim: Vector3 = Vector3(-sin(_yaw), 0.0, -cos(_yaw))
+	if Vector3(velocity[0], velocity[1], velocity[2]).length() < 0.3 and _alive(_target) and _target_distance() <= float(Kit.tuning.value("mining.range")):
+		aim = _rock_position(_target) - _ship_position()
+		aim.y = 0.0
 	if aim.length_squared() > 0.0001:
 		_ship_yaw = rotate_toward(_ship_yaw, atan2(-aim.z, aim.x), deg_to_rad(float(Kit.tuning.value("presentation.ship_turn_rate"))) * delta)
 	_ship.rotation.y = _ship_yaw
@@ -399,7 +411,7 @@ func _face(delta: float) -> void:
 # A short beam from the drill tip to the struck rock's face while the hit glow lasts.
 func _update_beam() -> void:
 	_beam.visible = false
-	if _pulse < 0.05 or not _rock_views.has(_beam_target):
+	if _beam_glow < 0.05 or not _rock_views.has(_beam_target):
 		return
 	var nose: Vector3 = _ship.global_basis.x.normalized()
 	var start: Vector3 = _tool.global_position + nose * 0.33
@@ -411,5 +423,5 @@ func _update_beam() -> void:
 	var direction: Vector3 = (finish - start) / length
 	_beam.global_position = (start + finish) * 0.5
 	_beam.look_at(finish, Vector3.FORWARD if absf(direction.dot(Vector3.UP)) > 0.99 else Vector3.UP)
-	_beam.scale = Vector3(1.0 + _pulse, 1.0 + _pulse, length)
+	_beam.scale = Vector3(1.0 + _beam_glow, 1.0 + _beam_glow, length)
 	_beam.visible = true

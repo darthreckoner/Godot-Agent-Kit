@@ -242,7 +242,7 @@ Generated from declarations. Change the source resource and regenerate this map.
   | pulse_decay | 3.0 | strength/s | 0.1 to 10.0 | How quickly the mining tool glow settles. |
   | flight_pulse_decay | 3.0 | strength/s | 0.1 to 10.0 | How quickly the thruster feedback settles after flight input. |
   | toast_duration | 3.0 | s | 0.5 to 10.0 | How long rejection and cargo messages remain visible. |
-  | ship_turn_rate | 360.0 | degrees/s | 30.0 to 1080.0 | How quickly the ship model turns to face where it flies or the rock it is mining. Looks only; flight rules ignore it. |
+  | ship_turn_rate | 360.0 | degrees/s | 30.0 to 1080.0 | How quickly the ship model turns to point away from the camera, or at the rock it is mining. Looks only; flight rules ignore it. |
   | camera_start_yaw | -45.0 | degrees | -180.0 to 180.0 | Starting orbit angle around the ship. -90 sits directly behind the ship, looking past its nose at the rocks; 0 looks at its side. Restart needed. |
 
 - **ship** — Flight and ship capacities. [game/tuning/ship.tres](game/tuning/ship.tres)

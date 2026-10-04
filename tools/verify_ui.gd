@@ -80,6 +80,19 @@ func _run() -> void:
 	var tabs: TabContainer = inspector.get_child(0).get_child(1)
 	tabs.current_tab = 1
 	_checks.append(KitScenario.assertion("Inspector screenshot saved.", await _shot("why")))
+	# A refused hit changes nothing, so it must be explained from the rock it was aimed at.
+	for index: int in range(10):
+		Kit.clock.advance()
+	Kit.world.writable = true
+	var moved: bool = Kit.world.set_field(&"rock:020", "position", [4.5, 0.0, 0.0])
+	Kit.world.writable = false
+	var refused: KitActionResult = Kit.actions.run(&"mine", &"ship:player", {"target": "rock:020"})
+	Kit.overlay.set("_selected", &"rock:020")
+	Kit.overlay._refresh_inspector()
+	_checks.append(KitScenario.assertion("Why on a rock explains a refused hit on it.", moved and refused.outcome == "rejected" and why.get_parsed_text().contains("Refused by mining.tool_vs_hardness")))
+	_checks.append(KitScenario.assertion("Refused-hit screenshot saved.", await _shot("why_refused")))
+	var timeline: RichTextLabel = Kit.overlay.get("_timeline")
+	_checks.append(KitScenario.assertion("The Log tab lists actions and refusals with no filter typed.", timeline.get_parsed_text().contains("mine by ship:player") and timeline.get_parsed_text().contains("Refused by mining.tool_vs_hardness")))
 	_key(KEY_F2)
 	await get_tree().process_frame
 	var search: LineEdit = Kit.overlay.get("_search")

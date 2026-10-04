@@ -6,6 +6,9 @@ UI fix only; no public API, file format or save schema change, so VERSION stays 
 
 - F2 tuning panel: an empty search listed nothing, because Godot's `contains("")` is false. F2 now opens with every tuning group listed and collapsed: game and kit settings first, then feel stages, each alphabetical. Clicking a group opens it. A search matches every typed word against group, knob name and help text, and opens each matching group. A search with no match says so.
 - F2 search box: it now has a visible border and background, a Search label, example hint text and a Clear button, and it takes the cursor when F2 opens.
+- F2: Apply, Discard and Save as variant now sit at the top of each open group instead of below its last knob, where long groups hid them. Slider tooltips are removed: they repeated the help line already shown under each slider, over a hard-to-read translucent background.
+- F1 Log tab: it was always empty for the same `contains("")` reason. Empty filters now show every action. Each line names the action's inputs (e.g. its target), and refused actions list the failed rule and its message underneath.
+- F1 Why tab: refused actions change nothing, so they were only listed under the actor. Why now also lists the 10 newest actions aimed at the selected entity, with their refusal reasons. Selecting a rock answers "why can't I mine this?".
 
 ## 0.1.0 — 2026-10-03
 
