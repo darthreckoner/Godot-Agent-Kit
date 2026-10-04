@@ -7,6 +7,18 @@ var report_dir: String = ""
 var render_mode: bool = false
 ## Input scenarios require a windowed scene, physical-key events and a manually advanced clock.
 var requires_play: bool = false
+var tuning_pins: Dictionary = {}
+var setup_message: String = ""
+
+## Call after registering tuning, before creating records that use it.
+## These values also become Discard's baseline, without writing project files.
+func pin_tuning(values: Dictionary) -> bool:
+	if not Kit.tuning.pin(values):
+		setup_message = Kit.tuning.last_message
+		return false
+	tuning_pins.merge(values, true)
+	setup_message = ""
+	return true
 
 func setup() -> bool:
 	return true

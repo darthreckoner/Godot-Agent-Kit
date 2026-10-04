@@ -140,7 +140,7 @@ func _run_one(path: String, variant: String, midpoint_reload: bool, rendering: b
 	scenario.report_dir = _report_dir.path_join(label)
 	scenario.render_mode = rendering
 	if not scenario.setup():
-		return {"passed": false, "error": "Scenario setup failed."}
+		return {"passed": false, "error": scenario.setup_message if not scenario.setup_message.is_empty() else "Scenario setup failed."}
 	var view: Node
 	if rendering or scenario.requires_play:
 		Kit.feel.enabled = true
@@ -184,6 +184,7 @@ func _run_one(path: String, variant: String, midpoint_reload: bool, rendering: b
 	for assertion: Dictionary in assertions:
 		passed = passed and bool(assertion.passed)
 	var result: Dictionary = {"passed": passed, "variant": variant if not variant.is_empty() else "default", "hash": Kit.simulation_hash(), "world_hash": Kit.world.state_hash(), "assertions": assertions, "numbers": scenario.numbers(), "constraints": scenario.constraints(), "records": Kit.log.records(), "events": Kit.events.history.duplicate(true)}
+	result["tuning_pins"] = scenario.tuning_pins.duplicate(true)
 	result["shots"] = KitMap.paths(scenario.report_dir.path_join("shots"), "png") if DirAccess.dir_exists_absolute(scenario.report_dir.path_join("shots")) else []
 	if view != null:
 		_release_inputs()
@@ -209,7 +210,19 @@ func _release_inputs() -> void:
 	_held_buttons.clear()
 	Input.flush_buffered_events()
 
+func _wait_for_feel(timeout: float) -> bool:
+	var feel_deadline: int = Time.get_ticks_msec() + int(timeout * 1000.0)
+	while Kit.feel.is_playing():
+		if Time.get_ticks_msec() >= feel_deadline:
+			push_error("The scenario timed out waiting for effects to finish.")
+			return false
+		await get_tree().process_frame
+	return true
+
 func _execute_command(command: Dictionary, scenario: KitScenario, view: Node) -> bool:
+	# Keep the effect-wait coroutine outside the input/screenshot match dispatcher.
+	if str(command.command) == "wait_for_feel":
+		return await _wait_for_feel(float(command.get("timeout", 30.0)))
 	match str(command.command):
 		"control":
 			if not scenario.requires_play:

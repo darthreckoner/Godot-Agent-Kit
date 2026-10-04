@@ -93,6 +93,16 @@ This creates an empty Godot project under reports, checks clean and forced insta
 
 tools/verify_ui.tscn exercises the actual overlay input and control callbacks. Run that scene windowed for screenshots in reports/ui-verification. It checks Why, trials, Apply, Discard, variants, and feel replay/skip. These checks do not establish whether the game feels good.
 
+### Scenario tuning fixtures
+
+After registering tuning and before creating world records, call `KitScenario.pin_tuning` with a dictionary of full knob names and fixture values, such as `{"mining.energy_cost": 4.0, "mining.charge_on_attempt": 0}`. Check its boolean result; `setup_message` explains a refusal. The complete list is validated before any change. Pins become the in-memory Discard baseline, preserve resource identity (including feel-stage links), and never write project resources. Reports list `tuning_pins`. The underlying registry method is `Kit.tuning.pin(values)`.
+
+The mining testbed uses explicit rule fixtures in `scenarios/mining_scenario.gd`, applied before health, hardness, yields and ship capacities enter records. Use `tune` commands for later policy trials. These tests remain independent of balancing edits. `shipped_default_balance` reads the actual project defaults and prints `DEFAULT BALANCE CHANGED` with expected/shipped values when they differ from `scenarios/fixtures/default_balance.json`; this is a notice, so balancing does not fail unrelated rules. Update that reference only when intentionally accepting a new default balance.
+
+For an idle-effect assertion or windowed harness cleanup, use `{"command": "wait_for_feel", "timeout": 30.0}`. It waits until `Kit.feel.is_playing()` is false, fails at the timeout, and leaves rule ticks untouched. Fixed presentation waits remain appropriate when the elapsed animation itself is being tested.
+
+`tools/verify_scenario_tuning.ps1` copies the project under ignored reports, applies both limits of each mining knob, then runs every non-play rule scenario and compares its continuation hash with the fixture baseline. It also checks that the default-balance notice detects each applied change and that source files remain unchanged. Its report is separate from normal repeat/save-reload evidence.
+
 ## Install into your game
 
 Create an empty Godot 4.7 project, then run:

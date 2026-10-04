@@ -49,9 +49,16 @@ reports/            generated, gitignored
 - Run `tools/kit.ps1 test` before finishing any task. Report actual results.
 - New rules get a scenario. Changes to what the player sees or does get an input-driven play
   scenario, and someone inspects its screenshots before the task is called done.
-- Scenarios must not depend on the designer's live tuning or bindings. Set the tuning values an
-  assertion depends on, press named controls (starting from declared default bindings), and
-  wait for effects to finish instead of waiting a fixed time.
+- After registering tuning and before creating records, call `pin_tuning` with a dictionary
+  of full knob names and every fixture value the assertions depend on. Check its boolean
+  result; `setup_message` explains a refusal. Pins establish the in-memory Discard baseline
+  and appear in reports without writing project defaults. Use `tune` for later live trials.
+- Check shipped default balance separately and report changes clearly. Rule fixtures use
+  explicit values; they stay independent of designer Apply values and script defaults.
+- Play scenarios press named controls starting from declared default bindings. Before an
+  idle-effect assertion, use `wait_for_feel` with an explicit timeout; it waits for actual
+  effect completion without advancing rule ticks. Use fixed waits only to test elapsed
+  presentation behavior itself.
 - A passing test does not mean it feels good. Say what the designer should playtest.
 - If you cannot run something, say so plainly.
 

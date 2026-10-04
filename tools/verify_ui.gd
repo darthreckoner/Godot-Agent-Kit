@@ -36,11 +36,19 @@ func _run() -> void:
 	if error != OK:
 		get_tree().quit(1)
 		return
-	Kit.scenario_mode = true
+	var driver: KitScenario = load("res://scenarios/support/play_scenario.gd").new()
+	var fixture_ok: bool = driver.setup()
+	_checks.append(KitScenario.assertion("UI verification uses explicit mining fixtures without writing tuning.", fixture_ok))
+	if not fixture_ok:
+		get_tree().quit(1)
+		return
 	var lab: Node = load("res://game/views/mining_lab.tscn").instantiate()
+	lab.set("boot_world", false)
 	add_child(lab)
 	await get_tree().process_frame
 	Kit.controls.reset_defaults()
+	Kit.feel.enabled = true
+	Kit.scenario_mode = false
 	# Drive the playable scene's real physical-key and clock callbacks.
 	Kit.clock.mode = KitClock.Mode.MANUAL_TURN
 	Kit.actions.input_source = "ui_verification"
@@ -55,8 +63,6 @@ func _run() -> void:
 	Kit.clock.advance()
 	_release(&"fly_left")
 	_checks.append(KitScenario.assertion("Flight input updates the authoritative ship.", Kit.world.field(&"ship:player", "position") != before_position))
-	var driver: KitScenario = load("res://scenarios/support/play_scenario.gd").new()
-	_checks.append(KitScenario.assertion("UI verification uses explicit mining fixtures without writing tuning.", driver.use_play_fixture()))
 	var before_click: String = Kit.world.state_hash()
 	var clicked: bool = await driver.click_rock(lab, &"rock:000")
 	_checks.append(KitScenario.assertion("A physical rock click selects without mining or spending energy.", clicked and before_click == Kit.world.state_hash() and Kit.log.records().size() == 1, {"target": str(lab.get("_target")), "records": Kit.log.records().size()}))
@@ -185,5 +191,11 @@ func _run() -> void:
 	error = KitCanonical.write_text(_directory.path_join("report.json"), JSON.stringify({"passed": passed, "checks": _checks}, "  "))
 	print("UI evidence: " + _directory)
 	# Let feel sounds started by the checks finish so shutdown reports no resources in use.
-	await get_tree().create_timer(1.0).timeout
+	var deadline: int = Time.get_ticks_msec() + 30000
+	while Kit.feel.is_playing() and Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
+	if Kit.feel.is_playing():
+		push_error("UI verification timed out waiting for effects to finish.")
+		passed = false
+	await get_tree().process_frame
 	get_tree().quit(0 if passed and error == OK else 1)

@@ -2,9 +2,37 @@
 
 ## Build version
 
-0.3.0 — ticket 10 (editable controls) implemented on 2026-10-04, verified on Windows with Godot 4.7.2. Save schema remains 1.
-Implementation branch: codex/ticket-10-editable-controls, created from clean b1c81d8e10df5e9782eed783cc3c59f4c6efe641. The designer reported a passing playtest and authorized commit, push and merge on 2026-10-04. The earlier implementation and playtest history are retained below.
-Delivery: implementation commit b30a1252b237f5f90018941dce5b0068642dcbb5 was pushed and merged through [PR #3](https://github.com/darthreckoner/Godot-Agent-Kit/pull/3) at 114e7fedf002cb8e4c6f33a4c17adf9f5b4e0270 on 2026-10-04. GitHub reports MERGED, and local main was fast-forwarded to fetched origin/main. The checkout is on main.
+0.3.1 — ticket 11 (scenario tuning independence) complete locally on 2026-10-04, verified on Windows with Godot 4.7.2. Save schema remains 1.
+Current branch: codex/ticket-11-scenario-tuning, based on clean fetched main at 81787c342c368fb7066d45a4465d26e3e8c96029. On 2026-10-04 the designer requested commit, PR creation and merge. Publication is in progress; the HUD capture limitation below remains recorded.
+Earlier ticket 10 delivery: implementation b30a1252b237f5f90018941dce5b0068642dcbb5 was pushed and merged through [PR #3](https://github.com/darthreckoner/Godot-Agent-Kit/pull/3) at 114e7fedf002cb8e4c6f33a4c17adf9f5b4e0270. The designer's passing 0.3.0 playtest and delivery authorization are retained below.
+
+## Ticket 11 implementation and verification (2026-10-04)
+
+- Publication rerun after the designer requested commit, PR and merge: tools/kit.ps1 test exited 0 with 12/12 sim and 4/4 play scenarios, all repeat/save-reload checks passing. Sim reports span 20261004-180505* through 180528*. Play reports: reports/play_controls/20261004-180530-2013170, reports/play_flight_and_dock/20261004-180533-5186492, reports/play_overlay_defaults/20261004-180544-15946601 and reports/play_targeting/20261004-180545-17352660. Inspected controls_conflict.png (readable controls/refusal) and heavy_same_damage.png (target/hints readable, but title and parts of energy/cargo labels missing again). The capture limitation remains open. git diff --check passes, and player rules/views/tuning/feel/data match origin/main.
+- KitScenario.pin_tuning(values) and KitTuningRegistry.pin(values) validate a full list before changing anything, preserve resource identity and project files, and establish the in-memory baseline used by Discard. Full knob names and values appear in each scenario report as tuning_pins; setup_message explains a refusal. scenario_tuning_pins checks baseline/trial/Discard, resource identity, file preservation and atomic refusal of unknown, out-of-range, non-finite and fractional-integer values.
+- MiningSetup accepts a scenario setup callback after registration but before world creation. All ten existing sim scenarios and four play scenarios inherit 23 explicit fixture values: all 12 mining knobs, five ship knobs, five economy knobs and kit.tick_rate. Initial health, hardness, yields, capacities and energy therefore come from the fixture. Fixtures use range 2.5 and cooldown 0.3; project defaults remain the designer's range 4 and cooldown 0.299997. Rule handlers, views, controls, game tuning and feel resources are unchanged.
+- shipped_default_balance separately reads real project defaults against scenarios/fixtures/default_balance.json. Differences print DEFAULT BALANCE CHANGED with expected/shipped values and appear in report numbers; balance edits are notices. A change to the reference requires an intentional balance acceptance. The current project defaults match that reference.
+- wait_for_feel waits for Kit.feel.is_playing() to become false, with an explicit timeout and no rule-tick advancement. Idle F3, rendered compare cleanup and UI cleanup use actual completion. Fixed waits that test turn animation or capture a particular moment remain. UI verification now sets up the same explicit fixture before building its view.
+- VERSION, addon VERSION, plugin and save-wrapper kit_version are 0.3.1 for the added public helper/API and report fields. CHANGELOG, README and KIT_RULES.md explain the fixture workflow. Save schema remains 1; existing migration/save tests pass. GAME_MAP includes the two new scenarios.
+- tools/kit.ps1 test: exit 0, 12/12 sim and 4/4 play scenarios with repeat and midpoint save/reload. Final sim reports span 20261004-175206* through 175228*. Final play reports: reports/play_controls/20261004-175231-1951550, reports/play_flight_and_dock/20261004-175234-5078878, reports/play_overlay_defaults/20261004-175245-15834784, reports/play_targeting/20261004-175246-17252767. The targeting scenario explicitly checks that effect waiting preserves rule state and ticks. Logs remain reports/engine-profile/test.log and play.log.
+- tools/kit.ps1 compare feel_change_is_scoped mine_hit mine_hit_heavy -Render: exit 0; final report reports/feel_change_is_scoped/20261004-175334-1975683/report.json. The earlier passed report 20261004-172529-1940938 also proves identical constraints, world/continuation hashes and action ticks [0, 9], energy spent 8 and iron yielded 3. UI verification: exit 0, 27/27 checks, reports/ticket11-ui-complete.log and reports/ui-verification/20261004T172911-1349329/report.json. Installer: exit 0, reports/install-smoke/99dcc5679864463381828e568967e994/verification.json. Final map, lint and git diff --check pass.
+- tools/verify_scenario_tuning.ps1: exit 0 on the final frozen-source run. reports/scenario-tuning/76c93a1589704b99990d5d7b8ca6d852/verification.json records all 24 applied min/max cases for the 12 mining knobs. Each case passes all 11 rule scenarios with the same continuation hashes as baseline (264 case/scenario combinations, plus 11 baseline runs). Default-balance notices match the applied values, including an unchanged notice when applying the existing default. The wrapper's before/after SHA-256 guard confirms that all original addon, game, scenario and tool files stayed unchanged. Earlier passed matrix cd9c64f34408402e828000b596ed0bd3 remains; render ablations later ran in that disposable copy and its runner was restored from current source.
+- Preserved diagnostics: the first rendered compare passed assertions but returned 1 for shutdown resource errors (reports/ticket11-compare-shutdown-failure.log and reports/feel_change_is_scoped/20261004-172348-1986217). Waiting for actual effect completion passed on rerun. The first UI attempt retained a removed testbed helper call (reports/ticket11-ui.log); it was corrected to fixture setup before view creation. Matrix attempts b18c4b7ded6a4fe794f189be85478db1 and 22348b8513594ccf9481e644e563400b under reports/scenario-tuning were rejected by the source-file guard because I continued editing KIT_RULES.md / verify_ui.gd while they ran; the first also incorrectly required a change notice for the already-default charge value 0. The notice expectation is fixed, and the final run passes both rule checks and the source guard.
+- Images inspected: final Controls conflict image, final targeting heavy_same_damage.png, default_tuning.png from 20261004-173144-15829805, UI tuning_trial.png, and both A/B impact.png images from 20261004-172529-1940938. Controls/default panels, UI trials and A/B impacts are readable. Remaining capture issue: portions of HUD text disappear in some captures, including final heavy_same_damage.png. Targeting rerun 20261004-175000-1931123 has a fully readable HUD, but the full-suite capture still omits it. Earlier targeting captures 173146*, 173513* and 174500* retain partial/missing text. Input/rule assertions pass, so they do not detect this visual anomaly.
+- Render investigation was bounded to disposable copies: baseline main at 81787c3 rendered a readable targeting HUD in reports/ticket11-baseline/d8794e31df2c42a19c21d910bb43280a/reports/play_targeting/20261004-173851-2790230. A baseline-runner ablation in the first passed matrix copy also rendered readable text (174327*) but deliberately lacked the wait command and failed idle F3. The new runner's effect wait is dispatched before the existing match and lives in a separate helper; an isolated rerun then rendered correctly, but recurrence in the full suite means the renderer/capture cause remains unconfirmed. Player view/feel resources were not changed to address it. Future capture investigation should preserve these comparisons.
+
+Sim audit (fixtures are established through the common setup before records exist):
+
+| Scenario | Assertion inputs accounted for |
+|---|---|
+| mine_basic, feel_change_is_scoped | Damage, health, yields, energy cost/capacity, cooldown and tick rate |
+| mine_full_cargo | The above plus shared capacity and the existing-cargo fixture |
+| mine_hard_rock, charge_policy_binding | Cost, cooldown, health, power, success-policy baseline; hard-rock fixture is explicitly harder than the tool |
+| mine_out_of_range, economy_round_trip | Mining fixture, flight speed/acceleration/tick rate, dock range and sale/refill prices |
+| kit_integrity | Explicit range and energy-cost baseline before trials, Discard and save tests |
+| large_terrain_records, rng_two_streams | Explicit ship starting state; probe record sizes/counts, rules and RNG ordering are scenario fixtures |
+| scenario_tuning_pins | Explicit cost/policy values; registry contract checks compare captured baselines |
+| shipped_default_balance | Deliberately reads project defaults; differences are reported separately |
 
 ## Kit-adoption branch merged with 0.3.0 (2026-10-04)
 
@@ -105,10 +133,7 @@ The designer's first playtest found three testbed problems. All three are fixed 
 
 ## Open tickets
 
-- Ticket 11 (below) is partly done. 0.3.0 made play scenarios load script-default mining tuning, made the idle-F3 step wait for the longest declared effect, and made mine_hard_rock set a rock harder than the tool. KIT_RULES.md now states the rule. Remaining:
-  - a kit scenario helper that pins a list of knobs;
-  - an audit that every sim scenario sets the tuning its assertions use;
-  - a clearly named check that reports when shipped default balance changes.
+None. Ticket 11 is complete locally; its scope and evidence are retained in this file.
 
 ## Completed ticket 10 scope
 
@@ -139,6 +164,8 @@ The designer's first playtest found three testbed problems. All three are fixed 
       - VERSION 0.3.0 with CHANGELOG and README entries (new kit API and file format; save schema unchanged unless bindings enter saves, which they should not).
       - tools/kit.ps1 test, compare, map and lint pass; verify_ui passes; STATE updated.
       - Out of scope: gamepad, per-player bindings and in-game rebinding for shipped games.
+
+## Completed ticket 11 scope
 
 11. Rule tests must not depend on the designer's live tuning (found 2026-10-04).
     - Problem: an F2 Apply saved mining.tool_power 3.0 and mining.hard_threshold 3.0 to game/tuning/mining.tres (reverted at the designer's request; main keeps the designer's range 4.0, energy_max 60 and 2.5 s debris effect). Gold became minable, and mine_hard_rock and charge_policy_binding failed, because scenarios load the live tuning files. Any balancing pass can break rule tests that are not about balance. The designer chose to revert to tool power 2 / hard threshold 4 for now.
@@ -224,6 +251,7 @@ Original build (2026-10-03):
 
 ## Known issues / designer acceptance
 
+- Automated HUD captures sometimes omit text; ticket 11's section records failed and readable comparisons. Functional scenario checks pass, and the cause is unconfirmed. Recheck capture reliability before using those images as visual acceptance evidence.
 - The designer's 0.3.0 playtest passes. W changes its movement direction when the camera orbits; that is intended. Broken targets clear and require a fresh click.
 - An F5 save written before the playtest patch also stores live tuning. Loading it brings back mining.range 8 as a live trial; Discard in F2 restores 2.5.
 - At 2 m or less from a rock, the ship model visibly overlaps it. The lab has no collision; that was out of scope.
@@ -236,9 +264,9 @@ Original build (2026-10-03):
 
 ## Next steps
 
-0. Ticket 10 is merged and accepted. Future play scenarios should press named controls and start from declaration defaults.
+0. Publish ticket 11 through a PR as requested, then record the actual merge and sync main. Future scenarios pin assertion inputs before world creation, press named controls and use actual effect completion for idle checks.
 
-1. Finish ticket 11's remaining items (see Open tickets). The kit-distribution work is merged.
+1. Optional designer smoke check: change a mining knob in F2, Apply, then run tools/kit.ps1 test. Rule fixtures should stay green and shipped_default_balance should show the balance change. Update its reference only when accepting the new shipped defaults. Current player feel and the earlier overlap issue are outside ticket 11's changes.
 2. Record the preferred charge policy and feel direction; patch through scoped tickets after review against DESIGN.md.
 3. Continue the merged Rust Bucket design work before porting it.
 4. Prove broader reuse with a Railroad Wars slice before adding the kit to the game template.

@@ -7,6 +7,12 @@
 - An installed game's `tools/kit.ps1` prints a notice when that kit repo has a newer VERSION.
 - `tools/install_kit.ps1` no longer uses `[System.IO.Path]::GetRelativePath`, which does not exist in Windows PowerShell 5.1.
 
+## 0.3.1 — 2026-10-04
+
+- `KitScenario.pin_tuning(values)` and `KitTuningRegistry.pin(values)` establish an in-memory scenario baseline from full knob names. The complete list is validated before changes; Discard restores the pinned values. Resource identity and project files are preserved. Scenario reports include `tuning_pins` and readable setup failures.
+- Mining rule and play scenarios pin their rule fixtures before world creation, including initial rock health/hardness/yields, ship capacities, flight, economy and tick rate. Designer Apply values and script defaults no longer supply their assertion inputs. The separate `shipped_default_balance` scenario reports changed project defaults as notices against `scenarios/fixtures/default_balance.json`.
+- Play scenarios can use `wait_for_feel` with a timeout. The idle-F3 probe waits for actual effect completion instead of a guessed duration. `tools/verify_scenario_tuning.ps1` applies each mining knob's minimum and maximum in an isolated project and checks every rule scenario and continuation hash. Save schema remains 1.
+
 ## 0.3.0 — 2026-10-04
 
 - New `KitControlAction` and `KitControlSet` resources declare named controls, plain-English descriptions, groups, and up to two physical keyboard or mouse slots. `Kit.controls` registers them in InputMap, checks conflicts across kit and game, and exposes Trial, Apply, Discard, Reset to defaults, current slots and readable labels.
