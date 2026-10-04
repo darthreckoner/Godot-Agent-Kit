@@ -35,6 +35,11 @@ func _run() -> void:
 	# Drive the playable scene's real physical-key and clock callbacks.
 	Kit.clock.mode = KitClock.Mode.MANUAL_TURN
 	Kit.actions.input_source = "ui_verification"
+	# Park the drill against rock:000 so the Space press below is a real, in-reach hit.
+	Kit.world.writable = true
+	var parked: bool = Kit.world.set_field(&"ship:player", "position", [2.5, 0.0, 0.0])
+	Kit.world.writable = false
+	_checks.append(KitScenario.assertion("The harness parked the ship within drill reach.", parked))
 	var before_position: Variant = Kit.world.field(&"ship:player", "position")
 	_key(KEY_A)
 	await get_tree().process_frame

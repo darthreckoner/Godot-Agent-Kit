@@ -5,7 +5,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 ## Actions
 
 - **mine** — Hit a selected rock; pay energy and collect ore on break. [game/data/mine.tres](game/data/mine.tres)
-  - Requires: mining.in_range: The target must be within mining range.; mining.cooldown: Wait for the mining tool cooldown.; mining.energy: There must be enough energy for this hit.
+  - Requires: mining.in_range: Fly closer: the drill must reach the rock.; mining.cooldown: Wait for the mining tool cooldown.; mining.energy: There must be enough energy for this hit.
   - Charge: ON_SUCCESS; overflow: CLIP; tuning: mining; success events: mine_hit; rejection events: mine_rejected; clip events: cargo_clipped.
 - **move_ship** — Move the ship using fixed-tick acceleration and braking. [game/data/move_ship.tres](game/data/move_ship.tres)
   - Requires: handler checks
@@ -199,7 +199,7 @@ Generated from declarations. Change the source resource and regenerate this map.
   | Knob | Value | Unit | Range | Help |
   |---|---:|---|---|---|
   | energy_cost | 4.0 | energy | 0.0 to 20.0 | Energy paid for each successful mining hit. |
-  | range | 8.0 | m | 1.0 to 30.0 | Maximum distance to the selected rock. |
+  | range | 2.5 | m | 1.0 to 30.0 | Reach from the ship's centre to the rock's centre. About 2 m puts the drill against the rock face. |
   | cooldown | 0.3 | s | 0.033333 to 3.0 | Rule time between hits, independent of animation. |
   | tool_power | 2.0 | power | 0.25 to 10.0 | Tool strength compared with the rock's hardness. |
   | iron_yield | 3.0 | ore | 0.0 to 20.0 | Iron collected when an iron rock breaks. |
@@ -216,7 +216,7 @@ Generated from declarations. Change the source resource and regenerate this map.
   | Knob | Value | Unit | Range | Help |
   |---|---:|---|---|---|
   | energy_cost | 4.0 | energy | 0.0 to 20.0 | Energy paid for each successful mining hit. |
-  | range | 8.0 | m | 1.0 to 30.0 | Maximum distance to the selected rock. |
+  | range | 2.5 | m | 1.0 to 30.0 | Reach from the ship's centre to the rock's centre. About 2 m puts the drill against the rock face. |
   | cooldown | 0.3 | s | 0.033333 to 3.0 | Rule time between hits, independent of animation. |
   | tool_power | 2.0 | power | 0.25 to 10.0 | Tool strength compared with the rock's hardness. |
   | iron_yield | 3.0 | ore | 0.0 to 20.0 | Iron collected when an iron rock breaks. |
@@ -242,6 +242,8 @@ Generated from declarations. Change the source resource and regenerate this map.
   | pulse_decay | 3.0 | strength/s | 0.1 to 10.0 | How quickly the mining tool glow settles. |
   | flight_pulse_decay | 3.0 | strength/s | 0.1 to 10.0 | How quickly the thruster feedback settles after flight input. |
   | toast_duration | 3.0 | s | 0.5 to 10.0 | How long rejection and cargo messages remain visible. |
+  | ship_turn_rate | 360.0 | degrees/s | 30.0 to 1080.0 | How quickly the ship model turns to face where it flies or the rock it is mining. Looks only; flight rules ignore it. |
+  | camera_start_yaw | -45.0 | degrees | -180.0 to 180.0 | Starting orbit angle around the ship. -90 sits directly behind the ship, looking past its nose at the rocks; 0 looks at its side. Restart needed. |
 
 - **ship** — Flight and ship capacities. [game/tuning/ship.tres](game/tuning/ship.tres)
 
@@ -279,3 +281,4 @@ Generated from declarations. Change the source resource and regenerate this map.
 - **mine_basic** — Mine a soft rock and verify energy and ore accounting. [scenarios/mine_basic.gd](scenarios/mine_basic.gd)
 - **mine_full_cargo** — Clip new ore at shared capacity without removing existing cargo. [scenarios/mine_full_cargo.gd](scenarios/mine_full_cargo.gd)
 - **mine_hard_rock** — Prove success-only rejection and paid zero-yield attempts. [scenarios/mine_hard_rock.gd](scenarios/mine_hard_rock.gd)
+- **mine_out_of_range** — A rock out of drill reach rejects without cost; flying in and stopping makes it minable. [scenarios/mine_out_of_range.gd](scenarios/mine_out_of_range.gd)

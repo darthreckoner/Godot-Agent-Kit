@@ -1,6 +1,15 @@
 extends KitScenario
+const PARKED_AT_ROCK: Array = [2.5, 0.0, 0.0]
 
 func setup() -> bool:
+	if not MiningSetup.configure(20261003, true, variant):
+		return false
+	# Mining scenarios start parked with the drill against rock:000; mine_out_of_range covers the flight in.
+	var parked: bool = Kit.world.set_field(&"ship:player", "position", PARKED_AT_ROCK)
+	MiningSetup.finish_setup()
+	return parked
+
+func start_from_launch() -> bool:
 	if not MiningSetup.configure(20261003, true, variant):
 		return false
 	MiningSetup.finish_setup()

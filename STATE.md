@@ -3,6 +3,17 @@
 ## Build version
 
 0.1.0 — complete first implementation, verified on Godot 4.7.2 on 2026-10-03.
+Testbed playtest patch on 2026-10-04 (branch claude/v0-1-review-issues-1ntmju). The kit is unchanged, so VERSION and CHANGELOG are unchanged.
+
+## Playtest patch (2026-10-04)
+
+The designer's first playtest found three testbed problems. All three are fixed in game/ and the kit is untouched.
+
+- Flight followed fixed world axes: W moved the ship toward its port side and the ship never turned. Now WASD follows the camera (W flies away from it, A/D go to its left/right, Q/E down/up). The ship model turns to face where it flies, and the camera starts behind and to one side of the ship (presentation.camera_start_yaw, -45°). The move_ship rule and its world-direction input are unchanged.
+- Mining worked from far away. mining.range was 8 m, measured centre to centre, and the ship started within reach of most rocks. Reach is now 2.5 m, about the drill touching the rock face, and the launch point (4.5 m from the nearest rock) is out of reach. The target label shows "in drill reach" or "fly X m closer", and the selection ring is gold in reach and red out of reach. A short beam runs from the drill tip to the struck rock on every committed hit. Parked within reach, the ship model turns its nose to the selected rock. The rejection now reads "Fly closer: the drill must reach the rock."
+- "Choose a rock that has not already broken" came from a stale target. A broken rock stayed selected, and clicking empty space or pressing Space still mined it. Now a broken target hands over to the nearest live rock, and Space must be released before mining continues on that new rock. A click that hits no rock does nothing. With no live rocks left, Space shows "No rock selected."
+- New tuning knobs: presentation.ship_turn_rate and presentation.camera_start_yaw.
+- Scenarios: mining scenarios now start parked 2 m from rock:000 (scenarios/mining_scenario.gd). economy_round_trip flies 50 ticks to the dock instead of 28. The kit_integrity 2D range probe uses a 2 m distance. A new mine_out_of_range scenario proves a launch-point hit rejects on mining.in_range with no cost, and that flying in and stopping makes the rock minable. tools/verify_ui.gd parks the ship within reach before its Space press.
 
 ## Delivery
 
@@ -38,6 +49,21 @@
 
 ## Verification
 
+Playtest patch (2026-10-04, Linux sandbox, Godot 4.7.2 official build, PowerShell 7.4.6):
+- tools/kit.ps1 test: exit 0; all seven scenarios passed with repeat and midpoint save/reload.
+- tools/kit.ps1 compare feel_change_is_scoped mine_hit mine_hit_heavy: exit 0; A/B constraints identical.
+- tools/kit.ps1 lint and map: exit 0. GAME_MAP.md regenerated.
+- tools/verify_ui.tscn under Xvfb: all 11 UI checks passed.
+- A throwaway windowed probe (not committed) drove the real lab with physical keys. Results:
+  - W+D flew nose-first toward the rocks.
+  - A launch-point hit was rejected with "Fly closer".
+  - Two hits within reach broke rock:000, and the target moved to rock:005.
+  - Holding Space did not start mining rock:005.
+  - The screenshots were inspected.
+- Gaps: none of this was run on Windows, and nobody has played it by hand yet.
+
+Original build (2026-10-03):
+
 - tools/kit.ps1 test: exit 0; all six scenarios passed in sim with repeat and midpoint save/reload. Final run is recorded in reports/final-test.log and reports/<scenario>/20261003-1038*/report.json.
 - Required scenario outcomes: soft rock costs 8 energy and yields 3 iron; full cargo clips to exact capacity while preserving prior gold; hard rock rejects without cost vs attempted_no_yield with one cost; mining/docking returns full energy and 31 credits.
 - Windowed tools/kit.ps1 scenario feel_change_is_scoped -Render: exit 0. Four 1280×720 PNGs, both variants, at impact and after rock break. Report: reports/feel_change_is_scoped/20261003-103643-1457611/report.md.
@@ -50,6 +76,11 @@
 
 ## Known issues / designer acceptance
 
+- Playtest patch: the Space latch and the auto-retarget choice (nearest live rock, measured from the ship) are untested by a human. Camera-relative flight means W changes direction when the camera orbits; that is intended, but needs feel acceptance.
+- An F5 save written before the playtest patch also stores live tuning. Loading it brings back mining.range 8 as a live trial; Discard in F2 restores 2.5.
+- At 2 m or less from a rock, the ship model visibly overlaps it. The lab has no collision; that was out of scope.
+- The review raised two kit tickets that are still open. Charge policy has two sources of truth (action definition and tuning knob, bridged by game/setup.gd; GAME_MAP always shows ON_SUCCESS). Each action makes about five full world copies, which must be fixed before porting Rust Bucket.
+
 - Human feel acceptance is pending. Automation and screenshot inspection establish function/accounting/scope, not satisfying flight or mining feel.
 - Sandboxed Godot starts report an inaccessible Windows certificate store. All offline checks complete; no network capability is required. There are no remaining script, resource-load or shutdown-leak errors in final runs.
 - Repeatability covers declared records, controlled RNG and clock on the tested engine version. Native physics and cross-version RNG equivalence are not claimed.
@@ -57,7 +88,7 @@
 
 ## Next steps
 
-1. Designer playtests flight, docking, F1 Why, F2 trial/apply/discard, both charge policies, and light/heavy impacts at normal and slow speed.
+1. Designer replays the lab with the playtest patch: flight, drill reach, the target hand-over after a break, docking, F1 Why, F2 trial/apply/discard, both charge policies, light/heavy impacts at normal and slow speed, and the invented damage formula (power − hardness + 1).
 2. Record the preferred charge policy and feel direction; patch through scoped tickets after review against DESIGN.md.
 3. Continue the merged Rust Bucket design work before porting it.
 4. Prove broader reuse with a Railroad Wars slice before adding the kit to the game template.
