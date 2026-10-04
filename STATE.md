@@ -61,7 +61,7 @@ The designer's first playtest found three testbed problems. All three are fixed 
 - Nose: it followed camera panning, which was not wanted. Now it only turns while W is held, toward where the camera looks, and finishes that turn smoothly after W is released. It eases in and out (presentation.ship_turn_rate 240°/s top speed, new presentation.ship_turn_ease 0.3 s). Orbiting, A/D and S never turn it. When stopped within reach with no flight key held, it still noses toward the selected rock.
 - F1/F2 were hard to read: buttons looked like plain text. The overlay now has a shared theme (see CHANGELOG).
 - F1 Why still didn't answer "why can't I mine gold?", because it showed whatever the World tab had selected (dock:home). Why now has its own pickers, plus a notice that always explains the newest refusal. The Log tab collapses flight repeats.
-- Light vs heavy impact take the same number of hits. That is intended: feel variants never change rule outcomes, and the compare run proves it. The designer found the visual difference too subtle (heavy: shake 0.35 vs 0.10, flash 0.25 vs 0.10, windup 0.16 s vs 0.05 s, seen from a 17 m camera). This is an open feel ticket; tune it under F2 → Feel Mine Hit Heavy 2.
+- Light vs heavy impact: the designer found the difference clearly visible, but expected heavy to do more damage. It doesn't, by design: feel variants never change rule outcomes, and the compare run proves it. This is a labelling problem. "B: impact A/B", "Heavy impact." and "Impact: mine hit" read like a stronger tool, not a presentation-only A/B. Open ticket: label it as looks-only in the HUD, toast and hints.
 
 ## Verification
 
