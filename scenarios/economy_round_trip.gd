@@ -4,7 +4,7 @@ func _init() -> void:
 	description = "Mine, fly to the dock, sell ore and buy a full refill."
 func steps() -> Array[Dictionary]:
 	var commands: Array[Dictionary] = mine_steps()
-	for index: int in range(28):
+	for index: int in range(50):
 		commands.append({"command": "queue", "action": "move_ship", "actor": "ship:player", "params": {"direction": [-1.0, 0.0, 0.0]}})
 		commands.append({"command": "advance", "ticks": 1})
 	commands.append({"command": "run", "action": "sell_and_refuel", "actor": "ship:player", "params": {"dock": "dock:home"}})

@@ -14,7 +14,7 @@ func plan(ctx: Dictionary) -> KitChangeSet:
 	var hardness: float = float(rock.hardness)
 	result.has_yield = power >= hardness
 	result.no_yield_rule = &"mining.tool_vs_hardness"
-	result.no_yield_message = "This rock is too hard for the current tool. No energy was charged."
+	result.no_yield_message = "Too hard: tool power %.1f (tuning/mining.tool_power) is below this rock's hardness %.1f. No energy was charged." % [power, hardness]
 	result.add(KitResourceDelta.make(ctx.actor, "energy", -float(ctx.tuning.value("mining.energy_cost")), "tuning/mining.energy_cost", true))
 	result.add(KitSetField.make(ctx.actor, "mine_ready_at", ctx.clock.seconds() + float(ctx.tuning.value("mining.cooldown")), "tuning/mining.cooldown", true))
 	result.payload = {"broke": false, "hardness": hardness, "no_yield": not result.has_yield}

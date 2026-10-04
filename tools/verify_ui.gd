@@ -23,6 +23,20 @@ func _shot(name: String) -> bool:
 	await RenderingServer.frame_post_draw
 	var image: Image = get_viewport().get_texture().get_image()
 	return image.save_png(_directory.path_join(name + ".png")) == OK
+func _groups(rows: VBoxContainer) -> Array[Button]:
+	var headers: Array[Button] = []
+	for child: Node in rows.get_children():
+		if child is Button and child.has_meta("tuning_group") and not child.is_queued_for_deletion():
+			headers.append(child)
+	return headers
+func _sliders(rows: VBoxContainer) -> int:
+	var count: int = 0
+	for row: Node in rows.get_children():
+		if row is HBoxContainer:
+			for child: Node in row.get_children():
+				if child is HSlider:
+					count += 1
+	return count
 func _run() -> void:
 	var error: Error = DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_directory))
 	if error != OK:
@@ -35,6 +49,11 @@ func _run() -> void:
 	# Drive the playable scene's real physical-key and clock callbacks.
 	Kit.clock.mode = KitClock.Mode.MANUAL_TURN
 	Kit.actions.input_source = "ui_verification"
+	# Park the drill against rock:000 so the Space press below is a real, in-reach hit.
+	Kit.world.writable = true
+	var parked: bool = Kit.world.set_field(&"ship:player", "position", [2.5, 0.0, 0.0])
+	Kit.world.writable = false
+	_checks.append(KitScenario.assertion("The harness parked the ship within drill reach.", parked))
 	var before_position: Variant = Kit.world.field(&"ship:player", "position")
 	_key(KEY_A)
 	await get_tree().process_frame
@@ -61,12 +80,56 @@ func _run() -> void:
 	var tabs: TabContainer = inspector.get_child(0).get_child(1)
 	tabs.current_tab = 1
 	_checks.append(KitScenario.assertion("Inspector screenshot saved.", await _shot("why")))
+	# A refused hit changes nothing, so it must be explained from the rock it was aimed at.
+	for index: int in range(10):
+		Kit.clock.advance()
+	Kit.world.writable = true
+	var moved: bool = Kit.world.set_field(&"rock:020", "position", [4.5, 0.0, 0.0])
+	Kit.world.writable = false
+	var refused: KitActionResult = Kit.actions.run(&"mine", &"ship:player", {"target": "rock:020"})
+	# The designer may have anything selected; the newest refusal must still be answered.
+	Kit.overlay.set("_selected", &"dock:home")
+	Kit.overlay._refresh_inspector()
+	var notice: PanelContainer = Kit.overlay.get("_refusal_box")
+	var notice_text: Label = Kit.overlay.get("_refusal_text")
+	var show_button: Button = Kit.overlay.get("_refusal_show")
+	_checks.append(KitScenario.assertion("Why answers the newest refusal whatever is selected.", moved and refused.outcome == "rejected" and notice.visible and notice_text.text.contains("Refused by mining.tool_vs_hardness") and show_button.visible and show_button.text == "Show rock:020"))
+	_checks.append(KitScenario.assertion("Refusal notice screenshot saved.", await _shot("why_notice")))
+	var picker: Button = Kit.overlay.get("_why_entity_button")
+	var popup: PopupPanel = Kit.overlay.get("_why_entity_popup")
+	var listing: ItemList = Kit.overlay.get("_why_entity_list")
+	picker.pressed.emit()
+	await get_tree().process_frame
+	var ids: Array[StringName] = Kit.world.ids()
+	_checks.append(KitScenario.assertion("The Thing list is alphabetical, grouped by kind and fits under its button.", ids[0] == &"dock:home" and ids[1] == &"rock:000" and ids[-1] == &"ship:player" and listing.get_item_text(0) == "Dock" and not listing.is_item_selectable(0) and popup.visible and popup.size.y <= 340, popup.size, Vector2i(int(picker.size.x), 340)))
+	_checks.append(KitScenario.assertion("Thing list screenshot saved.", await _shot("why_thing_list")))
+	for index: int in range(listing.item_count):
+		if listing.get_item_metadata(index) == &"ship:player":
+			listing.select(index)
+			listing.item_selected.emit(index)
+	_checks.append(KitScenario.assertion("Picking from the Thing list selects it and closes the list.", Kit.overlay.get("_selected") == &"ship:player" and not popup.visible and picker.text.begins_with("ship:player")))
+	show_button.pressed.emit()
+	_checks.append(KitScenario.assertion("Why on a rock explains a refused hit on it.", Kit.overlay.get("_selected") == &"rock:020" and why.get_parsed_text().contains("Refused by mining.tool_vs_hardness")))
+	_checks.append(KitScenario.assertion("Refused-hit screenshot saved.", await _shot("why_refused")))
+	var timeline: RichTextLabel = Kit.overlay.get("_timeline")
+	_checks.append(KitScenario.assertion("The Log tab lists actions and refusals with no filter typed.", timeline.get_parsed_text().contains("mine by ship:player") and timeline.get_parsed_text().contains("Refused by mining.tool_vs_hardness")))
 	_key(KEY_F2)
 	await get_tree().process_frame
 	var search: LineEdit = Kit.overlay.get("_search")
+	var rows: VBoxContainer = Kit.overlay.get("_knob_rows")
+	_checks.append(KitScenario.assertion("F2 opens with every tuning group listed.", _groups(rows).size() == Kit.tuning.sets.size() and _sliders(rows) == 0, _groups(rows).size(), Kit.tuning.sets.size()))
+	_checks.append(KitScenario.assertion("F2 puts the cursor in the search box.", search.has_focus()))
+	_checks.append(KitScenario.assertion("Empty tuning screenshot saved.", await _shot("tuning_groups")))
+	for header: Button in _groups(rows):
+		if header.get_meta("tuning_group") == &"ship":
+			header.pressed.emit()
+	await get_tree().process_frame
+	_checks.append(KitScenario.assertion("Clicking a group opens its sliders.", _sliders(rows) == Kit.tuning.sets[&"ship"].knobs().size(), _sliders(rows), Kit.tuning.sets[&"ship"].knobs().size()))
+	search.text = "zzz"
+	search.text_changed.emit(search.text)
+	_checks.append(KitScenario.assertion("A search with no match says so.", _groups(rows).is_empty() and rows.get_child_count() == 1 and str(rows.get_child(0).text).begins_with("Nothing matches")))
 	search.text = "mining energy_cost"
 	search.text_changed.emit(search.text)
-	var rows: VBoxContainer = Kit.overlay.get("_knob_rows")
 	var slider: HSlider
 	for row: Node in rows.get_children():
 		if row is HBoxContainer:
@@ -119,4 +182,6 @@ func _run() -> void:
 		passed = passed and bool(check.passed)
 		print("%s: %s" % ["PASS" if check.passed else "FAIL", check.label])
 	error = KitCanonical.write_text(_directory.path_join("report.json"), JSON.stringify({"passed": passed, "checks": _checks}, "  "))
+	# Let feel sounds started by the checks finish so shutdown reports no resources in use.
+	await get_tree().create_timer(1.0).timeout
 	get_tree().quit(0 if passed and error == OK else 1)

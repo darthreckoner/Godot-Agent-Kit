@@ -3,6 +3,18 @@
 ## Build version
 
 0.1.0 — complete first implementation, verified on Godot 4.7.2 on 2026-10-03.
+Testbed playtest patch on 2026-10-04 (branch claude/v0-1-review-issues-1ntmju). The kit is unchanged, so VERSION and CHANGELOG are unchanged.
+
+## Playtest patch (2026-10-04)
+
+The designer's first playtest found three testbed problems. All three are fixed in game/ and the kit is untouched.
+
+- Flight followed fixed world axes: W moved the ship toward its port side and the ship never turned. Now WASD follows the camera (W flies away from it, A/D go to its left/right, Q/E down/up). The ship model turns to face where it flies, and the camera starts behind and to one side of the ship (presentation.camera_start_yaw, -45°). The move_ship rule and its world-direction input are unchanged.
+- Mining worked from far away. mining.range was 8 m, measured centre to centre, and the ship started within reach of most rocks. Reach is now 2.5 m, about the drill touching the rock face, and the launch point (4.5 m from the nearest rock) is out of reach. The target label shows "in drill reach" or "fly X m closer", and the selection ring is gold in reach and red out of reach. A short beam runs from the drill tip to the struck rock on every committed hit. Parked within reach, the ship model turns its nose to the selected rock. The rejection now reads "Fly closer: the drill must reach the rock."
+- "Choose a rock that has not already broken" came from a stale target. A broken rock stayed selected, and clicking empty space or pressing Space still mined it. Now a broken target hands over to the nearest live rock, and Space must be released before mining continues on that new rock. A click that hits no rock does nothing. With no live rocks left, Space shows "No rock selected."
+- New tuning knobs: presentation.ship_turn_rate and presentation.camera_start_yaw.
+- F2 tuning panel (kit UI, see CHANGELOG Unreleased): it opened blank, because an empty search matched nothing, and the search box was nearly invisible. It now lists every group collapsed, with game and kit settings above feel stages. Search matches every typed word and opens matching groups. The search box is visible and takes the cursor when F2 opens.
+- Scenarios: mining scenarios now start parked 2 m from rock:000 (scenarios/mining_scenario.gd). economy_round_trip flies 50 ticks to the dock instead of 28. The kit_integrity 2D range probe uses a 2 m distance. A new mine_out_of_range scenario proves a launch-point hit rejects on mining.in_range with no cost, and that flying in and stopping makes the rock minable. tools/verify_ui.gd parks the ship within reach before its Space press.
 
 ## Delivery
 
@@ -36,7 +48,68 @@
 - Placeholder sounds are locally generated tones. Stage numbers and feedback fades are tunable resources; primitive meshes, colors and particle assets are authored Godot presentation resources.
 - Stage variants are standalone .tres resources assigned to FeelSequences in Godot. F1 A/B supports registered sequence variants; the testbed registers light/heavy mining sequences.
 
+## Playtest round 2 (2026-10-04)
+
+- Flight: A/D turned the nose and S spun the ship 180°. Now the nose points away from the camera, so A/D strafe and S backs up. Once stopped within reach, the nose turns to the selected rock.
+- Enter fired a yellow "shot". The drill beam reused the tool glow that dock feedback also raises. It now has its own glow, raised only by mine_hit.
+- "Why can't I mine the yellow rocks?" F1 could not answer it (see CHANGELOG Unreleased): the Log tab was always empty, and Why on a rock never showed refusals. Both are fixed. The game also says it directly: the target line warns "too hard: tool power 2.0 is below hardness 4.0", and the refusal message names tuning/mining.tool_power. Messages now wrap and centre, so long ones fit on screen.
+- Design note for the designer: with default tuning (tool_power 2, hard_threshold 4), gold can never be mined. The lab has no tool upgrade, so gold only becomes minable by raising mining.tool_power in F2.
+- F2: Apply/Discard moved to the top of each open group; tooltips removed (see CHANGELOG).
+
+## Playtest round 3 (2026-10-04)
+
+- Nose: it followed camera panning, which was not wanted. Now it only turns while W is held, toward where the camera looks, and finishes that turn smoothly after W is released. It eases in and out (presentation.ship_turn_rate 240°/s top speed, new presentation.ship_turn_ease 0.3 s). Orbiting, A/D and S never turn it. When stopped within reach with no flight key held, it still noses toward the selected rock.
+- F1/F2 were hard to read: buttons looked like plain text. The overlay now has a shared theme (see CHANGELOG).
+- F1 Why still didn't answer "why can't I mine gold?", because it showed whatever the World tab had selected (dock:home). Why now has its own pickers, plus a notice that always explains the newest refusal. The Log tab collapses flight repeats.
+- Light vs heavy impact: the designer found the difference clearly visible, but expected heavy to do more damage. It doesn't, by design: feel variants never change rule outcomes, and the compare run proves it. This is a labelling problem. "B: impact A/B", "Heavy impact." and "Impact: mine hit" read like a stronger tool, not a presentation-only A/B. Open ticket: label it as looks-only in the HUD, toast and hints.
+
+- F1 Why's Thing dropdown covered the whole screen and listed rocks out of order (rock:000, then 029 down to 001). Godot's StringName sort is not alphabetical, so KitWorld.ids() broke its documented sorted order. Fixed (see CHANGELOG). The picker is now a short scrolling list under its button, grouped Dock/Rock/Ship.
+
+## Windows test-command fix (2026-10-04)
+
+- The designer's tools/kit.ps1 test on Windows died at the import step, before any scenario ran. Godot warned "Detected another project.godot at res://reports/install-smoke/…" on stderr, and Windows PowerShell 5.1 makes stderr lines terminating under 'Stop'. Fixed in kit.ps1 and verify_install.ps1 (see CHANGELOG); reports/.gdignore removes the warning itself.
+- Verified on Linux with PowerShell 7.4. The 5.1 failure could not be reproduced here: 7.x no longer applies 'Stop' to native stderr. The helper captured the real Godot warning as text, exit 0. kit.ps1 test passed 7/7 with an install-smoke project under reports/ and no warning in import.log. verify_install.ps1 passed end to end, and verify_ui still passes 24/24 with reports/.gdignore. Confirmed on 2026-10-04: the designer reports tools/kit.ps1 test passes on Windows.
+
+## Open tickets for the reviewer (2026-10-04)
+
+All tickets from the review and from the playtests in one place. None of these are implemented yet.
+
+Testbed (game/):
+1. Light/heavy hit wording. The designer saw a clear difference but expected heavy hits to do more damage. Label the variant as looks-only in the hint line ("B: hit look, light/heavy"), the B toast ("same damage, bigger shake and flash") and the target line ("Hit look: heavy"). Damage stays with mining.tool_power.
+2. Targeting and nose (designer direction):
+   - Clicking a rock only selects it; it never mines. Space is the only mining input.
+   - The nose turns to face a rock once, smoothly, when the player clicks it. Remove the automatic noses-to-target when stopped within reach. W keeps its current eased turn toward the camera's forward direction.
+   - No auto-targeting: when the target breaks, the target clears. Space with no target shows "No rock selected. Click a rock to target it." The Space release latch can go once nothing auto-selects.
+   - Update hints, tools/verify_ui.gd and the windowed probe evidence to match.
+3. Numpad Enter (KEY_KP_ENTER) should also sell and refuel, like Enter.
+4. F3 "skip feel" looks broken. Kit.feel.skip() jumps the feel sequence playing now to its last stage, but mining sequences last about 0.5 s, so a press almost always finds nothing playing. Decide between relabelling it (e.g. "F3: jump to end of current effect"), making it a toggle that turns presentation off while testing rules, or removing it from the lab's hints. The F1 Feel tab has the same "Skip to final stage" button.
+5. Gold is unminable with default tuning (tool_power 2 < hardness 4) and the lab has no tool upgrade. Decide whether that is intended, or add a way to raise drill power in play.
+
+Kit (addons/agent_kit/):
+6. Charge policy has two sources of truth: the action definition and the mining.charge_on_attempt knob, bridged by game/setup.gd. GAME_MAP always shows ON_SUCCESS, and saves store both. Let an action definition point its policy at a tuning knob. This changes the public API, so it needs a CHANGELOG entry and VERSION bump.
+7. Every action copies the whole world about five times (action_runner.gd). Stage only the records an action touches, and add a large-terrain-record scenario that measures speed. Must land before porting Rust Bucket.
+8. KitRng.end_action sorts stream names with Array.sort() on StringNames, which is not alphabetical, so rng_draws order in records may vary between runs or builds. Use a text sort, and add a two-stream scenario.
+9. Testing gap. Scenarios call rules directly, and verify_ui only checked pre-filled panels, so unplayable flight, empty F2, empty Log and an unanswerable refusal all shipped green. Add play scenarios that drive physical input and the camera and take screenshots. Add default-state checks for every overlay panel and tab. Make "inspected screenshots" part of done for any task that changes what the player sees or does.
+
 ## Verification
+
+Playtest patch (2026-10-04, Linux sandbox, Godot 4.7.2 official build, PowerShell 7.4.6):
+- tools/kit.ps1 test: exit 0; all seven scenarios passed with repeat and midpoint save/reload.
+- tools/kit.ps1 compare feel_change_is_scoped mine_hit mine_hit_heavy: exit 0; A/B constraints identical.
+- tools/kit.ps1 lint and map: exit 0. GAME_MAP.md regenerated.
+- After the Thing-picker fix: tools/kit.ps1 test (7/7), compare and lint pass. tools/verify_ui.tscn passes 24/24, with new checks that the list is alphabetical, grouped and fits under its button, and that picking closes it and selects the thing. Screenshot inspected.
+- After round 3: tools/kit.ps1 test (7/7), compare and lint pass. tools/verify_ui.tscn passes 21/21, with new checks that the refusal notice answers while dock:home is selected and that its Show button selects the rock. The harness now waits for feel sounds before quitting: round 2's run had reported a clunk.wav "resource still in use" at shutdown, an artifact of the harness quitting mid-sound. A windowed probe confirmed: orbiting 120° left the nose at 0°, W eased the nose 1→5→10→19→…→142→146→165°, and A/S left it alone. F1/F2 screenshots inspected.
+- After round 2: tools/kit.ps1 test (7/7), compare and lint pass; tools/verify_ui.tscn passes 19/19. New checks: Why on a rock explains a refused hit, the Log tab lists refusals with no filter typed, plus a refusal screenshot. A windowed probe showed the nose staying at 45° during A-strafe and S-reverse, no beam on Enter, and the gold refusal message wrapping on screen.
+- tools/verify_ui.tscn under Xvfb (round 1): all 16 UI checks passed, including 5 new ones: F2 lists every group, the cursor is in search, clicking a group opens it, a no-match search says so, and the empty panel is screenshotted. Against the old overlay.gd the four new behaviour checks fail; the screenshot check passes either way. Screenshots were inspected.
+- A throwaway windowed probe (not committed) drove the real lab with physical keys. Results:
+  - W+D flew nose-first toward the rocks.
+  - A launch-point hit was rejected with "Fly closer".
+  - Two hits within reach broke rock:000, and the target moved to rock:005.
+  - Holding Space did not start mining rock:005.
+  - The screenshots were inspected.
+- Gaps: none of this was run on Windows, and nobody has played it by hand yet.
+
+Original build (2026-10-03):
 
 - tools/kit.ps1 test: exit 0; all six scenarios passed in sim with repeat and midpoint save/reload. Final run is recorded in reports/final-test.log and reports/<scenario>/20261003-1038*/report.json.
 - Required scenario outcomes: soft rock costs 8 energy and yields 3 iron; full cargo clips to exact capacity while preserving prior gold; hard rock rejects without cost vs attempted_no_yield with one cost; mining/docking returns full energy and 31 credits.
@@ -50,6 +123,15 @@
 
 ## Known issues / designer acceptance
 
+- Test gap behind both playtest rounds: scenarios call rules directly, and verify_ui typed a search before looking at F1/F2. So "unplayable flight", "empty F2", "empty Log" and "no answer for a refusal" all shipped green. Proposed kit work: input-driven play scenarios (physical keys, camera, screenshots) as a first-class scenario mode, plus default-state checks for every overlay panel and tab. Until then, every view change gets a windowed probe and inspected screenshots.
+- Kit ticket (determinism risk): KitRng.end_action sorts stream names with Array.sort() on StringNames, which is not alphabetical. The order of rng_draws in action records could differ between engine runs or builds when one action draws from several streams. No rule outcome depends on it today. Fix it with a text sort, plus a scenario that draws from two streams.
+- F1 Log is flooded by move_ship records while flying (one per tick); use the action filter, e.g. "mine".
+
+- Playtest patch: the Space latch and the auto-retarget choice (nearest live rock, measured from the ship) are untested by a human. Camera-relative flight means W changes direction when the camera orbits; that is intended, but needs feel acceptance.
+- An F5 save written before the playtest patch also stores live tuning. Loading it brings back mining.range 8 as a live trial; Discard in F2 restores 2.5.
+- At 2 m or less from a rock, the ship model visibly overlaps it. The lab has no collision; that was out of scope.
+- The review raised two kit tickets that are still open. Charge policy has two sources of truth (action definition and tuning knob, bridged by game/setup.gd; GAME_MAP always shows ON_SUCCESS). Each action makes about five full world copies, which must be fixed before porting Rust Bucket.
+
 - Human feel acceptance is pending. Automation and screenshot inspection establish function/accounting/scope, not satisfying flight or mining feel.
 - Sandboxed Godot starts report an inaccessible Windows certificate store. All offline checks complete; no network capability is required. There are no remaining script, resource-load or shutdown-leak errors in final runs.
 - Repeatability covers declared records, controlled RNG and clock on the tested engine version. Native physics and cross-version RNG equivalence are not claimed.
@@ -57,7 +139,7 @@
 
 ## Next steps
 
-1. Designer playtests flight, docking, F1 Why, F2 trial/apply/discard, both charge policies, and light/heavy impacts at normal and slow speed.
+1. Designer replays the lab with the playtest patch: flight, drill reach, the target hand-over after a break, docking, F1 Why, F2 trial/apply/discard, both charge policies, light/heavy impacts at normal and slow speed, and the invented damage formula (power − hardness + 1).
 2. Record the preferred charge policy and feel direction; patch through scoped tickets after review against DESIGN.md.
 3. Continue the merged Rust Bucket design work before porting it.
 4. Prove broader reuse with a Railroad Wars slice before adding the kit to the game template.
