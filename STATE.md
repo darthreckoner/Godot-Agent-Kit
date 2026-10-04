@@ -71,6 +71,36 @@ The designer's first playtest found three testbed problems. All three are fixed 
 - The designer's tools/kit.ps1 test on Windows died at the import step, before any scenario ran. Godot warned "Detected another project.godot at res://reports/install-smoke/…" on stderr, and Windows PowerShell 5.1 makes stderr lines terminating under 'Stop'. Fixed in kit.ps1 and verify_install.ps1 (see CHANGELOG); reports/.gdignore removes the warning itself.
 - Verified on Linux with PowerShell 7.4. The 5.1 failure could not be reproduced here: 7.x no longer applies 'Stop' to native stderr. The helper captured the real Godot warning as text, exit 0. kit.ps1 test passed 7/7 with an install-smoke project under reports/ and no warning in import.log. verify_install.ps1 passed end to end, and verify_ui still passes 24/24 with reports/.gdignore. Confirmed on 2026-10-04: the designer reports tools/kit.ps1 test passes on Windows.
 
+## Open tickets
+
+10. Editable controls (designer request, 2026-10-04; designer chose option A: Apply saves the game's default controls into the project, like tuning).
+    - Problem: every key is hard-wired.
+      - game/views/mining_lab.gd checks KEY_W, KEY_SPACE, etc. directly, and Numpad Enter is a second hard-coded case (KEY_ENTER, KEY_KP_ENTER).
+      - The key-hint line is typed by hand and has gone stale more than once.
+      - The overlay's F1/F2 keys are fixed in addons/agent_kit/ui/overlay.gd.
+      - scenarios/support/play_scenario.gd presses physical keycodes, so any rebind would make play scenarios press the wrong key.
+    - Kit (addons/agent_kit/):
+      - A controls declaration resource. Each action has an id, a plain-English description, a group and up to two keys (keyboard keys and mouse buttons). Register it into Godot's InputMap at boot.
+      - The kit's own F1/F2/F3 keys become kit actions in the same list, so conflicts are checked across kit and game.
+      - A Controls group at the top of F2: each action shows its description and key slots. Click a slot, then press a key to rebind. Same Trial / Apply / Discard flow as tuning, plus Reset to defaults.
+      - Conflicts are refused with a plain-English message ("Space is already drill selected target").
+      - Apply writes the game's default controls resource in the project (option A). Personal per-machine bindings are out of scope.
+      - map.gd adds a Controls section to GAME_MAP.md listing every action with its keys and description.
+    - Testbed (game/):
+      - Declare the lab's actions: fly forward/back/left/right/up/down, drill selected target, sell and refuel, hit look A/B, charge policy, save, load, restart trials and exit. Enter and Numpad Enter become one action with two keys.
+      - mining_lab.gd reads named actions instead of key codes.
+      - Generate the hint line from the current bindings.
+      - Keep the input-to-world-direction mapping and every rule outcome unchanged.
+    - Tests:
+      - Play scenarios press the key currently bound to a named action, and every scenario starts from default bindings, so a designer's rebind cannot break tests.
+      - New play scenario: rebind fly forward to another key, check that the new key flies, W no longer flies, and the hint line shows the new key. Also check a conflicting rebind is refused and Discard restores W.
+      - Default-state check for the new F2 Controls group.
+      - Inspected screenshots of the Controls group and the updated hints.
+    - Done means:
+      - VERSION 0.3.0 with CHANGELOG and README entries (new kit API and file format; save schema unchanged unless bindings enter saves, which they should not).
+      - tools/kit.ps1 test, compare, map and lint pass; verify_ui passes; STATE updated.
+      - Out of scope: gamepad, per-player bindings and in-game rebinding for shipped games.
+
 ## Completed review/playtest tickets (2026-10-04)
 
 All nine tickets below are implemented. Human feel acceptance remains a separate playtest step.
@@ -159,6 +189,8 @@ Original build (2026-10-03):
 - A single post-generation map-process stall occurred; its immediate rerun passed. Investigate if it recurs.
 
 ## Next steps
+
+0. Ticket 10, editable controls (see Open tickets), before more play scenarios are written against physical keycodes.
 
 1. Designer replays the 0.2.0 lab: click-only selection and one-time nose turn, W/A/D/S, drill reach, target clearing after a break, both Enter keys, F3 active/idle behavior, gold's F2 power instruction, F1 Why and F2 trial/apply/discard. Compare hit looks while remembering that damage comes from tool power (power − hardness + 1).
 2. Record the preferred charge policy and feel direction; patch through scoped tickets after review against DESIGN.md.
