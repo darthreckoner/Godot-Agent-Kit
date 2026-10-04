@@ -16,7 +16,11 @@ func apply(world: KitWorld) -> bool:
 	if not (current is float or current is int):
 		return false
 	var next: float = float(current) + amount
-	if current is int:
+	# Canonical whole-valued floats can be represented as ints. The declared field type,
+	# rather than its current numeric representation, determines integer-only resources.
+	var type_id: StringName = StringName(world.field(entity, "type"))
+	var definition: KitRecordType = world.types[type_id]
+	if not field.contains(".") and definition.fields.get(field) == "int":
 		return next == floorf(next) and world.set_field(entity, field, int(next))
 	return world.set_field(entity, field, next)
 

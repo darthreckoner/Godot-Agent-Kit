@@ -5,6 +5,8 @@ var description: String
 var variant: String = ""
 var report_dir: String = ""
 var render_mode: bool = false
+## Input scenarios require a windowed scene, physical-key events and a manually advanced clock.
+var requires_play: bool = false
 
 func setup() -> bool:
 	return true

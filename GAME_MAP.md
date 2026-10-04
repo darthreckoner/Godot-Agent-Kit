@@ -6,7 +6,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 
 - **mine** — Hit a selected rock; pay energy and collect ore on break. [game/data/mine.tres](game/data/mine.tres)
   - Requires: mining.in_range: Fly closer: the drill must reach the rock.; mining.cooldown: Wait for the mining tool cooldown.; mining.energy: There must be enough energy for this hit.
-  - Charge: ON_SUCCESS; overflow: CLIP; tuning: mining; success events: mine_hit; rejection events: mine_rejected; clip events: cargo_clipped.
+  - Charge: tuning/mining.charge_on_attempt (0: ON_SUCCESS; 1: ON_ATTEMPT); overflow: CLIP; tuning: mining; success events: mine_hit; rejection events: mine_rejected; clip events: cargo_clipped.
 - **move_ship** — Move the ship using fixed-tick acceleration and braking. [game/data/move_ship.tres](game/data/move_ship.tres)
   - Requires: handler checks
   - Charge: ON_SUCCESS; overflow: REJECT; tuning: ship; success events: ship_moved; rejection events: dock_rejected; clip events: .
@@ -16,6 +16,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 
 ## Events
 
+- **target_selected** — The view selected a target; no rule action or world change occurred. Payload: entity, actor, action. [game/data/events.tres](game/data/events.tres)
 - **mine_hit** — The tool contacted a rock. Payload: entity, actor, action. [game/data/events.tres](game/data/events.tres)
 - **rock_break** — A rock broke and yielded ore. Payload: entity, actor, action. [game/data/events.tres](game/data/events.tres)
 - **mine_rejected** — A mining check failed. Payload: entity, actor, action. [game/data/events.tres](game/data/events.tres)
@@ -184,6 +185,16 @@ Generated from declarations. Change the source resource and regenerate this map.
   | shake_frequency | 20.0 | Hz | 0.0 to 80.0 | Shake oscillations per second. |
   | screen_flash | 0.0 | opacity | 0.0 to 1.0 | Brightness of the brief screen flash. |
 
+- **feel_target_selected_0** — Immediate target acknowledgement; the nose turn is presentation only. [game/feel/stages/target_selected_0.tres](game/feel/stages/target_selected_0.tres)
+
+  | Knob | Value | Unit | Range | Help |
+  |---|---:|---|---|---|
+  | duration | 0.12 | s | 0.0 to 5.0 | Presentation time for this stage; never changes rule time. |
+  | sound_marker_sec | 0.0 | s | 0.0 to 5.0 | Time in the sound where the stage makes contact. |
+  | shake_amplitude | 0.0 | strength | 0.0 to 2.0 | Strength sent to the game's presentation camera. |
+  | shake_frequency | 20.0 | Hz | 0.0 to 80.0 | Shake oscillations per second. |
+  | screen_flash | 0.0 | opacity | 0.0 to 1.0 | Brightness of the brief screen flash. |
+
 - **economy** — Dock trade and energy prices. [game/tuning/economy.tres](game/tuning/economy.tres)
 
   | Knob | Value | Unit | Range | Help |
@@ -242,7 +253,7 @@ Generated from declarations. Change the source resource and regenerate this map.
   | pulse_decay | 3.0 | strength/s | 0.1 to 10.0 | How quickly the mining tool glow settles. |
   | flight_pulse_decay | 3.0 | strength/s | 0.1 to 10.0 | How quickly the thruster feedback settles after flight input. |
   | toast_duration | 3.0 | s | 0.5 to 10.0 | How long rejection and cargo messages remain visible. |
-  | ship_turn_rate | 240.0 | degrees/s | 30.0 to 1080.0 | Top speed of the ship model's turn when W points it where the camera looks, or when it noses toward the rock it is mining. Looks only; flight rules ignore it. |
+  | ship_turn_rate | 240.0 | degrees/s | 30.0 to 1080.0 | Top speed of the ship model's turn when W follows the camera or a click faces a rock once. Looks only; flight rules ignore it. |
   | ship_turn_ease | 0.3 | s | 0.05 to 1.5 | Seconds the ship model takes to speed up into a turn and to settle out of it. Higher feels heavier and smoother. |
   | camera_start_yaw | -45.0 | degrees | -180.0 to 180.0 | Starting orbit angle around the ship. -90 sits directly behind the ship, looking past its nose at the rocks; 0 looks at its side. Restart needed. |
 
@@ -268,18 +279,25 @@ Generated from declarations. Change the source resource and regenerate this map.
 - **cargo_clipped** — cargo clipped Event: cargo_clipped; stages: Cargo full warning (0.18s). [game/feel/cargo_clipped.tres](game/feel/cargo_clipped.tres)
 - **dock_rejected** — dock rejected Event: dock_rejected; stages: Dock unavailable (0.14s). [game/feel/dock_rejected.tres](game/feel/dock_rejected.tres)
 - **dock_success** — dock success Event: dock_success; stages: Trade complete (0.25s). [game/feel/dock_success.tres](game/feel/dock_success.tres)
-- **mine_hit** — mine hit Event: mine_hit; stages: Windup (0.05s) → Contact (0.04s) → Impact (0.16s) → Debris (0.22s). [game/feel/mine_hit.tres](game/feel/mine_hit.tres)
-- **mine_hit_heavy** — Heavy mining impact Event: mine_hit; stages: Windup (0.16s) → Contact (0.08s) → Heavy impact (0.35s) → Debris (0.35s). [game/feel/mine_hit_heavy.tres](game/feel/mine_hit_heavy.tres)
+- **mine_hit** — Light hit look — same damage Event: mine_hit; stages: Windup (0.05s) → Contact (0.04s) → Impact (0.16s) → Debris (0.22s). [game/feel/mine_hit.tres](game/feel/mine_hit.tres)
+- **mine_hit_heavy** — Heavy hit look — same damage Event: mine_hit; stages: Windup (0.16s) → Contact (0.08s) → Heavy impact (0.35s) → Debris (0.35s). [game/feel/mine_hit_heavy.tres](game/feel/mine_hit_heavy.tres)
 - **mine_rejected** — mine rejected Event: mine_rejected; stages: Dull clunk (0.12s). [game/feel/mine_rejected.tres](game/feel/mine_rejected.tres)
 - **rock_break** — rock break Event: rock_break; stages: Fracture (0.18s) → Debris (0.35s). [game/feel/rock_break.tres](game/feel/rock_break.tres)
 - **ship_moved** — ship moved Event: ship_moved; stages: Thrusters (0.033333s). [game/feel/ship_moved.tres](game/feel/ship_moved.tres)
+- **target_selected** — Target selected Event: target_selected; stages: Ready to drill (0.12s). [game/feel/target_selected.tres](game/feel/target_selected.tres)
 
 ## Scenarios
 
+- **charge_policy_binding** — A bound charge policy follows live tuning through queueing, Discard and legacy save restoration. [scenarios/charge_policy_binding.gd](scenarios/charge_policy_binding.gd)
 - **economy_round_trip** — Mine, fly to the dock, sell ore and buy a full refill. [scenarios/economy_round_trip.gd](scenarios/economy_round_trip.gd)
 - **feel_change_is_scoped** — Compare light and heavy impacts while preserving every mining outcome and tick. [scenarios/feel_change_is_scoped.gd](scenarios/feel_change_is_scoped.gd)
 - **kit_integrity** — Verify atomicity, RNG auditing, queue order, tuning trials, save recovery and migration. [scenarios/kit_integrity.gd](scenarios/kit_integrity.gd)
+- **large_terrain_records** — Measure action staging with 2,000 large terrain records; only two touched records may be copied. [scenarios/large_terrain_records.gd](scenarios/large_terrain_records.gd)
 - **mine_basic** — Mine a soft rock and verify energy and ore accounting. [scenarios/mine_basic.gd](scenarios/mine_basic.gd)
 - **mine_full_cargo** — Clip new ore at shared capacity without removing existing cargo. [scenarios/mine_full_cargo.gd](scenarios/mine_full_cargo.gd)
 - **mine_hard_rock** — Prove success-only rejection and paid zero-yield attempts. [scenarios/mine_hard_rock.gd](scenarios/mine_hard_rock.gd)
 - **mine_out_of_range** — A rock out of drill reach rejects without cost; flying in and stopping makes it minable. [scenarios/mine_out_of_range.gd](scenarios/mine_out_of_range.gd)
+- **play_flight_and_dock** — Drive camera orbit and WASD through physical input; Numpad Enter and Enter both trade at the dock. [scenarios/play_flight_and_dock.gd](scenarios/play_flight_and_dock.gd)
+- **play_overlay_defaults** — Inspect every default F1 tab and empty-search F2 before filling panels; explain an input-driven refusal. [scenarios/play_overlay_defaults.gd](scenarios/play_overlay_defaults.gd)
+- **play_targeting** — Physical clicks select and face once; Space alone drills, clears broken targets and explains hard gold. [scenarios/play_targeting.gd](scenarios/play_targeting.gd)
+- **rng_two_streams** — Audit two rule RNG streams in alphabetical order, even when drawn in reverse order. [scenarios/rng_two_streams.gd](scenarios/rng_two_streams.gd)

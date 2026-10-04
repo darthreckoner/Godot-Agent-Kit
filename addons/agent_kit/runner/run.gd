@@ -4,6 +4,8 @@ var _mode: String = "sim"
 var _repeat: bool = false
 var _save_reload: bool = false
 var _all_passed: bool = true
+var _held_keys: Dictionary = {}
+var _held_buttons: Dictionary = {}
 
 func _ready() -> void:
 	call_deferred("_entry")
@@ -37,8 +39,8 @@ func _entry() -> void:
 		print("Game map generated." if error == OK else "Map failed: " + error_string(error))
 		get_tree().quit(0 if error == OK else 1)
 		return
-	if _mode == "render" and DisplayServer.get_name() == "headless":
-		push_error("Render mode needs a windowed Godot process.")
+	if _mode in ["render", "play"] and DisplayServer.get_name() == "headless":
+		push_error("Render and play modes need a windowed Godot process.")
 		get_tree().quit(1)
 		return
 	var paths: Array[String] = _scenario_paths()
@@ -63,6 +65,13 @@ func _entry() -> void:
 			_all_passed = false
 			continue
 		var scenario: KitScenario = load(path).new()
+		if scenario.requires_play != (_mode == "play"):
+			if command != "test":
+				push_error("This scenario needs %s mode." % ("play (-Play)" if scenario.requires_play else "sim or render"))
+				_all_passed = false
+			else:
+				print("SKIP %s in %s mode; covered by %s mode." % [scenario.id, _mode, "play" if scenario.requires_play else "sim"])
+			continue
 		var timestamp: String = Time.get_datetime_string_from_system().replace("-", "").replace(":", "").replace("T", "-")
 		var suffix: String = str(Time.get_ticks_usec())
 		_report_dir = "res://reports/%s/%s-%s" % [scenario.id, timestamp, suffix]
@@ -81,7 +90,7 @@ func _entry() -> void:
 		var runs: Array[Dictionary] = []
 		var checks: Array[Dictionary] = []
 		for index: int in range(variants.size()):
-			var baseline: Dictionary = await _run_one(path, variants[index], false, _mode == "render", "variant_%d" % index)
+			var baseline: Dictionary = await _run_one(path, variants[index], false, _mode in ["render", "play"], "variant_%d" % index)
 			runs.append(baseline)
 			checks.append(KitScenario.assertion("Variant %d assertions" % index, baseline.get("passed", false)))
 			if _repeat:
@@ -133,7 +142,7 @@ func _run_one(path: String, variant: String, midpoint_reload: bool, rendering: b
 	if not scenario.setup():
 		return {"passed": false, "error": "Scenario setup failed."}
 	var view: Node
-	if rendering:
+	if rendering or scenario.requires_play:
 		Kit.feel.enabled = true
 		var packed: PackedScene = scenario.render_scene()
 		if packed == null:
@@ -146,6 +155,10 @@ func _run_one(path: String, variant: String, midpoint_reload: bool, rendering: b
 		await RenderingServer.frame_post_draw
 		if view.has_method("caption"):
 			view.caption("%s · %s" % [scenario.description, variant])
+	if scenario.requires_play:
+		# Real _input/_unhandled_input and physical-key polling run; wall time cannot advance rules.
+		Kit.scenario_mode = false
+		Kit.clock.mode = KitClock.Mode.MANUAL_TURN
 	var commands: Array[Dictionary] = scenario.steps()
 	var command_checks: Array[Dictionary] = []
 	var save_path: String = scenario.report_dir.path_join("midpoint.json")
@@ -173,13 +186,76 @@ func _run_one(path: String, variant: String, midpoint_reload: bool, rendering: b
 	var result: Dictionary = {"passed": passed, "variant": variant if not variant.is_empty() else "default", "hash": Kit.simulation_hash(), "world_hash": Kit.world.state_hash(), "assertions": assertions, "numbers": scenario.numbers(), "constraints": scenario.constraints(), "records": Kit.log.records(), "events": Kit.events.history.duplicate(true)}
 	result["shots"] = KitMap.paths(scenario.report_dir.path_join("shots"), "png") if DirAccess.dir_exists_absolute(scenario.report_dir.path_join("shots")) else []
 	if view != null:
+		_release_inputs()
+		await get_tree().process_frame
 		view.queue_free()
 		await get_tree().process_frame
 	Kit.feel.clear()
+	Kit.scenario_mode = true
 	return result
+
+func _release_inputs() -> void:
+	for code: int in _held_keys:
+		var event: InputEventKey = InputEventKey.new()
+		event.keycode = code as Key
+		event.physical_keycode = code as Key
+		Input.parse_input_event(event)
+	for code: int in _held_buttons:
+		var event: InputEventMouseButton = InputEventMouseButton.new()
+		event.button_index = code as MouseButton
+		event.position = _held_buttons[code]
+		Input.parse_input_event(event)
+	_held_keys.clear()
+	_held_buttons.clear()
+	Input.flush_buffered_events()
 
 func _execute_command(command: Dictionary, scenario: KitScenario, view: Node) -> bool:
 	match str(command.command):
+		"key":
+			if not scenario.requires_play:
+				return false
+			var event: InputEventKey = InputEventKey.new()
+			event.keycode = int(command.key) as Key
+			event.physical_keycode = event.keycode
+			event.pressed = bool(command.get("pressed", true))
+			if event.pressed:
+				_held_keys[int(event.keycode)] = true
+			else:
+				_held_keys.erase(int(event.keycode))
+			Input.parse_input_event(event)
+			await get_tree().process_frame
+		"mouse_button":
+			if not scenario.requires_play:
+				return false
+			var event: InputEventMouseButton = InputEventMouseButton.new()
+			event.button_index = int(command.button) as MouseButton
+			var position: Array = command.position
+			event.position = Vector2(float(position[0]), float(position[1]))
+			event.pressed = bool(command.get("pressed", true))
+			if event.pressed:
+				_held_buttons[int(event.button_index)] = event.position
+			else:
+				_held_buttons.erase(int(event.button_index))
+			Input.parse_input_event(event)
+			await get_tree().process_frame
+		"mouse_motion":
+			if not scenario.requires_play:
+				return false
+			var event: InputEventMouseMotion = InputEventMouseMotion.new()
+			var relative: Array = command.relative
+			event.relative = Vector2(float(relative[0]), float(relative[1]))
+			Input.parse_input_event(event)
+			await get_tree().process_frame
+		"input_ticks":
+			if not scenario.requires_play:
+				return false
+			for index: int in range(int(command.get("ticks", 1))):
+				Kit.clock.advance()
+				await get_tree().process_frame
+		"wait_presentation":
+			if not scenario.requires_play:
+				return false
+			await get_tree().create_timer(float(command.get("seconds", 0.1))).timeout
 		"run":
 			Kit.actions.run(StringName(command.action), StringName(command.actor), command.get("params", {}), "scenario")
 		"queue":

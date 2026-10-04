@@ -2,8 +2,8 @@
 
 ## Build version
 
-0.1.0 — complete first implementation, verified on Godot 4.7.2 on 2026-10-03.
-Testbed playtest patch on 2026-10-04 (branch claude/v0-1-review-issues-1ntmju). The kit is unchanged, so VERSION and CHANGELOG are unchanged.
+0.2.0 — all nine review/playtest tickets implemented on 2026-10-04, verified on Windows with Godot 4.7.2. Save schema remains 1.
+Local branch: codex/open-tickets-2026-10-04, created from fetched main at 05c66d87227871d45c0753564d439cc54ad5c01a. The earlier implementation and playtest history are retained below.
 
 ## Playtest patch (2026-10-04)
 
@@ -18,6 +18,7 @@ The designer's first playtest found three testbed problems. All three are fixed 
 
 ## Delivery
 
+- Current ticket work is on local branch codex/open-tickets-2026-10-04. VERSION, addon VERSION, plugin version and save wrapper kit_version are 0.2.0. CHANGELOG and README describe the interface changes; GAME_MAP is regenerated from declarations.
 - Build commit d2bac79 was pushed to origin/main on 2026-10-03 at the designer's request.
 - Before pushing, tools/kit.ps1 test returned exit 0: all six scenarios passed repeat and save/reload again. Evidence: reports/push-test.log and reports/<scenario>/20261003-1103*/report.json.
 
@@ -37,7 +38,7 @@ The designer's first playtest found three testbed problems. All three are fixed 
 
 - Canonical JSON sorts keys, rounds finite floats to six decimal places, and treats whole-valued floats and integers identically.
 - Records use numeric arrays for coordinates. The reusable range condition supports any matching dimension; the mining view uses three dimensions.
-- Resource limits are record-type metadata, including shared capacity across cargo entries. Transactions validate a private world before committing.
+- Resource limits are record-type metadata, including shared capacity across cargo entries. Transactions lock the authoritative world, plan through a read-only view, and validate/canonicalize only touched records before committing them together.
 - Flight is an additional declared testbed action. Authoritative position and velocity stay in records; views read them. Physics determinism remains outside scope.
 - The manual clock advances one tick per turn; real-time play uses a tunable fixed tick rate. Cooldowns use simulation seconds. Held-input repetition uses that clock and cooldown, independently of feel duration.
 - Hard rock rejects without payment under ON_SUCCESS; ON_ATTEMPT commits energy and cooldown with zero yield. A damaging hit counts as yield before a rock breaks. Damage is tool power minus hardness plus one when power meets hardness.
@@ -70,9 +71,23 @@ The designer's first playtest found three testbed problems. All three are fixed 
 - The designer's tools/kit.ps1 test on Windows died at the import step, before any scenario ran. Godot warned "Detected another project.godot at res://reports/install-smoke/…" on stderr, and Windows PowerShell 5.1 makes stderr lines terminating under 'Stop'. Fixed in kit.ps1 and verify_install.ps1 (see CHANGELOG); reports/.gdignore removes the warning itself.
 - Verified on Linux with PowerShell 7.4. The 5.1 failure could not be reproduced here: 7.x no longer applies 'Stop' to native stderr. The helper captured the real Godot warning as text, exit 0. kit.ps1 test passed 7/7 with an install-smoke project under reports/ and no warning in import.log. verify_install.ps1 passed end to end, and verify_ui still passes 24/24 with reports/.gdignore. Confirmed on 2026-10-04: the designer reports tools/kit.ps1 test passes on Windows.
 
-## Open tickets for the reviewer (2026-10-04)
+## Completed review/playtest tickets (2026-10-04)
 
-All tickets from the review and from the playtests in one place. None of these are implemented yet.
+All nine tickets below are implemented. Human feel acceptance remains a separate playtest step.
+
+1. Hit-look labels in hints, HUD, toasts and Feel pickers explicitly say light/heavy have the same damage. Damage remains controlled by mining.tool_power.
+2. Clicks select and capture a smooth, one-time nose goal; Space alone drills. W retains its eased camera-forward turn. There is no stopped-ship tracking, automatic target or Space-release latch. Broken targets clear and no-target Space explains how to select. Selection has immediate FeelSequence feedback. README, hints, verify_ui and play_targeting match these controls.
+3. Enter and Numpad Enter invoke the same dock action. play_flight_and_dock drives both keys and verifies trade/refill without a mining beam.
+4. Designer choice confirmed: keep the lab focused. F3 and the Feel button say "Finish current effect". Active F3 leaves rule state/timing unchanged; idle F3 explains that there is no effect and points to F1 replay.
+5. Designer choice confirmed: gold intentionally demonstrates a harder rock. Its HUD instruction directs the player to Mining / tool power in F2. No upgrade system is added.
+6. ActionDef.charge_policy_key binds mining to mining.charge_on_attempt. Execution, queued actions, Discard and restored tuning use that single live policy. Legacy schema-1 charge fields are ignored for bound actions; unbound actions retain the old behavior. charge_policy_binding exercises conflicts and missing bindings. GAME_MAP names the binding. VERSION/CHANGELOG are updated; the save shape remains schema 1 and existing fixtures pass.
+7. Transactions copy only touched records and validate/commit their changes together. large_terrain_records exercises 2,000 records with 128 numbers each; every action copies exactly two records. Its final baseline measured 310.7 microseconds per action and 840,050 microseconds for a five-full-copy reference workload on this machine. These are measurements, not a portable threshold or whole-action speedup claim. Rejection, RNG rollback, nested read ownership, invalid additions, existing add/remove and clipping tests pass.
+8. RNG audit sorts stream names as text. rng_two_streams creates/draws zeta before alpha and verifies alpha/zeta audit order with repeat and save/reload.
+9. First-class play scenarios use engine input events with physical keycodes, mouse motion/buttons and manual rule ticks. test runs both suites; -Play selects windowed input scenarios. They cover camera flight, targeting, docking, all five default F1 tabs, empty-search F2 and an input-driven refusal. AGENTS.md requires screenshot inspection for player-visible tasks. New-run overlay state resets, and empty Log/Events explain their state. Hardware input and human feel remain outside the verification claim.
+
+Implementation assumptions: selection is view state and emits a declared presentation event, without a rule action or world mutation. Only touched records are canonicalized during an action. Whole-valued float representations retain their declared float resource behavior. Overlapping feel stages caption the sequence actually emitting them.
+
+## Original ticket scope (implemented above)
 
 Testbed (game/):
 1. Light/heavy hit wording. The designer saw a clear difference but expected heavy hits to do more damage. Label the variant as looks-only in the hint line ("B: hit look, light/heavy"), the B toast ("same damage, bigger shake and flash") and the target line ("Hit look: heavy"). Damage stays with mining.tool_power.
@@ -92,6 +107,16 @@ Kit (addons/agent_kit/):
 9. Testing gap. Scenarios call rules directly, and verify_ui only checked pre-filled panels, so unplayable flight, empty F2, empty Log and an unanswerable refusal all shipped green. Add play scenarios that drive physical input and the camera and take screenshots. Add default-state checks for every overlay panel and tab. Make "inspected screenshots" part of done for any task that changes what the player sees or does.
 
 ## Verification
+
+Ticket implementation (2026-10-04, Windows, Godot 4.7.2 official build, Compatibility renderer):
+- tools/kit.ps1 test: exit 0, 10/10 sim scenarios and 3/3 windowed play scenarios; all repeat and midpoint save/reload checks pass. Logs: reports/engine-profile/test.log and play.log. Final sim reports are under reports/<scenario>/20261004-14073* through 140757*.
+- Final play reports: reports/play_flight_and_dock/20261004-140759-1769160, reports/play_overlay_defaults/20261004-140810-12669842, and reports/play_targeting/20261004-140811-14095341. Baseline screenshots cover flight/docking, all default tabs/F2, refusal, click-only selection, cleared target, gold power wording and heavy same-damage wording.
+- tools/verify_ui.tscn: exit 0, 25/25 checks including an actual select-only click before Space; latest inspected evidence: reports/ui-verification/20261004T141839-1275902. The previous click/camera synchronization failure is retained in reports/ui-reruns/20261004-click-camera-failure; the helper now waits for the drawn frame before projecting a click. Future UI runs have unique evidence directories.
+- tools/kit.ps1 compare feel_change_is_scoped mine_hit mine_hit_heavy -Render: exit 0; identical constraints, world hashes, energy/cargo and action timing, with four screenshots under reports/feel_change_is_scoped/20261004-140423-1795501.
+- tools/verify_install.ps1: exit 0; clean/unchanged/forced install, local-edit refusal, import and empty-project boot pass. Evidence: reports/install-smoke/6175169e70ff407b8613199855260b81/verification.json and boot.log.
+- tools/kit.ps1 map and lint: exit 0. git diff --check passes. Screenshots named above were inspected for readable HUD/toasts, target clearing, panel defaults, refusal explanations, tuning controls and cosmetic A/B differences. Final runs have no script/resource/shutdown errors; the known offline certificate-store warning remains.
+- Earlier failures are preserved: the initial staging constructor leaked script resources at shutdown, a play-mode declaration was missing on concrete scenarios, and an occluded gold fixture selected a nearer stone. These were corrected and the final repeat/save-reload runs pass.
+- One final map process stalled after printing "Game map generated"; it was stopped and an immediate rerun exited 0. The stalled output is retained in reports/ticket-map-stalled.log. The cause of that isolated stall is unconfirmed.
 
 Playtest patch (2026-10-04, Linux sandbox, Godot 4.7.2 official build, PowerShell 7.4.6):
 - tools/kit.ps1 test: exit 0; all seven scenarios passed with repeat and midpoint save/reload.
@@ -123,23 +148,19 @@ Original build (2026-10-03):
 
 ## Known issues / designer acceptance
 
-- Test gap behind both playtest rounds: scenarios call rules directly, and verify_ui typed a search before looking at F1/F2. So "unplayable flight", "empty F2", "empty Log" and "no answer for a refusal" all shipped green. Proposed kit work: input-driven play scenarios (physical keys, camera, screenshots) as a first-class scenario mode, plus default-state checks for every overlay panel and tab. Until then, every view change gets a windowed probe and inspected screenshots.
-- Kit ticket (determinism risk): KitRng.end_action sorts stream names with Array.sort() on StringNames, which is not alphabetical. The order of rng_draws in action records could differ between engine runs or builds when one action draws from several streams. No rule outcome depends on it today. Fix it with a text sort, plus a scenario that draws from two streams.
-- F1 Log is flooded by move_ship records while flying (one per tick); use the action filter, e.g. "mine".
-
-- Playtest patch: the Space latch and the auto-retarget choice (nearest live rock, measured from the ship) are untested by a human. Camera-relative flight means W changes direction when the camera orbits; that is intended, but needs feel acceptance.
+- Camera-relative flight, the click-facing turn and click-to-select workflow need human feel acceptance. W changes its movement direction when the camera orbits; that is intended. Broken targets now clear and require a fresh click.
 - An F5 save written before the playtest patch also stores live tuning. Loading it brings back mining.range 8 as a live trial; Discard in F2 restores 2.5.
 - At 2 m or less from a rock, the ship model visibly overlaps it. The lab has no collision; that was out of scope.
-- The review raised two kit tickets that are still open. Charge policy has two sources of truth (action definition and tuning knob, bridged by game/setup.gd; GAME_MAP always shows ON_SUCCESS). Each action makes about five full world copies, which must be fixed before porting Rust Bucket.
 
 - Human feel acceptance is pending. Automation and screenshot inspection establish function/accounting/scope, not satisfying flight or mining feel.
 - Sandboxed Godot starts report an inaccessible Windows certificate store. All offline checks complete; no network capability is required. There are no remaining script, resource-load or shutdown-leak errors in final runs.
 - Repeatability covers declared records, controlled RNG and clock on the tested engine version. Native physics and cross-version RNG equivalence are not claimed.
 - Lint is intentionally heuristic.
+- A single post-generation map-process stall occurred; its immediate rerun passed. Investigate if it recurs.
 
 ## Next steps
 
-1. Designer replays the lab with the playtest patch: flight, drill reach, the target hand-over after a break, docking, F1 Why, F2 trial/apply/discard, both charge policies, light/heavy impacts at normal and slow speed, and the invented damage formula (power − hardness + 1).
+1. Designer replays the 0.2.0 lab: click-only selection and one-time nose turn, W/A/D/S, drill reach, target clearing after a break, both Enter keys, F3 active/idle behavior, gold's F2 power instruction, F1 Why and F2 trial/apply/discard. Compare hit looks while remembering that damage comes from tool power (power − hardness + 1).
 2. Record the preferred charge policy and feel direction; patch through scoped tickets after review against DESIGN.md.
 3. Continue the merged Rust Bucket design work before porting it.
 4. Prove broader reuse with a Railroad Wars slice before adding the kit to the game template.

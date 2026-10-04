@@ -1,7 +1,7 @@
 class_name KitSaveStore
 extends RefCounted
 const SCHEMA_VERSION: int = 1
-const KIT_VERSION: String = "0.1.0"
+const KIT_VERSION: String = "0.2.0"
 var last_message: String = ""
 
 func _wrapper(payload: Dictionary) -> Dictionary:

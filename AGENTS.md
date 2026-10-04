@@ -27,6 +27,9 @@ other game goes in `game/`. If you're unsure which side something belongs on, it
 
 ## Evidence
 - Run `tools/kit.ps1 test` before finishing any task. Report actual results, not expectations.
+- For changes to player-visible behavior or controls, run input-driven play scenarios and
+  inspect their screenshots. Record reports, images inspected, and remaining visual issues
+  in STATE.md before marking the task done.
 - A passing test does not mean it feels good. Say what the designer should playtest.
 - If you can't run something, say so plainly.
 

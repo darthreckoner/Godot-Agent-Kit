@@ -4,9 +4,11 @@ param(
     [Parameter(Position=1)][string]$Name = '',
     [Parameter(Position=2)][string]$VariantA = '',
     [Parameter(Position=3)][string]$VariantB = '',
-    [switch]$Render
+    [switch]$Render,
+    [switch]$Play
 )
 $ErrorActionPreference = 'Stop'
+if ($Render -and $Play) { throw 'Choose either -Render (rule screenshots) or -Play (physical input scenarios).' }
 $projectRoot = Split-Path $PSScriptRoot -Parent
 if ($Command -eq 'lint') {
     Write-Output 'Heuristic regex lint (not a proof of correctness).'
@@ -94,10 +96,11 @@ try {
         exit 1
     }
     $engineArgs = @('--path', $projectRoot)
-    if (-not $Render) { $engineArgs += '--headless' }
+    if (-not ($Render -or $Play)) { $engineArgs += '--headless' }
     $engineArgs += @('res://addons/agent_kit/runner/run.tscn', '--', $Command)
     if ($Name) { $engineArgs += @('--scenario', $Name) }
     if ($Render) { $engineArgs += @('--mode', 'render') }
+    if ($Play) { $engineArgs += @('--mode', 'play') }
     if ($Command -in @('scenario','compare')) { $engineArgs += @('--repeat','--save-reload') }
     if ($Command -eq 'compare') {
         if (-not $VariantA -or -not $VariantB) { throw 'compare needs scenario, variant A, and variant B.' }
@@ -111,6 +114,15 @@ try {
     # A sandbox certificate-store warning does not affect offline tests; every other engine error fails.
     $unexpectedErrors = @($runOutput | Where-Object { [string]$_ -match '^ERROR:|SCRIPT ERROR:|Parse Error:' -and [string]$_ -notmatch '^ERROR: Failed to read the root certificate store\.' })
     if ($unexpectedErrors.Count) { exit 1 }
+    if ($runExit -eq 0 -and $Command -eq 'test' -and -not ($Render -or $Play)) {
+        Write-Output 'Running windowed play scenarios (physical input, camera, default panels and screenshots).'
+        $playRun = Invoke-Godot @('--path', $projectRoot, 'res://addons/agent_kit/runner/run.tscn', '--', 'test', '--mode', 'play')
+        $playRun.Output | Write-Output
+        $playRun.Output | Set-Content -LiteralPath (Join-Path $profilePath 'play.log') -Encoding utf8
+        $playErrors = @($playRun.Output | Where-Object { [string]$_ -match '^ERROR:|SCRIPT ERROR:|Parse Error:' -and [string]$_ -notmatch '^ERROR: Failed to read the root certificate store\.' })
+        if ($playErrors.Count) { exit 1 }
+        exit $playRun.Exit
+    }
     exit $runExit
 }
 finally { $env:APPDATA = $previousAppData }

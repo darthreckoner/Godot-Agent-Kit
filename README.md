@@ -1,4 +1,4 @@
-# Godot Agent Kit 0.1
+# Godot Agent Kit 0.2
 
 A reusable Godot 4.7 addon and a small mining lab. The kit records what your game did, explains why values changed, and lets you try tuning and feel changes safely. It works offline.
 
@@ -6,21 +6,21 @@ A reusable Godot 4.7 addon and a small mining lab. The kit records what your gam
 
 Open this folder's project.godot in Godot 4.7 and press F6 on game/views/mining_lab.tscn, or press F5 to run the project. Use the Compatibility renderer.
 
-You start next to a 30-block asteroid. Orange iron blocks are soft, blue stone blocks are medium, and yellow gold blocks are hard. Select a block by clicking it; clicking also requests a mining hit. Hold Space to keep mining the selected block. A successful hit costs 4 energy by default. Two hits break a soft block and collect 3 iron. If cargo fills, only the ore that fits is collected.
+You start next to a 30-block asteroid, outside drill reach, with no target selected. Orange iron blocks are soft, blue stone blocks are medium, and yellow gold blocks are hard. Clicking selects a block and smoothly faces it once. Fly close enough, then hold Space to drill it. When it breaks, the target clears; click another rock to continue. A successful hit costs 4 energy by default. Two hits break a soft block and collect 3 iron. If cargo fills, only the ore that fits is collected.
 
 Fly left toward the dock. Within 3 metres, Enter sells every ore type and buys a full energy refill. The trade happens completely or is rejected if you cannot afford it.
 
 | Control | What it does |
 |---|---|
-| WASD | Fly along the X/Z plane |
+| WASD | Camera-relative flight; W eases the nose toward camera forward, A/D strafe and S backs up |
 | Q / E | Fly down / up |
 | Right mouse drag / mouse wheel | Orbit / zoom |
-| Click a rock / Space | Select and mine / keep mining the selected rock |
-| Enter | Sell cargo and refuel at the dock |
+| Click a rock / Space | Select and face once / drill the selected rock |
+| Enter / Numpad Enter | Sell cargo and refuel at the dock |
 | F1 / F2 | Open the inspector / tuning panel |
-| B | Switch light and heavy mining impacts |
+| B | Switch light/heavy hit looks; same damage, different shake and flash |
 | V | Trial success-only or on-attempt energy charging |
-| F3 | Skip current feel sequences to their final stage |
+| F3 | Finish the current effect; an idle press explains replay in F1 Feel |
 | F5 / F9 | Save / load, including rule continuation and live tuning |
 | R | Restart from the saved tuning resources; unsaved trials are discarded |
 | Esc | Exit |
@@ -57,6 +57,8 @@ From PowerShell in this folder:
 ~~~powershell
 .\tools\kit.ps1 test
 .\tools\kit.ps1 scenario mine_basic
+.\tools\kit.ps1 scenario play_targeting -Play
+.\tools\kit.ps1 test -Play
 .\tools\kit.ps1 scenario feel_change_is_scoped -Render
 .\tools\kit.ps1 compare feel_change_is_scoped mine_hit mine_hit_heavy
 .\tools\kit.ps1 compare mine_basic mining mining.charge_on_attempt
@@ -65,7 +67,9 @@ From PowerShell in this folder:
 .\tools\kit.ps1 lint
 ~~~
 
-Test discovers every declared scenario, runs the actual rules headlessly, repeats each run, and compares continuous play with a midpoint save/reload continuation. Save/reload verification clears the live world, clock, pending queue and RNG before restoring the file. The feel scenario also compares its two variants automatically. Render uses the same rules and the actual mining view, and writes PNGs at marked presentation stages.
+Test discovers every declared scenario, runs the rule suite headlessly and then runs the input scenarios windowed. Both suites repeat each run and compare continuous play with a midpoint save/reload continuation. Save/reload verification clears the live world, clock, pending queue and RNG before restoring the file. The feel scenario also compares its two variants automatically. Render uses the same rules and the actual mining view, and writes PNGs at marked presentation stages.
+
+Play scenarios set `requires_play = true`, supply a render scene and send engine `InputEventKey` events with physical keycodes, mouse button/motion events, and `input_ticks` commands. The real scene handles input and polls physical keys while rules advance only through the manual clock. `wait_presentation` lets cosmetic turns/effects settle without advancing rules. This verifies engine input handling, camera behavior and UI defaults; it does not simulate hardware drivers or establish human feel acceptance. Screenshots are baseline evidence and must be inspected for any player-visible task.
 
 Reports are saved under reports/scenario/date-time/. Open report.md for the plain-English result or report.json for the complete checks, operation records, repeated/reloaded evidence, numbers and comparisons. Render reports link their screenshots. Failed reports remain available beside reruns.
 
@@ -114,7 +118,7 @@ Installed kit code should be changed in this source repository and reinstalled. 
 
 ## How an action stays safe
 
-A handler checks requirements and plans changes against a read-only world copy. The runner applies them to a private staging world and validates types, minimums, capacities, reasons and event declarations. Any failure discards the entire transaction. On success, the runner commits the staging state, appends the operation record, then emits declared events. Views and feel playback react to those events.
+A handler checks requirements and plans changes against a read-only world view. The authoritative world is locked during the transaction. The runner copies only touched records into private staging and validates their types, minimums, capacities, reasons and event declarations. Any failure discards every staged change and restores rule RNG. On success, the runner commits all changed records, appends the operation record, then emits declared events. Views and feel playback react to those events. No full-world snapshot is needed for an action; saves and hashes still include the complete world.
 
 ~~~mermaid
 flowchart TD
@@ -132,6 +136,8 @@ flowchart TD
 World records use StringName IDs, registered field types, optional array lengths and resource-limit metadata. Reads return copies; after setup, direct put/set/remove calls refuse writes. The action runner owns changes during play. Setup and verified save load may restore records directly. Custom changes extend KitChange and implement apply(world) -> bool, to_dict() and describe(), with an entity, field and reason. Changes involved in a zero-yield cost use cost_only.
 
 A successful damaging mining hit counts as yield even before a block breaks. Damage is tool power minus hardness plus one, provided tool power meets hardness. Under ON_SUCCESS a zero-yield plan rejects; under ON_ATTEMPT only its marked cost/cooldown changes commit. Overflow CLIP trims the new positive resource delta and preserves resources already owned.
+
+An ActionDef can set `charge_policy_key = "mining.charge_on_attempt"` to bind policy to a tuning knob. That knob must be an integer with value 0 (success) or 1 (attempt). Trial, Apply, Discard and save restoration all use this same live source; queued actions resolve it when executed. Leave the key empty to use the definition's `charge_policy`. Schema-1 saves retain their existing policy shape; for a bound action the stored charge is a fallback default, and legacy duplicated live charges are ignored on restore. GAME_MAP documents the binding instead of a misleading fixed policy.
 
 Queued requests resolve at the next tick in tick/sequence order. The clock supports fixed ticks or manual turns; rules read only this clock. Named rule RNG streams derive from the run seed and name. The action audit records each raw native generator draw by replaying between its start/end states, preserving the native RandomNumberGenerator interface. Do not reseed a stream inside an action. Cosmetic randomness is independent.
 
