@@ -2,8 +2,8 @@
 
 ## Build version
 
-0.3.1 — ticket 11 (scenario tuning independence) complete locally on 2026-10-04, verified on Windows with Godot 4.7.2. Save schema remains 1.
-Current branch: codex/ticket-11-scenario-tuning, based on clean fetched main at 81787c342c368fb7066d45a4465d26e3e8c96029. On 2026-10-04 the designer requested commit, PR creation and merge. Publication is in progress; the HUD capture limitation below remains recorded.
+0.3.1 — ticket 11 (scenario tuning independence) merged on 2026-10-04, verified on Windows with Godot 4.7.2. Save schema remains 1.
+Current branch: main. Ticket 11 implementation 61486cd3475d9687f59a61ceda250ce20c3f919b was pushed and merged through [PR #5](https://github.com/darthreckoner/Godot-Agent-Kit/pull/5) at 08185c8ed67610d0564b7244b1aa3c72e4878ecd, as requested by the designer. GitHub reports MERGED at 2026-10-04T23:08:39Z, and local main was fast-forwarded to that merge. The HUD capture limitation below remains recorded.
 Earlier ticket 10 delivery: implementation b30a1252b237f5f90018941dce5b0068642dcbb5 was pushed and merged through [PR #3](https://github.com/darthreckoner/Godot-Agent-Kit/pull/3) at 114e7fedf002cb8e4c6f33a4c17adf9f5b4e0270. The designer's passing 0.3.0 playtest and delivery authorization are retained below.
 
 ## Ticket 11 implementation and verification (2026-10-04)
@@ -133,7 +133,7 @@ The designer's first playtest found three testbed problems. All three are fixed 
 
 ## Open tickets
 
-None. Ticket 11 is complete locally; its scope and evidence are retained in this file.
+None. Ticket 11 is merged; its scope and evidence are retained in this file.
 
 ## Completed ticket 10 scope
 
@@ -264,7 +264,7 @@ Original build (2026-10-03):
 
 ## Next steps
 
-0. Publish ticket 11 through a PR as requested, then record the actual merge and sync main. Future scenarios pin assertion inputs before world creation, press named controls and use actual effect completion for idle checks.
+0. Ticket 11 is merged through PR #5. Future scenarios pin assertion inputs before world creation, press named controls and use actual effect completion for idle checks. Investigate intermittent HUD capture text loss in a separate scoped task; preserve the recorded comparisons.
 
 1. Optional designer smoke check: change a mining knob in F2, Apply, then run tools/kit.ps1 test. Rule fixtures should stay green and shipped_default_balance should show the balance change. Update its reference only when accepting the new shipped defaults. Current player feel and the earlier overlap issue are outside ticket 11's changes.
 2. Record the preferred charge policy and feel direction; patch through scoped tickets after review against DESIGN.md.
