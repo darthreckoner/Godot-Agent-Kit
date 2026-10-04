@@ -5,7 +5,7 @@ func _init() -> void:
 	description = "Inspect every default F1 tab and empty-search F2 before filling panels; explain an input-driven refusal."
 func setup() -> bool:
 	_checks.clear()
-	return start_from_launch() and use_play_fixture()
+	return start_from_launch()
 func steps() -> Array[Dictionary]:
 	return [
 		{"command": "default_tabs"},

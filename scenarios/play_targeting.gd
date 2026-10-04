@@ -14,12 +14,6 @@ func setup() -> bool:
 	Kit.world.writable = false
 	return ok
 func steps() -> Array[Dictionary]:
-	var settle: float = 0.0
-	for sequence: KitFeelSequence in Kit.feel.sequences.values():
-		var duration: float = 0.0
-		for stage: KitFeelStage in sequence.stages:
-			duration += maxf(stage.duration, stage.sound_marker_sec)
-		settle = maxf(settle, duration / Kit.feel.time_scale)
 	return [
 		{"command": "initial"},
 		{"command": "control", "action": "fly_forward"},
@@ -54,7 +48,7 @@ func steps() -> Array[Dictionary]:
 		{"command": "control", "action": "hit_look", "pressed": false},
 		{"command": "look_after"},
 		{"command": "screenshot", "name": "heavy_same_damage"},
-		{"command": "wait_presentation", "seconds": settle + 0.1},
+		{"command": "wait_for_feel", "timeout": 30.0},
 		{"command": "control", "action": "kit_finish_effect"},
 		{"command": "control", "action": "kit_finish_effect", "pressed": false},
 		{"command": "idle_f3"}
@@ -95,5 +89,6 @@ func execute_custom(command: Dictionary, view: Node) -> bool:
 		"look_after":
 			_checks.append(assertion("B says same damage, bigger shake and flash; rule state/timing are unchanged.", _look_hash == Kit.simulation_hash() and str(view.get("_toast").text).contains("same damage, bigger shake and flash") and str(view.get("_target_label").text).contains("Hit look: heavy")))
 		"idle_f3":
+			_checks.append(assertion("Waiting for effect completion leaves rule state and ticks unchanged.", _look_hash == Kit.simulation_hash() and not Kit.feel.is_playing()))
 			_checks.append(assertion("Idle F3 explains that it finishes a current effect.", str(view.get("_toast").text).begins_with("No effect playing."), str(view.get("_toast").text)))
 	return true

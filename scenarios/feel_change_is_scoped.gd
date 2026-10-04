@@ -9,6 +9,7 @@ func steps() -> Array[Dictionary]:
 	if render_mode:
 		commands.insert(1, {"command": "screenshot", "name": "impact", "stage": "Heavy impact" if variant.contains("heavy") else "Impact", "delay": 0.0})
 		commands.append({"command": "screenshot", "name": "rock_broken", "delay": 0.3})
+		commands.append({"command": "wait_for_feel", "timeout": 30.0})
 	return commands
 func expect() -> Array[Dictionary]:
 	return basic_expect()

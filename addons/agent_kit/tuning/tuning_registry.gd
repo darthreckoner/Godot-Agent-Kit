@@ -4,6 +4,37 @@ signal changed(key: String)
 var sets: Dictionary = {}
 var paths: Dictionary = {}
 var _original: Dictionary = {}
+var last_message: String = ""
+
+## Establish an in-memory baseline before scenario world setup, including Discard.
+## Validate the complete list first; keep resource identity so feel stages stay linked.
+func pin(values: Dictionary) -> bool:
+	for key: Variant in values:
+		var parts: PackedStringArray = str(key).split(".")
+		if not (key is String or key is StringName) or parts.size() != 2 or not sets.has(StringName(parts[0])):
+			last_message = "Scenario tuning cannot find " + str(key) + "."
+			return false
+		var resource: KitTuningSet = sets[StringName(parts[0])]
+		var metadata: Dictionary = resource.metadata(parts[1])
+		var next: Variant = values[key]
+		if metadata.is_empty():
+			last_message = "Scenario tuning cannot find " + str(key) + "."
+			return false
+		if not (next is int or next is float) or not is_finite(float(next)) or float(next) < metadata.min or float(next) > metadata.max:
+			last_message = "Scenario tuning needs %s between %s and %s." % [key, metadata.min, metadata.max]
+			return false
+		if resource.get(parts[1]) is int and float(next) != floorf(float(next)):
+			last_message = "Scenario tuning needs a whole number for " + str(key) + "."
+			return false
+	for key: Variant in values:
+		var parts: PackedStringArray = str(key).split(".")
+		var set_id: StringName = StringName(parts[0])
+		var resource: KitTuningSet = sets[set_id]
+		resource.set(parts[1], int(values[key]) if resource.get(parts[1]) is int else float(values[key]))
+		_original[set_id][parts[1]] = resource.get(parts[1])
+		changed.emit(str(key))
+	last_message = "Scenario tuning is pinned in memory; project defaults are preserved."
+	return true
 
 func register(resource: KitTuningSet, path: String = "") -> void:
 	sets[resource.id] = resource.duplicate(true)

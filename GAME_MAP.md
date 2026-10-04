@@ -326,3 +326,5 @@ Generated from declarations. Change the source resource and regenerate this map.
 - **play_overlay_defaults** — Inspect every default F1 tab and empty-search F2 before filling panels; explain an input-driven refusal. [scenarios/play_overlay_defaults.gd](scenarios/play_overlay_defaults.gd)
 - **play_targeting** — Physical clicks select and face once; Space alone drills, clears broken targets and explains hard gold. [scenarios/play_targeting.gd](scenarios/play_targeting.gd)
 - **rng_two_streams** — Audit two rule RNG streams in alphabetical order, even when drawn in reverse order. [scenarios/rng_two_streams.gd](scenarios/rng_two_streams.gd)
+- **scenario_tuning_pins** — Scenario pins validate together, preserve resources and files, and establish the Discard baseline. [scenarios/scenario_tuning_pins.gd](scenarios/scenario_tuning_pins.gd)
+- **shipped_default_balance** — Report changes to shipped mining, ship and economy defaults separately from rule fixtures. [scenarios/shipped_default_balance.gd](scenarios/shipped_default_balance.gd)

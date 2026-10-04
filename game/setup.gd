@@ -1,7 +1,7 @@
 class_name MiningSetup
 extends RefCounted
 
-static func configure(seed_value: int = 20261003, scenario: bool = false, variant: String = "") -> bool:
+static func configure(seed_value: int = 20261003, scenario: bool = false, variant: String = "", tuning_setup: Callable = Callable()) -> bool:
 	Kit.reset(seed_value, scenario)
 	var controls_path: String = "res://game/data/controls.tres"
 	var controls_resource: KitControlSet = ResourceLoader.load(controls_path, "", ResourceLoader.CACHE_MODE_IGNORE)
@@ -27,6 +27,10 @@ static func configure(seed_value: int = 20261003, scenario: bool = false, varian
 	if not variant.is_empty():
 		if not use_variant(variant):
 			return false
+	# Scenario fixtures pin their values before records copy health, yields or capacities.
+	if tuning_setup.is_valid() and not bool(tuning_setup.call()):
+		return false
+	Kit.clock.tick_rate = float(Kit.tuning.value("kit.tick_rate"))
 	var ship: Dictionary = {
 		"position": [0.0, 0.0, 0.0], "velocity": [0.0, 0.0, 0.0],
 		"energy": float(Kit.tuning.value("ship.energy_max")), "energy_max": float(Kit.tuning.value("ship.energy_max")),

@@ -7,7 +7,7 @@ func _init() -> void:
 	description = "Drive camera orbit and WASD through physical input; Numpad Enter and Enter both trade at the dock."
 func setup() -> bool:
 	_checks.clear()
-	if not start_from_launch() or not use_play_fixture():
+	if not start_from_launch():
 		return false
 	Kit.world.writable = true
 	var ok: bool = Kit.world.set_field(&"ship:player", "energy", 20.0) and Kit.world.set_field(&"ship:player", "cargo.iron", 3.0)
