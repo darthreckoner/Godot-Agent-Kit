@@ -65,6 +65,27 @@ The designer's first playtest found three testbed problems. All three are fixed 
 
 - F1 Why's Thing dropdown covered the whole screen and listed rocks out of order (rock:000, then 029 down to 001). Godot's StringName sort is not alphabetical, so KitWorld.ids() broke its documented sorted order. Fixed (see CHANGELOG). The picker is now a short scrolling list under its button, grouped Dock/Rock/Ship.
 
+## Open tickets for the reviewer (2026-10-04)
+
+All tickets from the review and from the playtests in one place. None of these are implemented yet.
+
+Testbed (game/):
+1. Light/heavy hit wording. The designer saw a clear difference but expected heavy hits to do more damage. Label the variant as looks-only in the hint line ("B: hit look, light/heavy"), the B toast ("same damage, bigger shake and flash") and the target line ("Hit look: heavy"). Damage stays with mining.tool_power.
+2. Targeting and nose (designer direction):
+   - Clicking a rock only selects it; it never mines. Space is the only mining input.
+   - The nose turns to face a rock once, smoothly, when the player clicks it. Remove the automatic noses-to-target when stopped within reach. W keeps its current eased turn toward the camera's forward direction.
+   - No auto-targeting: when the target breaks, the target clears. Space with no target shows "No rock selected. Click a rock to target it." The Space release latch can go once nothing auto-selects.
+   - Update hints, tools/verify_ui.gd and the windowed probe evidence to match.
+3. Numpad Enter (KEY_KP_ENTER) should also sell and refuel, like Enter.
+4. F3 "skip feel" looks broken. Kit.feel.skip() jumps the feel sequence playing now to its last stage, but mining sequences last about 0.5 s, so a press almost always finds nothing playing. Decide between relabelling it (e.g. "F3: jump to end of current effect"), making it a toggle that turns presentation off while testing rules, or removing it from the lab's hints. The F1 Feel tab has the same "Skip to final stage" button.
+5. Gold is unminable with default tuning (tool_power 2 < hardness 4) and the lab has no tool upgrade. Decide whether that is intended, or add a way to raise drill power in play.
+
+Kit (addons/agent_kit/):
+6. Charge policy has two sources of truth: the action definition and the mining.charge_on_attempt knob, bridged by game/setup.gd. GAME_MAP always shows ON_SUCCESS, and saves store both. Let an action definition point its policy at a tuning knob. This changes the public API, so it needs a CHANGELOG entry and VERSION bump.
+7. Every action copies the whole world about five times (action_runner.gd). Stage only the records an action touches, and add a large-terrain-record scenario that measures speed. Must land before porting Rust Bucket.
+8. KitRng.end_action sorts stream names with Array.sort() on StringNames, which is not alphabetical, so rng_draws order in records may vary between runs or builds. Use a text sort, and add a two-stream scenario.
+9. Testing gap. Scenarios call rules directly, and verify_ui only checked pre-filled panels, so unplayable flight, empty F2, empty Log and an unanswerable refusal all shipped green. Add play scenarios that drive physical input and the camera and take screenshots. Add default-state checks for every overlay panel and tab. Make "inspected screenshots" part of done for any task that changes what the player sees or does.
+
 ## Verification
 
 Playtest patch (2026-10-04, Linux sandbox, Godot 4.7.2 official build, PowerShell 7.4.6):
