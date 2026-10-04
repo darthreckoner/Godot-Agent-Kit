@@ -68,7 +68,7 @@ The designer's first playtest found three testbed problems. All three are fixed 
 ## Windows test-command fix (2026-10-04)
 
 - The designer's tools/kit.ps1 test on Windows died at the import step, before any scenario ran. Godot warned "Detected another project.godot at res://reports/install-smoke/…" on stderr, and Windows PowerShell 5.1 makes stderr lines terminating under 'Stop'. Fixed in kit.ps1 and verify_install.ps1 (see CHANGELOG); reports/.gdignore removes the warning itself.
-- Verified on Linux with PowerShell 7.4. The 5.1 failure could not be reproduced here: 7.x no longer applies 'Stop' to native stderr. The helper captured the real Godot warning as text, exit 0. kit.ps1 test passed 7/7 with an install-smoke project under reports/ and no warning in import.log. verify_install.ps1 passed end to end, and verify_ui still passes 24/24 with reports/.gdignore. Needs one confirming run on the designer's Windows PowerShell.
+- Verified on Linux with PowerShell 7.4. The 5.1 failure could not be reproduced here: 7.x no longer applies 'Stop' to native stderr. The helper captured the real Godot warning as text, exit 0. kit.ps1 test passed 7/7 with an install-smoke project under reports/ and no warning in import.log. verify_install.ps1 passed end to end, and verify_ui still passes 24/24 with reports/.gdignore. Confirmed on 2026-10-04: the designer reports tools/kit.ps1 test passes on Windows.
 
 ## Open tickets for the reviewer (2026-10-04)
 
