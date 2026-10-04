@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+UI fix only; no public API, file format or save schema change, so VERSION stays 0.1.0.
+
+- F2 tuning panel: an empty search listed nothing, because Godot's `contains("")` is false. F2 now opens with every tuning group listed and collapsed: game and kit settings first, then feel stages, each alphabetical. Clicking a group opens it. A search matches every typed word against group, knob name and help text, and opens each matching group. A search with no match says so.
+- F2 search box: it now has a visible border and background, a Search label, example hint text and a Clear button, and it takes the cursor when F2 opens.
+
 ## 0.1.0 — 2026-10-03
 
 First complete public kit and save schema 1.

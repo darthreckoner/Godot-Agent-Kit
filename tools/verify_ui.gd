@@ -23,6 +23,20 @@ func _shot(name: String) -> bool:
 	await RenderingServer.frame_post_draw
 	var image: Image = get_viewport().get_texture().get_image()
 	return image.save_png(_directory.path_join(name + ".png")) == OK
+func _groups(rows: VBoxContainer) -> Array[Button]:
+	var headers: Array[Button] = []
+	for child: Node in rows.get_children():
+		if child is Button and child.has_meta("tuning_group") and not child.is_queued_for_deletion():
+			headers.append(child)
+	return headers
+func _sliders(rows: VBoxContainer) -> int:
+	var count: int = 0
+	for row: Node in rows.get_children():
+		if row is HBoxContainer:
+			for child: Node in row.get_children():
+				if child is HSlider:
+					count += 1
+	return count
 func _run() -> void:
 	var error: Error = DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_directory))
 	if error != OK:
@@ -69,9 +83,20 @@ func _run() -> void:
 	_key(KEY_F2)
 	await get_tree().process_frame
 	var search: LineEdit = Kit.overlay.get("_search")
+	var rows: VBoxContainer = Kit.overlay.get("_knob_rows")
+	_checks.append(KitScenario.assertion("F2 opens with every tuning group listed.", _groups(rows).size() == Kit.tuning.sets.size() and _sliders(rows) == 0, _groups(rows).size(), Kit.tuning.sets.size()))
+	_checks.append(KitScenario.assertion("F2 puts the cursor in the search box.", search.has_focus()))
+	_checks.append(KitScenario.assertion("Empty tuning screenshot saved.", await _shot("tuning_groups")))
+	for header: Button in _groups(rows):
+		if header.get_meta("tuning_group") == &"ship":
+			header.pressed.emit()
+	await get_tree().process_frame
+	_checks.append(KitScenario.assertion("Clicking a group opens its sliders.", _sliders(rows) == Kit.tuning.sets[&"ship"].knobs().size(), _sliders(rows), Kit.tuning.sets[&"ship"].knobs().size()))
+	search.text = "zzz"
+	search.text_changed.emit(search.text)
+	_checks.append(KitScenario.assertion("A search with no match says so.", _groups(rows).is_empty() and rows.get_child_count() == 1 and str(rows.get_child(0).text).begins_with("Nothing matches")))
 	search.text = "mining energy_cost"
 	search.text_changed.emit(search.text)
-	var rows: VBoxContainer = Kit.overlay.get("_knob_rows")
 	var slider: HSlider
 	for row: Node in rows.get_children():
 		if row is HBoxContainer:

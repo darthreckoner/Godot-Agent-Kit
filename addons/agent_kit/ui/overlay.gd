@@ -12,6 +12,7 @@ var _action_filter: LineEdit
 var _outcome_filter: LineEdit
 var _search: LineEdit
 var _knob_rows: VBoxContainer
+var _expanded: Dictionary = {}
 var _status: Label
 var _a: OptionButton
 var _b: OptionButton
@@ -43,6 +44,8 @@ func _input(event: InputEvent) -> void:
 			_tuning_panel.visible = not _tuning_panel.visible
 			_inspector.hide()
 			_refresh_tuning()
+			if _tuning_panel.visible:
+				_search.grab_focus()
 			get_viewport().set_input_as_handled()
 
 func is_open() -> bool:
@@ -245,10 +248,22 @@ func _build_tuning() -> void:
 	var column: VBoxContainer = VBoxContainer.new()
 	_tuning_panel.add_child(column)
 	_label("F2 · Try a tuning value", column).add_theme_font_size_override("font_size", 24)
+	var search_row: HBoxContainer = HBoxContainer.new()
+	column.add_child(search_row)
+	_label("Search", search_row).add_theme_font_size_override("font_size", 18)
 	_search = LineEdit.new()
-	_search.placeholder_text = "Search names, groups, or help"
-	column.add_child(_search)
+	_search.placeholder_text = "Type to filter, e.g. range, energy, speed, camera"
+	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_search.add_theme_stylebox_override("normal", _search_style(Color(0.26, 0.55, 0.63)))
+	_search.add_theme_stylebox_override("focus", _search_style(Color(0.39, 0.89, 0.90)))
+	_search.add_theme_color_override("font_placeholder_color", Color(0.62, 0.70, 0.76))
+	search_row.add_child(_search)
 	_search.text_changed.connect(func(_text: String) -> void: _refresh_tuning())
+	_button("Clear", search_row, func() -> void:
+		_search.text = ""
+		_refresh_tuning()
+		_search.grab_focus())
+	_label("Every knob is listed by group. Click a group to open it, or type to filter.", column).modulate = Color(0.75, 0.82, 0.86)
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
@@ -258,23 +273,63 @@ func _build_tuning() -> void:
 	_status = _label("Sliders are live trials. Apply saves; Discard restores.", column)
 	_button("Close tuning", column, func() -> void: _tuning_panel.hide())
 
+func _search_style(border: Color) -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.11, 0.16, 0.23)
+	style.border_color = border
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(4)
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
+	return style
+
+## Empty search lists every group collapsed; a search opens each group with a match.
 func _refresh_tuning() -> void:
 	for child: Node in _knob_rows.get_children():
 		_knob_rows.remove_child(child)
 		child.queue_free()
+	var words: PackedStringArray = _search.text.to_lower().split(" ", false)
+	# Game and kit settings first, then feel stages; each section alphabetical.
 	var ids: Array = Kit.tuning.sets.keys()
-	ids.sort()
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		var a_feel: bool = Kit.tuning.sets[a] is KitFeelStage
+		var b_feel: bool = Kit.tuning.sets[b] is KitFeelStage
+		return a_feel != b_feel and b_feel or a_feel == b_feel and str(a) < str(b))
+	var section: String = ""
 	for id: StringName in ids:
 		var resource: KitTuningSet = Kit.tuning.sets[id]
 		var rows: Array[String] = []
+		var trials: int = 0
 		for knob: String in resource.knobs():
 			var metadata: Dictionary = resource.metadata(knob)
-			var haystack: String = ("%s %s %s" % [id, knob, metadata.get("help", "")]).to_lower()
-			if haystack.contains(_search.text.to_lower()):
+			var haystack: String = ("%s %s %s %s %s" % [id, resource.description, knob, knob.capitalize(), metadata.get("help", "")]).to_lower()
+			var matched: bool = true
+			for word: String in words:
+				matched = matched and haystack.contains(word)
+			if matched:
 				rows.append(knob)
+			if Kit.tuning.is_trial(id, knob):
+				trials += 1
 		if rows.is_empty():
 			continue
-		_label("%s — %s" % [str(id).capitalize(), resource.description], _knob_rows).add_theme_font_size_override("font_size", 19)
+		var next_section: String = "Feel stages · look and sound only, never rule outcomes" if resource is KitFeelStage else "Game and kit settings"
+		if next_section != section:
+			section = next_section
+			var heading: Label = _label(section, _knob_rows)
+			heading.add_theme_font_size_override("font_size", 16)
+			heading.modulate = Color(0.39, 0.89, 0.90)
+		var open: bool = not words.is_empty() or bool(_expanded.get(id, false))
+		var count: String = "%d knobs" % rows.size() if words.is_empty() else "%d of %d knobs match" % [rows.size(), resource.knobs().size()]
+		var header: Button = _button("%s %s — %s · %s%s" % ["▾" if open else "▸", str(id).capitalize(), resource.description, count, " · %d on trial" % trials if trials > 0 else ""], _knob_rows, func() -> void:
+			_expanded[id] = not bool(_expanded.get(id, false))
+			_refresh_tuning())
+		header.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		header.add_theme_font_size_override("font_size", 19)
+		header.set_meta("tuning_group", id)
+		if not open:
+			continue
 		for knob: String in rows:
 			var metadata: Dictionary = resource.metadata(knob)
 			var row: HBoxContainer = HBoxContainer.new()
@@ -317,6 +372,8 @@ func _refresh_tuning() -> void:
 		_button("Save as variant", buttons, func() -> void:
 			var error: Error = Kit.tuning.save_variant(id, variant.text)
 			_status.text = "Variant saved." if error == OK else "Could not save variant: " + error_string(error))
+	if _knob_rows.get_child_count() == 0:
+		_label("Nothing matches \"%s\". Try a word like range, energy, speed or camera, or press Clear to see every group." % _search.text, _knob_rows).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 func _process(delta: float) -> void:
 	_refresh_time += delta

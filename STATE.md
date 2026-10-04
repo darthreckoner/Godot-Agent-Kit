@@ -13,6 +13,7 @@ The designer's first playtest found three testbed problems. All three are fixed 
 - Mining worked from far away. mining.range was 8 m, measured centre to centre, and the ship started within reach of most rocks. Reach is now 2.5 m, about the drill touching the rock face, and the launch point (4.5 m from the nearest rock) is out of reach. The target label shows "in drill reach" or "fly X m closer", and the selection ring is gold in reach and red out of reach. A short beam runs from the drill tip to the struck rock on every committed hit. Parked within reach, the ship model turns its nose to the selected rock. The rejection now reads "Fly closer: the drill must reach the rock."
 - "Choose a rock that has not already broken" came from a stale target. A broken rock stayed selected, and clicking empty space or pressing Space still mined it. Now a broken target hands over to the nearest live rock, and Space must be released before mining continues on that new rock. A click that hits no rock does nothing. With no live rocks left, Space shows "No rock selected."
 - New tuning knobs: presentation.ship_turn_rate and presentation.camera_start_yaw.
+- F2 tuning panel (kit UI, see CHANGELOG Unreleased): it opened blank, because an empty search matched nothing, and the search box was nearly invisible. It now lists every group collapsed, with game and kit settings above feel stages. Search matches every typed word and opens matching groups. The search box is visible and takes the cursor when F2 opens.
 - Scenarios: mining scenarios now start parked 2 m from rock:000 (scenarios/mining_scenario.gd). economy_round_trip flies 50 ticks to the dock instead of 28. The kit_integrity 2D range probe uses a 2 m distance. A new mine_out_of_range scenario proves a launch-point hit rejects on mining.in_range with no cost, and that flying in and stopping makes the rock minable. tools/verify_ui.gd parks the ship within reach before its Space press.
 
 ## Delivery
@@ -53,7 +54,7 @@ Playtest patch (2026-10-04, Linux sandbox, Godot 4.7.2 official build, PowerShel
 - tools/kit.ps1 test: exit 0; all seven scenarios passed with repeat and midpoint save/reload.
 - tools/kit.ps1 compare feel_change_is_scoped mine_hit mine_hit_heavy: exit 0; A/B constraints identical.
 - tools/kit.ps1 lint and map: exit 0. GAME_MAP.md regenerated.
-- tools/verify_ui.tscn under Xvfb: all 11 UI checks passed.
+- tools/verify_ui.tscn under Xvfb: all 16 UI checks passed, including 5 new ones: F2 lists every group, the cursor is in search, clicking a group opens it, a no-match search says so, and the empty panel is screenshotted. Against the old overlay.gd the four new behaviour checks fail; the screenshot check passes either way. Screenshots were inspected.
 - A throwaway windowed probe (not committed) drove the real lab with physical keys. Results:
   - W+D flew nose-first toward the rocks.
   - A launch-point hit was rejected with "Fly closer".
