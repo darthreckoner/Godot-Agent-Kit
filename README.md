@@ -99,6 +99,14 @@ Open the target project in Godot to import its scripts. Kit boots without the mi
 
 Installed kit code should be changed in this source repository and reinstalled. The installer preserves unrelated target files. An extra untracked file inside the installed kit is reported before an ordinary reinstall.
 
+### Rules and requests for games built on the kit
+
+- **Kit rules travel with the kit.** `addons/agent_kit/KIT_RULES.md` tells agents how gameplay is built on the kit: records, declared actions, tuning, events and feel, scenarios, and what to do when the kit is not enough. It updates with every reinstall.
+- **New games get starter files.** If the target has no `AGENTS.md` or `KIT_REQUESTS.md`, the installer copies starters from `templates/game/`. Fill in the [bracketed] parts of AGENTS.md for the game. Existing files are never overwritten; if an existing AGENTS.md does not mention `addons/agent_kit/KIT_RULES.md`, the installer warns and prints the line to add.
+- **Kit changes are requested, not made in the game.** Agents in a game write needed kit changes to `KIT_REQUESTS.md` (problem, workaround, proposed change, why it is reusable). Accepted requests become tickets in this repo, ship in a new version, and are reinstalled.
+- **Updates are a choice.** The manifest records which kit repo a game was installed from. When that repo has a newer VERSION, the game's `tools/kit.ps1` prints a notice. Read the CHANGELOG, reinstall, then run `tools/kit.ps1 test`.
+- **For a game template:** install the kit into the template project. The starter AGENTS.md and KIT_REQUESTS.md arrive with it, so every game made from the template starts with the rules.
+
 ## Where things belong
 
 | Folder | Contents |

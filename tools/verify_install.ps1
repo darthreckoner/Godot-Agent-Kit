@@ -53,6 +53,13 @@ func _ready() -> void:
 script = ExtResource("1")
 '@ | Set-Content -LiteralPath (Join-Path $testRoot 'smoke.tscn') -Encoding utf8
 & (Join-Path $PSScriptRoot 'install_kit.ps1') -Target $testRoot
+# A new game gets the starter AGENTS.md and KIT_REQUESTS.md, and the kit rules travel inside the kit.
+foreach ($name in @('AGENTS.md', 'KIT_REQUESTS.md', 'addons/agent_kit/KIT_RULES.md')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $testRoot $name))) { throw "Clean install did not provide $name." }
+}
+if ((Get-Content -LiteralPath (Join-Path $testRoot 'AGENTS.md') -Raw) -notmatch 'addons/agent_kit/KIT_RULES\.md') { throw 'Starter AGENTS.md does not point at the kit rules.' }
+$installedManifest = Get-Content -LiteralPath (Join-Path $testRoot 'addons/agent_kit/install_manifest.json') -Raw | ConvertFrom-Json
+if ($installedManifest.source -ne [System.IO.Path]::GetFullPath($sourceRoot)) { throw 'Install manifest does not record the kit repo it came from.' }
 # An unchanged reinstall must be safe.
 & (Join-Path $PSScriptRoot 'install_kit.ps1') -Target $testRoot
 $targetFile = Join-Path $testRoot 'addons/agent_kit/core/clock.gd'
@@ -76,7 +83,20 @@ try {
     if ($bootRun.Exit -ne 0 -or ($boot -join "`n") -notmatch 'INSTALL PASS' -or ($boot -join "`n") -match 'SCRIPT ERROR:|Parse Error:') { throw 'Installed project failed to boot with Kit.' }
     # Import-created UID files must not be treated as game edits.
     & (Join-Path $PSScriptRoot 'install_kit.ps1') -Target $testRoot
-    @{passed=$true; target=$testRoot; checks=@('clean install','unchanged reinstall','modified-file refusal','forced reinstall','headless import','all-service boot','manual turn','reinstall after import')} |
+    # A game's own AGENTS.md is never overwritten; a missing pointer to the kit rules gets a warning.
+    $ownAgents = "# AGENTS.md: existing game`nGame-specific rules only.`n"
+    Set-Content -LiteralPath (Join-Path $testRoot 'AGENTS.md') -Value $ownAgents -Encoding utf8 -NoNewline
+    $reinstall = (& (Join-Path $PSScriptRoot 'install_kit.ps1') -Target $testRoot 3>&1 | ForEach-Object { "$_" }) -join "`n"
+    if ((Get-Content -LiteralPath (Join-Path $testRoot 'AGENTS.md') -Raw) -ne $ownAgents) { throw 'Reinstall overwrote the game''s AGENTS.md.' }
+    if ($reinstall -notmatch 'KIT_RULES\.md') { throw 'Reinstall did not warn that AGENTS.md lacks the kit rules pointer.' }
+    # An installed game hears when its kit repo has a newer version.
+    $manifestFile = Join-Path $testRoot 'addons/agent_kit/install_manifest.json'
+    $olderManifest = Get-Content -LiteralPath $manifestFile -Raw | ConvertFrom-Json
+    $olderManifest.version = '0.0.1'
+    $olderManifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestFile -Encoding utf8
+    $notice = (& (Join-Path $testRoot 'tools/kit.ps1') lint | ForEach-Object { "$_" }) -join "`n"
+    if ($notice -notmatch 'Kit notice: this game has kit 0\.0\.1') { throw 'Installed kit.ps1 did not report the newer kit version.' }
+    @{passed=$true; target=$testRoot; checks=@('clean install','starter AGENTS.md and KIT_REQUESTS.md','kit rules inside the kit','manifest records kit source','unchanged reinstall','modified-file refusal','forced reinstall','headless import','all-service boot','manual turn','reinstall after import','existing AGENTS.md preserved with warning','newer-kit notice')} |
         ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $testRoot 'verification.json') -Encoding utf8
 }
 finally { $env:APPDATA = $previousAppData }

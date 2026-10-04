@@ -10,6 +10,18 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($Render -and $Play) { throw 'Choose either -Render (rule screenshots) or -Play (physical input scenarios).' }
 $projectRoot = Split-Path $PSScriptRoot -Parent
+# In a game, say when the kit repo this game was installed from has moved to a newer version.
+$installManifest = Join-Path $projectRoot 'addons/agent_kit/install_manifest.json'
+if (Test-Path -LiteralPath $installManifest) {
+    $installed = Get-Content -LiteralPath $installManifest -Raw | ConvertFrom-Json
+    $sourceVersion = if ($installed.source) { Join-Path $installed.source 'VERSION' } else { '' }
+    if ($sourceVersion -and (Test-Path -LiteralPath $sourceVersion)) {
+        $latest = (Get-Content -LiteralPath $sourceVersion -Raw).Trim()
+        if ($latest -ne $installed.version) {
+            Write-Output "Kit notice: this game has kit $($installed.version); the kit repo at $($installed.source) has $latest. Read its CHANGELOG, then reinstall when you choose (see addons/agent_kit/KIT_RULES.md)."
+        }
+    }
+}
 if ($Command -eq 'lint') {
     Write-Output 'Heuristic regex lint (not a proof of correctness).'
     $findings = @()

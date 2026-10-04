@@ -71,6 +71,16 @@ The designer's first playtest found three testbed problems. All three are fixed 
 - The designer's tools/kit.ps1 test on Windows died at the import step, before any scenario ran. Godot warned "Detected another project.godot at res://reports/install-smoke/…" on stderr, and Windows PowerShell 5.1 makes stderr lines terminating under 'Stop'. Fixed in kit.ps1 and verify_install.ps1 (see CHANGELOG); reports/.gdignore removes the warning itself.
 - Verified on Linux with PowerShell 7.4. The 5.1 failure could not be reproduced here: 7.x no longer applies 'Stop' to native stderr. The helper captured the real Godot warning as text, exit 0. kit.ps1 test passed 7/7 with an install-smoke project under reports/ and no warning in import.log. verify_install.ps1 passed end to end, and verify_ui still passes 24/24 with reports/.gdignore. Confirmed on 2026-10-04: the designer reports tools/kit.ps1 test passes on Windows.
 
+## Kit adoption in games (2026-10-04)
+
+- The designer asked how the kit gets applied to real games and to the game dev template, and whether game work flows back into the kit. Neither direction is automatic, so the rules and process are now shipped with the kit.
+- addons/agent_kit/KIT_RULES.md holds the agent rules for games: where code goes, how gameplay is built, feel, evidence, kit requests and updating. It travels with the kit and updates on reinstall. The kit repo's AGENTS.md says to keep it in step with kit changes.
+- templates/game/AGENTS.md and KIT_REQUESTS.md are starter files. install_kit.ps1 copies them only when missing and warns if an existing AGENTS.md lacks the KIT_RULES.md pointer. The manifest records the kit repo path. An installed game's kit.ps1 prints a notice when that repo's VERSION differs from the installed one.
+- install_kit.ps1 used [System.IO.Path]::GetRelativePath, which Windows PowerShell 5.1 does not have; it is replaced by a helper. Manifest paths keep their format (checked: 76 entries, same keys).
+- Verified on Linux with Godot 4.7.2 and PowerShell 7.4. verify_install.ps1 passes, with new checks: starter files on a clean install, KIT_RULES.md inside the kit, manifest source, an existing AGENTS.md preserved with a warning, and the newer-kit notice. With the notice deliberately broken, verify_install fails on that check. tools/kit.ps1 test and lint pass. Not run on Windows PowerShell 5.1.
+- Full tools/kit.ps1 test under Xvfb: 10/10 sim scenarios pass. Play scenarios: play_flight_and_dock and play_overlay_defaults pass, play_targeting fails. The failing assertion is "Idle F3 explains that it finishes a current effect". It fails identically on untouched main (86c46ae) twice in this Linux container, so it is pre-existing and not caused by this change; it passed on Windows per the 0.2.0 verification. Suspected cause, unconfirmed: this container has no audio device (Godot's dummy driver), and Kit.feel.is_playing() may stay true while a sound has not finished, so F3 is not idle 0.8 s after B. Worth a look: an environment-dependent play scenario will mislead future agents.
+- Not done here: the game dev template repo itself. To adopt, install the kit into the template project, which brings the starter files with it.
+
 ## Open tickets
 
 10. Editable controls (designer request, 2026-10-04; designer chose option A: Apply saves the game's default controls into the project, like tuning).

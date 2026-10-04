@@ -6,6 +6,10 @@ $targetRoot = [System.IO.Path]::GetFullPath($Target)
 if (-not (Test-Path -LiteralPath (Join-Path $targetRoot 'project.godot') -PathType Leaf)) {
     throw 'Target must contain project.godot. Create an empty Godot 4.7 project first.'
 }
+# [System.IO.Path]::GetRelativePath does not exist in Windows PowerShell 5.1 (.NET Framework).
+function Get-RelativePath([string]$Root, [string]$Path) {
+    return $Path.Substring($Root.TrimEnd('\', '/').Length).TrimStart('\', '/').Replace('\', '/')
+}
 $sourceKit = Join-Path $sourceRoot 'addons/agent_kit'
 $targetKit = Join-Path $targetRoot 'addons/agent_kit'
 if ($targetRoot -eq [System.IO.Path]::GetFullPath($sourceRoot)) { throw 'Choose another project as the target.' }
@@ -20,7 +24,7 @@ if ((Test-Path -LiteralPath $targetKit) -and -not $Force) {
         }
     }
     foreach ($file in Get-ChildItem -LiteralPath $targetKit -Recurse -File) {
-        $relative = [System.IO.Path]::GetRelativePath($targetRoot, $file.FullName).Replace('\','/')
+        $relative = Get-RelativePath $targetRoot $file.FullName
         if ($relative -eq 'addons/agent_kit/install_manifest.json' -or $relative.EndsWith('.uid')) { continue }
         if (-not $manifest.files.PSObject.Properties[$relative]) { throw "Untracked kit file $relative. Use -Force to replace local files." }
     }
@@ -43,11 +47,12 @@ Copy-Item -LiteralPath (Join-Path $sourceRoot 'VERSION') -Destination (Join-Path
 $hashes = [ordered]@{}
 foreach ($file in Get-ChildItem -LiteralPath $targetKit -Recurse -File | Sort-Object FullName) {
     if ($file.Name -eq 'install_manifest.json') { continue }
-    $relative = [System.IO.Path]::GetRelativePath($targetRoot, $file.FullName).Replace('\','/')
+    $relative = Get-RelativePath $targetRoot $file.FullName
     $hashes[$relative] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 $hashes['tools/kit.ps1'] = (Get-FileHash -LiteralPath $targetWrapper -Algorithm SHA256).Hash.ToLowerInvariant()
-@{version=(Get-Content -LiteralPath (Join-Path $sourceRoot 'VERSION') -Raw).Trim(); files=$hashes} |
+# 'source' lets the installed tools/kit.ps1 notice when this kit repo has a newer version.
+@{version=(Get-Content -LiteralPath (Join-Path $sourceRoot 'VERSION') -Raw).Trim(); source=[System.IO.Path]::GetFullPath($sourceRoot); files=$hashes} |
     ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestPath -Encoding utf8
 if ($projectText -notmatch '(?m)^Kit=') {
     if ($projectText -match '(?m)^\[autoload\]\s*$') {
@@ -57,5 +62,17 @@ if ($projectText -notmatch '(?m)^Kit=') {
     else {
         Add-Content -LiteralPath $projectPath -Value "`n[autoload]`nKit=`"*res://addons/agent_kit/kit.gd`"" -Encoding utf8
     }
+}
+# Game-owned starter files: copied only when missing, never overwritten.
+foreach ($name in @('AGENTS.md', 'KIT_REQUESTS.md')) {
+    $destination = Join-Path $targetRoot $name
+    if (-not (Test-Path -LiteralPath $destination)) {
+        Copy-Item -LiteralPath (Join-Path $sourceRoot "templates/game/$name") -Destination $destination
+        Write-Output "Added starter $name. Fill in its [bracketed] parts for this game."
+    }
+}
+$agentsText = Get-Content -LiteralPath (Join-Path $targetRoot 'AGENTS.md') -Raw
+if ($agentsText -notmatch 'addons/agent_kit/KIT_RULES\.md') {
+    Write-Warning 'AGENTS.md does not point agents at the kit rules. Add this line to its "Read first" list: addons/agent_kit/KIT_RULES.md: how gameplay is built on Godot Agent Kit. Follow it.'
 }
 Write-Output "Installed Godot Agent Kit into $targetRoot. Import the project with Godot 4.7, then boot it."

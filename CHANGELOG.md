@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `addons/agent_kit/KIT_RULES.md`: the rules agents in a game follow to build on the kit, including the kit-request process and how to update. It ships inside the kit and updates on reinstall.
+- `tools/install_kit.ps1` adds starter `AGENTS.md` and `KIT_REQUESTS.md` (from `templates/game/`) to a game that has none, never overwrites existing ones, and warns when an existing AGENTS.md does not point at KIT_RULES.md. The install manifest now records the kit repo it came from.
+- An installed game's `tools/kit.ps1` prints a notice when that kit repo has a newer VERSION.
+- `tools/install_kit.ps1` no longer uses `[System.IO.Path]::GetRelativePath`, which does not exist in Windows PowerShell 5.1.
+
 ## 0.2.0 — 2026-10-04
 
 - `KitActionDef.charge_policy_key` optionally binds charge policy to an integer tuning knob (0: ON_SUCCESS, 1: ON_ATTEMPT). The runner reads it at execution, including queued actions. Missing or invalid bindings reject by `action.charge_policy`; unbound definitions retain their existing policy. GAME_MAP names the binding. The mining setup bridge is removed.
