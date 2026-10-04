@@ -6,5 +6,7 @@
 script = ExtResource("1")
 range = 4.0
 cooldown = 0.299997
+tool_power = 3.0
+hard_threshold = 3.0
 id = &"mining"
 description = "Mining rules and charge policy."
