@@ -65,13 +65,29 @@ if (-not $godotBin -and (Test-Path -LiteralPath $localConfig)) {
 if (-not $godotBin -or -not (Test-Path -LiteralPath $godotBin -PathType Leaf)) {
     throw 'Set GODOT_BIN or put a valid godot_bin path in kit.local.json (see kit.local.example.json).'
 }
+# Windows PowerShell 5.1 turns each line a native program writes to stderr into a terminating
+# error under 'Stop'. Godot prints harmless warnings there, so run it under 'Continue', keep every
+# line as plain text and let the checks below decide what counts as a failure.
+function Invoke-Godot([string[]]$Arguments) {
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $lines = @(& $godotBin @Arguments 2>&1 | ForEach-Object { "$_" })
+        return @{ Output = $lines; Exit = $LASTEXITCODE }
+    }
+    finally { $ErrorActionPreference = $previousPreference }
+}
 $profilePath = Join-Path $projectRoot 'reports/engine-profile'
 New-Item -ItemType Directory -Path $profilePath -Force | Out-Null
+# Reports hold screenshots and install-smoke projects; Godot must not import or scan them.
+$reportsIgnore = Join-Path $projectRoot 'reports/.gdignore'
+if (-not (Test-Path -LiteralPath $reportsIgnore)) { New-Item -ItemType File -Path $reportsIgnore -Force | Out-Null }
 $previousAppData = $env:APPDATA
 try {
     $env:APPDATA = $profilePath
-    $importOutput = & $godotBin --headless --path $projectRoot --editor --import --quit 2>&1
-    $importExit = $LASTEXITCODE
+    $import = Invoke-Godot @('--headless', '--path', $projectRoot, '--editor', '--import', '--quit')
+    $importOutput = $import.Output
+    $importExit = $import.Exit
     $importOutput | Set-Content -LiteralPath (Join-Path $profilePath 'import.log') -Encoding utf8
     if ($importExit -ne 0 -or ($importOutput -join "`n") -match 'SCRIPT ERROR:|Parse Error:|Failed to load script') {
         $importOutput | Write-Output
@@ -87,8 +103,9 @@ try {
         if (-not $VariantA -or -not $VariantB) { throw 'compare needs scenario, variant A, and variant B.' }
         $engineArgs += @('--a', $VariantA, '--b', $VariantB)
     }
-    $runOutput = & $godotBin @engineArgs 2>&1
-    $runExit = $LASTEXITCODE
+    $run = Invoke-Godot $engineArgs
+    $runOutput = $run.Output
+    $runExit = $run.Exit
     $runOutput | Write-Output
     $runOutput | Set-Content -LiteralPath (Join-Path $profilePath "$Command.log") -Encoding utf8
     # A sandbox certificate-store warning does not affect offline tests; every other engine error fails.

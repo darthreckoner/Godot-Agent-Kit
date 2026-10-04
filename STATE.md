@@ -65,6 +65,11 @@ The designer's first playtest found three testbed problems. All three are fixed 
 
 - F1 Why's Thing dropdown covered the whole screen and listed rocks out of order (rock:000, then 029 down to 001). Godot's StringName sort is not alphabetical, so KitWorld.ids() broke its documented sorted order. Fixed (see CHANGELOG). The picker is now a short scrolling list under its button, grouped Dock/Rock/Ship.
 
+## Windows test-command fix (2026-10-04)
+
+- The designer's tools/kit.ps1 test on Windows died at the import step, before any scenario ran. Godot warned "Detected another project.godot at res://reports/install-smoke/…" on stderr, and Windows PowerShell 5.1 makes stderr lines terminating under 'Stop'. Fixed in kit.ps1 and verify_install.ps1 (see CHANGELOG); reports/.gdignore removes the warning itself.
+- Verified on Linux with PowerShell 7.4. The 5.1 failure could not be reproduced here: 7.x no longer applies 'Stop' to native stderr. The helper captured the real Godot warning as text, exit 0. kit.ps1 test passed 7/7 with an install-smoke project under reports/ and no warning in import.log. verify_install.ps1 passed end to end, and verify_ui still passes 24/24 with reports/.gdignore. Needs one confirming run on the designer's Windows PowerShell.
+
 ## Open tickets for the reviewer (2026-10-04)
 
 All tickets from the review and from the playtests in one place. None of these are implemented yet.
