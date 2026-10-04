@@ -169,7 +169,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 
   | Knob | Value | Unit | Range | Help |
   |---|---:|---|---|---|
-  | duration | 0.35 | s | 0.0 to 5.0 | Presentation time for this stage; never changes rule time. |
+  | duration | 2.5 | s | 0.0 to 5.0 | Presentation time for this stage; never changes rule time. |
   | sound_marker_sec | 0.0 | s | 0.0 to 5.0 | Time in the sound where the stage makes contact. |
   | shake_amplitude | 0.0 | strength | 0.0 to 2.0 | Strength sent to the game's presentation camera. |
   | shake_frequency | 20.0 | Hz | 0.0 to 80.0 | Shake oscillations per second. |
@@ -227,8 +227,8 @@ Generated from declarations. Change the source resource and regenerate this map.
   | Knob | Value | Unit | Range | Help |
   |---|---:|---|---|---|
   | energy_cost | 4.0 | energy | 0.0 to 20.0 | Energy paid for each successful mining hit. |
-  | range | 2.5 | m | 1.0 to 30.0 | Reach from the ship's centre to the rock's centre. About 2 m puts the drill against the rock face. |
-  | cooldown | 0.3 | s | 0.033333 to 3.0 | Rule time between hits, independent of animation. |
+  | range | 4.0 | m | 1.0 to 30.0 | Reach from the ship's centre to the rock's centre. About 2 m puts the drill against the rock face. |
+  | cooldown | 0.299997 | s | 0.033333 to 3.0 | Rule time between hits, independent of animation. |
   | tool_power | 2.0 | power | 0.25 to 10.0 | Tool strength compared with the rock's hardness. |
   | iron_yield | 3.0 | ore | 0.0 to 20.0 | Iron collected when an iron rock breaks. |
   | gold_yield | 1.0 | ore | 0.0 to 20.0 | Gold collected when a gold rock breaks. |
@@ -263,7 +263,7 @@ Generated from declarations. Change the source resource and regenerate this map.
   |---|---:|---|---|---|
   | speed | 4.0 | m/s | 0.5 to 20.0 | Maximum flight speed. |
   | accel | 7.0 | m/s² | 0.5 to 30.0 | How quickly the ship responds and brakes. |
-  | energy_max | 40.0 | energy | 1.0 to 200.0 | Full energy capacity on the next setup. Restart needed. |
+  | energy_max | 60.0 | energy | 1.0 to 200.0 | Full energy capacity on the next setup. Restart needed. |
   | cargo_capacity | 12.0 | ore | 1.0 to 100.0 | Shared capacity of all ore types on the next setup. Restart needed. |
   | starting_credits | 20.0 | credits | 0.0 to 1000.0 | Credits at the start of a run. Restart needed. |
 
@@ -282,7 +282,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 - **mine_hit** — Light hit look — same damage Event: mine_hit; stages: Windup (0.05s) → Contact (0.04s) → Impact (0.16s) → Debris (0.22s). [game/feel/mine_hit.tres](game/feel/mine_hit.tres)
 - **mine_hit_heavy** — Heavy hit look — same damage Event: mine_hit; stages: Windup (0.16s) → Contact (0.08s) → Heavy impact (0.35s) → Debris (0.35s). [game/feel/mine_hit_heavy.tres](game/feel/mine_hit_heavy.tres)
 - **mine_rejected** — mine rejected Event: mine_rejected; stages: Dull clunk (0.12s). [game/feel/mine_rejected.tres](game/feel/mine_rejected.tres)
-- **rock_break** — rock break Event: rock_break; stages: Fracture (0.18s) → Debris (0.35s). [game/feel/rock_break.tres](game/feel/rock_break.tres)
+- **rock_break** — rock break Event: rock_break; stages: Fracture (0.18s) → Debris (2.5s). [game/feel/rock_break.tres](game/feel/rock_break.tres)
 - **ship_moved** — ship moved Event: ship_moved; stages: Thrusters (0.033333s). [game/feel/ship_moved.tres](game/feel/ship_moved.tres)
 - **target_selected** — Target selected Event: target_selected; stages: Ready to drill (0.12s). [game/feel/target_selected.tres](game/feel/target_selected.tres)
 
