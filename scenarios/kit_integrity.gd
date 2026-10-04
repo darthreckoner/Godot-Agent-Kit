@@ -40,7 +40,7 @@ func execute_custom(command: Dictionary, _view: Node) -> bool:
 			type.id = &"unit"
 			type.fields = {"position": "array", "quantity": "int"}
 			local_world.register_type(type)
-			var placed: bool = local_world.put(&"unit:a", &"unit", {"position": [0.0, 0.0], "quantity": 1}) and local_world.put(&"unit:b", &"unit", {"position": [3.0, 4.0], "quantity": 0})
+			var placed: bool = local_world.put(&"unit:a", &"unit", {"position": [0.0, 0.0], "quantity": 1}) and local_world.put(&"unit:b", &"unit", {"position": [1.2, 1.6], "quantity": 0})
 			var condition: KitCondition = KitCondition.new()
 			condition.rule_id = &"probe.2d_range"
 			condition.kind = "in_range"

@@ -6,7 +6,7 @@
 [sub_resource type="Resource" id="c0"]
 script = ExtResource("3")
 rule_id = &"mining.in_range"
-description = "The target must be within mining range."
+description = "Fly closer: the drill must reach the rock."
 kind = "in_range"
 field = "position"
 tuning_key = "mining.range"
