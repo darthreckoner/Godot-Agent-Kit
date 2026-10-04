@@ -1,11 +1,8 @@
 # Continuity
 
-- Objective: complete BUILD_PROMPT.md v0.1, preserving DESIGN.md's readable/safe/fast-to-feel pillars.
-- Work is in C:\Dev\godot-agent-kit on main. Initial checkout was clean; no pre-existing implementation was replaced.
-- Implementation is addon + mining testbed; the reusable addon has no mining, camera or dimensionality dependencies.
-- Local kit.local.json selects installed Godot 4.7.2; it is ignored. Verification profiles and reports stay under ignored reports/.
-- Required scenarios and kit_integrity pass repeat and save/reload. Windowed A/B and overlay screenshots have been inspected.
-- Empty-project installation, manifest edit refusal and Kit/manual-clock boot have passed.
-- Final map/lint/dump/tests, windowed compare, installation and physical-key/overlay verification passed; STATE.md records exact evidence paths.
-- Build commit d2bac79, including GAME_MAP.md, was pushed to origin/main at the designer's request. All six scenarios passed repeat/save-reload again before pushing; reports/push-test.log records delivery verification.
-- Human feel acceptance remains pending. Sandbox engine starts report an inaccessible Windows certificate store; offline runs proceed.
+- Completed all nine open STATE.md tickets on codex/open-tickets-2026-10-04, based on fetched main 05c66d87227871d45c0753564d439cc54ad5c01a. Initial checkout was clean.
+- Kit version 0.2.0; save schema 1 is preserved. Charge policy binds to tuning; actions stage touched records; RNG audit sorts names as text. Kit remains independent of mining/camera/dimensionality.
+- Lab uses click-only selection and one-time smooth facing, Space-only drilling, cleared broken targets and both Enter keys. Designer confirmed clearer F3/current-effect and gold/F2-power labels, with no upgrade system or persistent effects toggle.
+- tools/kit.ps1 test passes 10 sim + 3 windowed physical-input scenarios, all with repeat/save-reload. UI verification passes 25 checks. Rendered feel compare and installer checks pass; GAME_MAP, lint and diff checks pass.
+- STATE.md records reports, performance measurements, inspected screenshots and preserved failed runs. Generated evidence, engine profiles and kit.local.json remain ignored.
+- Delivery is the local implementation branch. Human feel acceptance of the new targeting/nose workflow remains pending. The sandbox certificate-store warning does not prevent offline verification.

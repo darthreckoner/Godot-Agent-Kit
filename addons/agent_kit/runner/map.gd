@@ -33,10 +33,13 @@ static func generate() -> Error:
 		var resource: Resource = load(path)
 		var link: String = "[%s](%s)" % [path.trim_prefix("res://"), path.trim_prefix("res://")]
 		if resource is KitActionDef:
+			var charge: String = KitActionDef.ChargePolicy.keys()[resource.charge_policy]
+			if not resource.charge_policy_key.is_empty():
+				charge = "tuning/%s (0: ON_SUCCESS; 1: ON_ATTEMPT)" % resource.charge_policy_key
 			var requirements: Array[String] = []
 			for condition: KitCondition in resource.requires:
 				requirements.append("%s: %s" % [condition.rule_id, condition.description])
-			categories.Actions.append("- **%s** — %s %s\n  - Requires: %s\n  - Charge: %s; overflow: %s; tuning: %s; success events: %s; rejection events: %s; clip events: %s.\n" % [resource.id, resource.description, link, "; ".join(requirements) if not requirements.is_empty() else "handler checks", KitActionDef.ChargePolicy.keys()[resource.charge_policy], KitActionDef.OverflowPolicy.keys()[resource.overflow_policy], resource.tuning_set, ", ".join(resource.events_on_success), ", ".join(resource.events_on_reject), ", ".join(resource.events_on_clip)])
+			categories.Actions.append("- **%s** — %s %s\n  - Requires: %s\n  - Charge: %s; overflow: %s; tuning: %s; success events: %s; rejection events: %s; clip events: %s.\n" % [resource.id, resource.description, link, "; ".join(requirements) if not requirements.is_empty() else "handler checks", charge, KitActionDef.OverflowPolicy.keys()[resource.overflow_policy], resource.tuning_set, ", ".join(resource.events_on_success), ", ".join(resource.events_on_reject), ", ".join(resource.events_on_clip)])
 		elif resource is KitEventRegistry:
 			for event: String in resource.declarations:
 				var definition: Dictionary = resource.declarations[event]

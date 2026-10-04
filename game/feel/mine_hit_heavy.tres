@@ -8,6 +8,6 @@
 [resource]
 script = ExtResource("1")
 id = &"mine_hit_heavy"
-description = "Heavy mining impact"
+description = "Heavy hit look — same damage"
 trigger_event = &"mine_hit"
 stages = Array[ExtResource("stage")]([ExtResource("s0"), ExtResource("s1"), ExtResource("s2"), ExtResource("s3")])

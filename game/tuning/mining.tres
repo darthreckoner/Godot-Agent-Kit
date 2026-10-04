@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-range = 3.5
+range = 4.0
 cooldown = 0.299997
 tool_power = 3.0
 hard_threshold = 3.0

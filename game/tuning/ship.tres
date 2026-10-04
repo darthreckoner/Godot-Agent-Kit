@@ -1,6 +1,9 @@
-[gd_resource type="Resource" script_class="ShipTuning" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ShipTuning" format=3]
+
 [ext_resource type="Script" path="res://game/tuning/ship_tuning.gd" id="1"]
+
 [resource]
 script = ExtResource("1")
+energy_max = 60.0
 id = &"ship"
 description = "Flight and ship capacities."

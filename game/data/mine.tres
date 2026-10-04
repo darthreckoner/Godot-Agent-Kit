@@ -37,6 +37,7 @@ description = "Hit a selected rock; pay energy and collect ore on break."
 handler = ExtResource("2")
 requires = Array[ExtResource("3")]([SubResource("c0"), SubResource("c1"), SubResource("c2")])
 tuning_set = &"mining"
+charge_policy_key = "mining.charge_on_attempt"
 events_on_success = Array[StringName]([&"mine_hit"])
 events_on_reject = Array[StringName]([&"mine_rejected"])
 events_on_clip = Array[StringName]([&"cargo_clipped"])

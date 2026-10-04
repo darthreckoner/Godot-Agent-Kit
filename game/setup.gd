@@ -14,16 +14,14 @@ static func configure(seed_value: int = 20261003, scenario: bool = false, varian
 	Kit.events.register(load("res://game/data/events.tres"))
 	for id: String in ["mine", "sell_and_refuel", "move_ship"]:
 		Kit.actions.register(load("res://game/data/%s.tres" % id))
-	for id: String in ["mine_hit_heavy", "mine_hit", "rock_break", "mine_rejected", "cargo_clipped", "ship_moved", "dock_success", "dock_rejected"]:
+	for id: String in ["mine_hit_heavy", "mine_hit", "rock_break", "mine_rejected", "cargo_clipped", "ship_moved", "dock_success", "dock_rejected", "target_selected"]:
 		var sequence: KitFeelSequence = load("res://game/feel/%s.tres" % id)
 		if sequence == null:
 			return false
 		Kit.feel.register(sequence)
-	Kit.tuning.changed.connect(_tuning_changed) if not Kit.tuning.changed.is_connected(_tuning_changed) else null
 	if not variant.is_empty():
 		if not use_variant(variant):
 			return false
-	_tuning_changed("mining.charge_on_attempt")
 	var ship: Dictionary = {
 		"position": [0.0, 0.0, 0.0], "velocity": [0.0, 0.0, 0.0],
 		"energy": float(Kit.tuning.value("ship.energy_max")), "energy_max": float(Kit.tuning.value("ship.energy_max")),
@@ -44,10 +42,6 @@ static func configure(seed_value: int = 20261003, scenario: bool = false, varian
 static func finish_setup() -> void:
 	Kit.world.writable = false
 
-static func _tuning_changed(key: String) -> void:
-	if key == "mining.charge_on_attempt" and Kit.actions.definitions.has(&"mine"):
-		Kit.actions.definitions[&"mine"].charge_policy = int(Kit.tuning.value(key))
-
 static func use_variant(path: String) -> bool:
 	var resource_path: String = path
 	if not path.begins_with("res://"):
@@ -61,7 +55,6 @@ static func use_variant(path: String) -> bool:
 	var resource: Resource = load(resource_path)
 	if resource is KitTuningSet:
 		Kit.tuning.register(resource, resource_path)
-		_tuning_changed("mining.charge_on_attempt")
 		return true
 	if resource is KitFeelSequence:
 		Kit.feel.register(resource)
