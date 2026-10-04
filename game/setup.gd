@@ -3,6 +3,11 @@ extends RefCounted
 
 static func configure(seed_value: int = 20261003, scenario: bool = false, variant: String = "") -> bool:
 	Kit.reset(seed_value, scenario)
+	var controls_path: String = "res://game/data/controls.tres"
+	var controls_resource: KitControlSet = ResourceLoader.load(controls_path, "", ResourceLoader.CACHE_MODE_IGNORE)
+	if not Kit.controls.register(controls_resource, controls_path, scenario):
+		push_error(Kit.controls.last_message)
+		return false
 	for id: String in ["mining", "ship", "economy", "presentation"]:
 		var path: String = "res://game/tuning/%s.tres" % id
 		var resource: KitTuningSet = load(path)

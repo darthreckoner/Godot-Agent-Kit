@@ -33,17 +33,17 @@ renderer/rendering_method="gl_compatibility"
 @'
 extends Node
 func _ready() -> void:
-    var services: Array = [Kit.world, Kit.actions, Kit.events, Kit.log, Kit.rng, Kit.clock, Kit.tuning, Kit.feel, Kit.save]
+    var services: Array = [Kit.world, Kit.actions, Kit.events, Kit.log, Kit.rng, Kit.clock, Kit.tuning, Kit.feel, Kit.save, Kit.controls]
     for service: Variant in services:
         if service == null:
             get_tree().quit(1)
             return
     Kit.clock.mode = KitClock.Mode.MANUAL_TURN
     Kit.clock.advance()
-    if Kit.clock.tick != 1 or get_node_or_null("/root/Kit") == null:
+    if Kit.clock.tick != 1 or get_node_or_null("/root/Kit") == null or Kit.controls.actions.size() != 3 or not InputMap.has_action(&"kit_tuning"):
         get_tree().quit(1)
         return
-    print("INSTALL PASS: Kit booted with all nine services and manual clock.")
+    print("INSTALL PASS: Kit booted with all ten services and default kit controls and manual clock.")
     get_tree().quit(0)
 '@ | Set-Content -LiteralPath (Join-Path $testRoot 'smoke.gd') -Encoding utf8
 @'

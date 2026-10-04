@@ -2,8 +2,23 @@
 
 ## Build version
 
-0.2.0 — all nine review/playtest tickets implemented on 2026-10-04, verified on Windows with Godot 4.7.2. Save schema remains 1.
-Local branch: codex/open-tickets-2026-10-04, created from fetched main at 05c66d87227871d45c0753564d439cc54ad5c01a. The earlier implementation and playtest history are retained below.
+0.3.0 — ticket 10 (editable controls) implemented on 2026-10-04, verified on Windows with Godot 4.7.2. Save schema remains 1.
+Implementation branch: codex/ticket-10-editable-controls, created from clean b1c81d8e10df5e9782eed783cc3c59f4c6efe641. The designer reported a passing playtest and authorized commit, push and merge on 2026-10-04. The earlier implementation and playtest history are retained below.
+
+## Ticket 10 delivery and verification (2026-10-04)
+
+- Added KitControlAction / KitControlSet declarations and Kit.controls. Each action has an ID, plain-English description, group and up to two physical keyboard or mouse slots. Boot registration validates the whole declaration before changing InputMap. Kit F1/F2/F3 shortcuts share the same conflict checks as the game.
+- F2 starts with a collapsed Controls group. Slot capture, conflict refusal, Trial highlighting, Apply, Discard, Reset to defaults, clearing slots and capture cancellation are available. Apply writes the game's project controls resource, including kit overrides, without editing addon defaults. Save payloads and rule hashes exclude bindings.
+- The lab declares all flight, camera, targeting, drill, dock, trial and session inputs in game/data/controls.tres. Enter and Numpad Enter are two slots of one action. Views read named actions; hints and instructions read live bindings. Five hint lines fit the window, with toasts above them. The Controls list scrolls inside F2. New-run status explains trials instead of retaining an earlier Apply message.
+- Play scenarios resolve named actions to real input events and begin with declared reset bindings. play_controls proves K flies after rebinding, W stops, hints update, Space conflicts refuse with the drill action named, Discard restores W, a second slot accepts a mouse button, kit shortcuts can be rebound, Reset/Discard work after Apply, and a fresh registration reads saved bindings. Apply tests write only report copies.
+- Committed designer tuning is preserved: mining range 4 m, tool power 3, gold hardness 3, and the 2.5 s rock-break debris stage. The hard-rock sim fixture explicitly exceeds tool power; play/UI fixtures use original mining values. The idle-effect probe waits for declared durations. These repair test assumptions exposed by the current checkout without altering gameplay resources or rule handlers. Gold is minable with the current project tuning; older notes below describe original defaults.
+- VERSION, addon VERSION, plugin version and save wrapper kit_version are 0.3.0. CHANGELOG and README document the new API/file format, reset-versus-applied defaults and unchanged schema 1. GAME_MAP includes all 21 controls and source files.
+- tools/kit.ps1 test: exit 0, 10/10 sim scenarios and 4/4 windowed play scenarios, each with repeat and midpoint save/reload. Logs: reports/engine-profile/test.log and play.log. Final sim reports: reports/<scenario>/20261004-164104* through 164126*. Final play reports: reports/play_controls/20261004-164128-1960945, reports/play_flight_and_dock/20261004-164131-5105600, reports/play_overlay_defaults/20261004-164142-15828152, reports/play_targeting/20261004-164144-17262170.
+- tools/verify_ui.tscn: exit 0, 27/27 checks. Evidence: reports/ticket10-ui-complete.log and reports/ui-verification/20261004T164235-1306978/report.json. tools/kit.ps1 compare feel_change_is_scoped mine_hit mine_hit_heavy -Render: exit 0, identical world/rule hashes, constraints, energy/cargo and action ticks [0, 9]; report: reports/feel_change_is_scoped/20261004-163909-1852555/report.json. tools/kit.ps1 map and lint: exit 0; git diff --check passes.
+- tools/verify_install.ps1: exit 0 on fresh retry; reports/install-smoke/9f7f478aa6934a4d9a2d8fedd644c274/verification.json and boot.log prove clean/unchanged/forced installation, local-edit refusal, import, all ten services/default kit controls and manual clock. First import exited 1 without script/resource errors; its log remains in reports/install-smoke/5c005c19c7244bbd88566625c8f8b45f/import.log. Cause is unconfirmed.
+- Screenshots inspected: final play_controls controls_group.png, controls_conflict.png and rebound_flight_hints.png; controls_trial.png from reports/play_controls/20261004-163720-1935148; final default_tuning/world/why/log/events images; final targeting heavy_same_damage.png and broken_target_cleared.png; final flight/dock numpad_enter_docks.png; final UI tuning_trial.png; both rendered compare impact.png images. Labels, slots, scrolling, default state, hints, toasts and cosmetic differences are readable at 1280x720. No remaining ticket-specific visual blocker was found. Earlier failed play-control/targeting reports and diagnostic logs remain under reports/.
+- Designer acceptance: on 2026-10-04 the designer reported "play test passes" and requested commit, push and merge. This records human acceptance of the current 0.3.0 lab; individual manual steps were not enumerated. Existing model overlap and the offline certificate warning remain.
+- Pre-publication rerun after acceptance: tools/kit.ps1 test exited 0 with 10/10 sim and 4/4 play scenarios, all repeat/save-reload checks passing. Sim reports span 20261004-165430* through 165452*. Play reports: reports/play_controls/20261004-165455-1974302, reports/play_flight_and_dock/20261004-165458-5188175, reports/play_overlay_defaults/20261004-165509-15938340, reports/play_targeting/20261004-165510-17371570. Inspected this rerun's controls_group.png, controls_conflict.png, rebound_flight_hints.png and default_tuning.png; labels, controls, hints and panel bounds remain readable with no ticket-specific visual blocker.
 
 ## Playtest patch (2026-10-04)
 
@@ -18,7 +33,7 @@ The designer's first playtest found three testbed problems. All three are fixed 
 
 ## Delivery
 
-- Current ticket work is on local branch codex/open-tickets-2026-10-04. VERSION, addon VERSION, plugin version and save wrapper kit_version are 0.2.0. CHANGELOG and README describe the interface changes; GAME_MAP is regenerated from declarations.
+- The earlier nine-ticket work was delivered on codex/open-tickets-2026-10-04 at version 0.2.0. Current ticket 10 delivery is recorded above at 0.3.0.
 - Build commit d2bac79 was pushed to origin/main on 2026-10-03 at the designer's request.
 - Before pushing, tools/kit.ps1 test returned exit 0: all six scenarios passed repeat and save/reload again. Evidence: reports/push-test.log and reports/<scenario>/20261003-1103*/report.json.
 
@@ -73,7 +88,11 @@ The designer's first playtest found three testbed problems. All three are fixed 
 
 ## Open tickets
 
-10. Editable controls (designer request, 2026-10-04; designer chose option A: Apply saves the game's default controls into the project, like tuning).
+None on this branch. Ticket 10 is implemented and the designer's playtest passes. Ticket 11 and kit-distribution work exist separately on origin/claude/v0-1-review-issues-1ntmju at bc43b44; they are outside this ticket's merge.
+
+## Completed ticket 10 scope
+
+10. Editable controls (implemented 2026-10-04; designer chose option A: Apply saves the game's default controls into the project, like tuning).
     - Problem: every key is hard-wired.
       - game/views/mining_lab.gd checks KEY_W, KEY_SPACE, etc. directly, and Numpad Enter is a second hard-coded case (KEY_ENTER, KEY_KP_ENTER).
       - The key-hint line is typed by hand and has gone stale more than once.
@@ -103,7 +122,7 @@ The designer's first playtest found three testbed problems. All three are fixed 
 
 ## Completed review/playtest tickets (2026-10-04)
 
-All nine tickets below are implemented. Human feel acceptance remains a separate playtest step.
+All nine tickets below are implemented. The designer reported a passing playtest of the current 0.3.0 lab on 2026-10-04.
 
 1. Hit-look labels in hints, HUD, toasts and Feel pickers explicitly say light/heavy have the same damage. Damage remains controlled by mining.tool_power.
 2. Clicks select and capture a smooth, one-time nose goal; Space alone drills. W retains its eased camera-forward turn. There is no stopped-ship tracking, automatic target or Space-release latch. Broken targets clear and no-target Space explains how to select. Selection has immediate FeelSequence feedback. README, hints, verify_ui and play_targeting match these controls.
@@ -178,11 +197,11 @@ Original build (2026-10-03):
 
 ## Known issues / designer acceptance
 
-- Camera-relative flight, the click-facing turn and click-to-select workflow need human feel acceptance. W changes its movement direction when the camera orbits; that is intended. Broken targets now clear and require a fresh click.
+- The designer's 0.3.0 playtest passes. W changes its movement direction when the camera orbits; that is intended. Broken targets clear and require a fresh click.
 - An F5 save written before the playtest patch also stores live tuning. Loading it brings back mining.range 8 as a live trial; Discard in F2 restores 2.5.
 - At 2 m or less from a rock, the ship model visibly overlaps it. The lab has no collision; that was out of scope.
 
-- Human feel acceptance is pending. Automation and screenshot inspection establish function/accounting/scope, not satisfying flight or mining feel.
+- Human acceptance is recorded from the designer's passing playtest, separately from automation and screenshot inspection.
 - Sandboxed Godot starts report an inaccessible Windows certificate store. All offline checks complete; no network capability is required. There are no remaining script, resource-load or shutdown-leak errors in final runs.
 - Repeatability covers declared records, controlled RNG and clock on the tested engine version. Native physics and cross-version RNG equivalence are not claimed.
 - Lint is intentionally heuristic.
@@ -190,9 +209,9 @@ Original build (2026-10-03):
 
 ## Next steps
 
-0. Ticket 10, editable controls (see Open tickets), before more play scenarios are written against physical keycodes.
+0. Commit, push and merge the accepted ticket 10 implementation. Future play scenarios should press named controls and start from declaration defaults.
 
-1. Designer replays the 0.2.0 lab: click-only selection and one-time nose turn, W/A/D/S, drill reach, target clearing after a break, both Enter keys, F3 active/idle behavior, gold's F2 power instruction, F1 Why and F2 trial/apply/discard. Compare hit looks while remembering that damage comes from tool power (power − hardness + 1).
+1. Reconcile the separately recorded ticket 11 and kit-distribution work before beginning the next ticket.
 2. Record the preferred charge policy and feel direction; patch through scoped tickets after review against DESIGN.md.
 3. Continue the merged Rust Bucket design work before porting it.
 4. Prove broader reuse with a Railroad Wars slice before adding the kit to the game template.

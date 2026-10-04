@@ -2,6 +2,30 @@
 
 Generated from declarations. Change the source resource and regenerate this map.
 
+## Controls
+
+- **kit_inspector** — Ask your game why. Group: Kit. Keys: F1. [addons/agent_kit/controls/kit.tres](addons/agent_kit/controls/kit.tres)
+- **kit_tuning** — Open tuning and controls. Group: Kit. Keys: F2. [addons/agent_kit/controls/kit.tres](addons/agent_kit/controls/kit.tres)
+- **kit_finish_effect** — Finish current effect. Group: Kit. Keys: F3. [addons/agent_kit/controls/kit.tres](addons/agent_kit/controls/kit.tres)
+- **fly_forward** — Fly forward. Group: Flight. Keys: W. [game/data/controls.tres](game/data/controls.tres)
+- **fly_back** — Fly back. Group: Flight. Keys: S. [game/data/controls.tres](game/data/controls.tres)
+- **fly_left** — Fly left. Group: Flight. Keys: A. [game/data/controls.tres](game/data/controls.tres)
+- **fly_right** — Fly right. Group: Flight. Keys: D. [game/data/controls.tres](game/data/controls.tres)
+- **fly_up** — Fly up. Group: Flight. Keys: E. [game/data/controls.tres](game/data/controls.tres)
+- **fly_down** — Fly down. Group: Flight. Keys: Q. [game/data/controls.tres](game/data/controls.tres)
+- **select_target** — Select and face a rock. Group: Camera and targeting. Keys: Left mouse. [game/data/controls.tres](game/data/controls.tres)
+- **orbit_camera** — Orbit camera (hold and drag). Group: Camera and targeting. Keys: Right mouse. [game/data/controls.tres](game/data/controls.tres)
+- **zoom_in** — Zoom in. Group: Camera and targeting. Keys: Wheel up. [game/data/controls.tres](game/data/controls.tres)
+- **zoom_out** — Zoom out. Group: Camera and targeting. Keys: Wheel down. [game/data/controls.tres](game/data/controls.tres)
+- **drill** — Drill selected target. Group: Mining and dock. Keys: Space. [game/data/controls.tres](game/data/controls.tres)
+- **sell_and_refuel** — Sell and refuel. Group: Mining and dock. Keys: Enter / Numpad Enter. [game/data/controls.tres](game/data/controls.tres)
+- **hit_look** — Switch hit look (same damage). Group: Trials and session. Keys: B. [game/data/controls.tres](game/data/controls.tres)
+- **charge_policy** — Switch charge policy. Group: Trials and session. Keys: V. [game/data/controls.tres](game/data/controls.tres)
+- **save** — Save. Group: Trials and session. Keys: F5. [game/data/controls.tres](game/data/controls.tres)
+- **load** — Load. Group: Trials and session. Keys: F9. [game/data/controls.tres](game/data/controls.tres)
+- **restart** — Restart trials. Group: Trials and session. Keys: R. [game/data/controls.tres](game/data/controls.tres)
+- **exit** — Exit. Group: Trials and session. Keys: Escape. [game/data/controls.tres](game/data/controls.tres)
+
 ## Actions
 
 - **mine** — Hit a selected rock; pay energy and collect ore on break. [game/data/mine.tres](game/data/mine.tres)
@@ -169,7 +193,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 
   | Knob | Value | Unit | Range | Help |
   |---|---:|---|---|---|
-  | duration | 0.35 | s | 0.0 to 5.0 | Presentation time for this stage; never changes rule time. |
+  | duration | 2.5 | s | 0.0 to 5.0 | Presentation time for this stage; never changes rule time. |
   | sound_marker_sec | 0.0 | s | 0.0 to 5.0 | Time in the sound where the stage makes contact. |
   | shake_amplitude | 0.0 | strength | 0.0 to 2.0 | Strength sent to the game's presentation camera. |
   | shake_frequency | 20.0 | Hz | 0.0 to 80.0 | Shake oscillations per second. |
@@ -227,15 +251,15 @@ Generated from declarations. Change the source resource and regenerate this map.
   | Knob | Value | Unit | Range | Help |
   |---|---:|---|---|---|
   | energy_cost | 4.0 | energy | 0.0 to 20.0 | Energy paid for each successful mining hit. |
-  | range | 2.5 | m | 1.0 to 30.0 | Reach from the ship's centre to the rock's centre. About 2 m puts the drill against the rock face. |
-  | cooldown | 0.3 | s | 0.033333 to 3.0 | Rule time between hits, independent of animation. |
-  | tool_power | 2.0 | power | 0.25 to 10.0 | Tool strength compared with the rock's hardness. |
+  | range | 4.0 | m | 1.0 to 30.0 | Reach from the ship's centre to the rock's centre. About 2 m puts the drill against the rock face. |
+  | cooldown | 0.299997 | s | 0.033333 to 3.0 | Rule time between hits, independent of animation. |
+  | tool_power | 3.0 | power | 0.25 to 10.0 | Tool strength compared with the rock's hardness. |
   | iron_yield | 3.0 | ore | 0.0 to 20.0 | Iron collected when an iron rock breaks. |
   | gold_yield | 1.0 | ore | 0.0 to 20.0 | Gold collected when a gold rock breaks. |
   | stone_yield | 2.0 | ore | 0.0 to 20.0 | Stone collected when a stone rock breaks. |
   | soft_threshold | 1.0 | hardness | 0.25 to 10.0 | Hardness of soft rocks. Restart needed. |
   | medium_threshold | 2.0 | hardness | 0.25 to 10.0 | Hardness of medium rocks. Restart needed. |
-  | hard_threshold | 4.0 | hardness | 0.25 to 10.0 | Hardness of hard rocks. Restart needed. |
+  | hard_threshold | 3.0 | hardness | 0.25 to 10.0 | Hardness of hard rocks. Restart needed. |
   | rock_health | 4.0 | health | 1.0 to 40.0 | Initial health of each rock block. Restart needed. |
   | charge_on_attempt | 0 | policy | 0.0 to 1.0 | 0: charge successful hits only. 1: also charge attempts against hard rocks. |
 
@@ -263,7 +287,7 @@ Generated from declarations. Change the source resource and regenerate this map.
   |---|---:|---|---|---|
   | speed | 4.0 | m/s | 0.5 to 20.0 | Maximum flight speed. |
   | accel | 7.0 | m/s² | 0.5 to 30.0 | How quickly the ship responds and brakes. |
-  | energy_max | 40.0 | energy | 1.0 to 200.0 | Full energy capacity on the next setup. Restart needed. |
+  | energy_max | 60.0 | energy | 1.0 to 200.0 | Full energy capacity on the next setup. Restart needed. |
   | cargo_capacity | 12.0 | ore | 1.0 to 100.0 | Shared capacity of all ore types on the next setup. Restart needed. |
   | starting_credits | 20.0 | credits | 0.0 to 1000.0 | Credits at the start of a run. Restart needed. |
 
@@ -282,7 +306,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 - **mine_hit** — Light hit look — same damage Event: mine_hit; stages: Windup (0.05s) → Contact (0.04s) → Impact (0.16s) → Debris (0.22s). [game/feel/mine_hit.tres](game/feel/mine_hit.tres)
 - **mine_hit_heavy** — Heavy hit look — same damage Event: mine_hit; stages: Windup (0.16s) → Contact (0.08s) → Heavy impact (0.35s) → Debris (0.35s). [game/feel/mine_hit_heavy.tres](game/feel/mine_hit_heavy.tres)
 - **mine_rejected** — mine rejected Event: mine_rejected; stages: Dull clunk (0.12s). [game/feel/mine_rejected.tres](game/feel/mine_rejected.tres)
-- **rock_break** — rock break Event: rock_break; stages: Fracture (0.18s) → Debris (0.35s). [game/feel/rock_break.tres](game/feel/rock_break.tres)
+- **rock_break** — rock break Event: rock_break; stages: Fracture (0.18s) → Debris (2.5s). [game/feel/rock_break.tres](game/feel/rock_break.tres)
 - **ship_moved** — ship moved Event: ship_moved; stages: Thrusters (0.033333s). [game/feel/ship_moved.tres](game/feel/ship_moved.tres)
 - **target_selected** — Target selected Event: target_selected; stages: Ready to drill (0.12s). [game/feel/target_selected.tres](game/feel/target_selected.tres)
 
@@ -297,6 +321,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 - **mine_full_cargo** — Clip new ore at shared capacity without removing existing cargo. [scenarios/mine_full_cargo.gd](scenarios/mine_full_cargo.gd)
 - **mine_hard_rock** — Prove success-only rejection and paid zero-yield attempts. [scenarios/mine_hard_rock.gd](scenarios/mine_hard_rock.gd)
 - **mine_out_of_range** — A rock out of drill reach rejects without cost; flying in and stopping makes it minable. [scenarios/mine_out_of_range.gd](scenarios/mine_out_of_range.gd)
+- **play_controls** — Rebind through F2; new keys fly, old keys stop, conflicts refuse, Discard/reset restore, and Apply persists project defaults. [scenarios/play_controls.gd](scenarios/play_controls.gd)
 - **play_flight_and_dock** — Drive camera orbit and WASD through physical input; Numpad Enter and Enter both trade at the dock. [scenarios/play_flight_and_dock.gd](scenarios/play_flight_and_dock.gd)
 - **play_overlay_defaults** — Inspect every default F1 tab and empty-search F2 before filling panels; explain an input-driven refusal. [scenarios/play_overlay_defaults.gd](scenarios/play_overlay_defaults.gd)
 - **play_targeting** — Physical clicks select and face once; Space alone drills, clears broken targets and explains hard gold. [scenarios/play_targeting.gd](scenarios/play_targeting.gd)

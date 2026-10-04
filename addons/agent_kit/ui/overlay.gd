@@ -27,12 +27,19 @@ var _b: OptionButton
 var _selected: StringName
 var _refresh_time: float = 0.0
 var _variant_sequences: Array[KitFeelSequence] = []
+signal effect_finished(was_playing: bool)
+var _capture_action: StringName = &""
+var _capture_slot: int = 0
+var _capture_cancel: Button
+var _inspector_title: Label
+var _tuning_title: Label
 
 func _ready() -> void:
 	layer = 80
 	_theme = _build_theme()
 	_build_inspector()
 	_build_tuning()
+	Kit.controls.changed.connect(_controls_changed)
 	_inspector.hide()
 	_tuning_panel.hide()
 
@@ -43,6 +50,7 @@ func clear_feel_variants() -> void:
 	_variant_sequences.clear()
 
 func reset_view() -> void:
+	_capture_action = &""
 	_why_entity_popup.hide()
 	_inspector.hide()
 	_tuning_panel.hide()
@@ -52,23 +60,45 @@ func reset_view() -> void:
 	_action_filter.clear()
 	_outcome_filter.clear()
 	_expanded.clear()
+	_status.text = "Changes are live trials. Apply saves project defaults; Discard restores the last applied values."
 	var tabs: TabContainer = _inspector.get_child(0).get_child(1)
 	tabs.current_tab = 0
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_F1:
-			_inspector.visible = not _inspector.visible
-			_tuning_panel.hide()
-			_refresh_inspector()
-			get_viewport().set_input_as_handled()
-		elif event.keycode == KEY_F2:
-			_tuning_panel.visible = not _tuning_panel.visible
-			_inspector.hide()
+	if not _capture_action.is_empty() and event.is_pressed() and not event.is_echo():
+		if event is InputEventMouseButton and _capture_cancel != null and _capture_cancel.get_global_rect().has_point(event.position):
+			return
+		var binding: Dictionary = KitControls.from_event(event)
+		if not binding.is_empty():
+			Kit.controls.trial(_capture_action, _capture_slot, binding)
+			_capture_action = &""
+			_status.text = Kit.controls.last_message
 			_refresh_tuning()
-			if _tuning_panel.visible:
-				_search.grab_focus()
 			get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed(&"kit_inspector"):
+		_inspector.visible = not _inspector.visible
+		_tuning_panel.hide()
+		_refresh_inspector()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"kit_tuning"):
+		_tuning_panel.visible = not _tuning_panel.visible
+		_inspector.hide()
+		_refresh_tuning()
+		if _tuning_panel.visible:
+			_search.grab_focus()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"kit_finish_effect"):
+		var playing: bool = Kit.feel.is_playing()
+		Kit.feel.skip()
+		effect_finished.emit(playing)
+		get_viewport().set_input_as_handled()
+
+func _controls_changed() -> void:
+	if _inspector_title != null:
+		_inspector_title.text = "%s · Ask your game why" % Kit.controls.text(&"kit_inspector")
+	if _tuning_title != null:
+		_tuning_title.text = "%s · Tuning and controls · trial, then Apply or Discard" % Kit.controls.text(&"kit_tuning")
 
 func is_open() -> bool:
 	return _inspector.visible or _tuning_panel.visible
@@ -191,7 +221,8 @@ func _build_inspector() -> void:
 	_inspector = _panel()
 	var column: VBoxContainer = VBoxContainer.new()
 	_inspector.add_child(column)
-	_label("F1 · Ask your game why", column).add_theme_font_size_override("font_size", 24)
+	_inspector_title = _label("", column)
+	_inspector_title.add_theme_font_size_override("font_size", 24)
 	var tabs: TabContainer = TabContainer.new()
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(tabs)
@@ -462,7 +493,9 @@ func _build_tuning() -> void:
 	_tuning_panel = _panel()
 	var column: VBoxContainer = VBoxContainer.new()
 	_tuning_panel.add_child(column)
-	_label("F2 · Try a tuning value", column).add_theme_font_size_override("font_size", 24)
+	_tuning_title = _label("", column)
+	_tuning_title.add_theme_font_size_override("font_size", 24)
+	_controls_changed()
 	var search_row: HBoxContainer = HBoxContainer.new()
 	column.add_child(search_row)
 	_label("Search", search_row).add_theme_font_size_override("font_size", 18)
@@ -475,7 +508,7 @@ func _build_tuning() -> void:
 		_search.text = ""
 		_refresh_tuning()
 		_search.grab_focus())
-	_styled(_label("Every knob is listed by group. Click a group to open it, or type to filter.", column), &"KitHelp")
+	_styled(_label("Controls and tuning are listed by group. Click a group to open it, or type to filter.", column), &"KitHelp")
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
@@ -484,7 +517,90 @@ func _build_tuning() -> void:
 	_knob_rows.add_theme_constant_override("separation", 6)
 	scroll.add_child(_knob_rows)
 	_status = _styled(_label("Moving a slider is a live trial. Each open group has Apply (save to its file) and Discard (undo trials) at its top.", column), &"KitHelp")
-	_button("Close tuning", column, func() -> void: _tuning_panel.hide())
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_button("Close tuning", column, func() -> void:
+		_capture_action = &""
+		_tuning_panel.hide())
+
+func _refresh_controls(words: PackedStringArray) -> void:
+	var matches: Array[StringName] = []
+	for id: StringName in Kit.controls.ids():
+		var action: KitControlAction = Kit.controls.actions[id]
+		var haystack: String = ("controls %s %s %s %s" % [id, action.group, action.description, Kit.controls.text(id)]).to_lower()
+		var matched: bool = true
+		for word: String in words:
+			matched = matched and haystack.contains(word)
+		if matched:
+			matches.append(id)
+	if matches.is_empty():
+		return
+	var open: bool = not words.is_empty() or bool(_expanded.get(&"controls", false))
+	var trials: int = 0
+	for id: StringName in Kit.controls.ids():
+		if Kit.controls.is_trial(id):
+			trials += 1
+	var header: Button = _button("%s Controls — keyboard and mouse · %d actions%s" % ["▾" if open else "▸", matches.size(), " · %d on trial" % trials if trials else ""], _knob_rows, func() -> void:
+		_expanded[&"controls"] = not bool(_expanded.get(&"controls", false))
+		_capture_action = &""
+		_refresh_tuning())
+	header.set_meta("controls_group", true)
+	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_styled(header, &"KitHeader")
+	if not open:
+		return
+	var buttons: HBoxContainer = HBoxContainer.new()
+	_knob_rows.add_child(buttons)
+	var apply_button: Button = _button("Apply controls", buttons, func() -> void:
+		_capture_action = &""
+		Kit.controls.apply()
+		_status.text = Kit.controls.last_message
+		_refresh_tuning())
+	apply_button.set_meta("controls_apply", true)
+	apply_button.disabled = Kit.controls.path.is_empty()
+	_styled(apply_button, &"KitPrimary")
+	var discard_button: Button = _button("Discard", buttons, func() -> void:
+		_capture_action = &""
+		Kit.controls.discard()
+		_status.text = Kit.controls.last_message
+		_refresh_tuning())
+	discard_button.set_meta("controls_discard", true)
+	var reset_button: Button = _button("Reset to defaults", buttons, func() -> void:
+		_capture_action = &""
+		Kit.controls.reset_defaults()
+		_status.text = Kit.controls.last_message
+		_refresh_tuning())
+	reset_button.set_meta("controls_reset", true)
+	_capture_cancel = _button("Cancel key capture", buttons, func() -> void:
+		_capture_action = &""
+		_status.text = "Key capture cancelled."
+		_refresh_tuning())
+	_capture_cancel.visible = not _capture_action.is_empty()
+	_styled(_label("Click a slot, then press a key or mouse button. × clears a slot. Apply saves the project's default controls.", _knob_rows), &"KitHelp")
+	var group: String = ""
+	for id: StringName in matches:
+		var action: KitControlAction = Kit.controls.actions[id]
+		if action.group != group:
+			group = action.group
+			_styled(_label(group.to_upper(), _knob_rows), &"KitSection")
+		var row: HBoxContainer = HBoxContainer.new()
+		_knob_rows.add_child(row)
+		var title: Label = _label(action.description + (" · Trial" if Kit.controls.is_trial(id) else ""), row)
+		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title.modulate = WARM if Kit.controls.is_trial(id) else Color.WHITE
+		for index: int in range(2):
+			var slot_button: Button = _button(KitControls.label(Kit.controls.slot(id, index)), row, func() -> void:
+				_capture_action = id
+				_capture_slot = index
+				_status.text = "Press a key or mouse button for %s, or click Cancel key capture." % action.description.to_lower()
+				_refresh_tuning())
+			slot_button.text = "Press a key…" if _capture_action == id and _capture_slot == index else slot_button.text
+			slot_button.custom_minimum_size.x = 170
+			slot_button.set_meta("control_action", id)
+			slot_button.set_meta("control_slot", index)
+			_button("×", row, func() -> void:
+				Kit.controls.trial(id, index, {})
+				_status.text = Kit.controls.last_message
+				_refresh_tuning())
 
 ## Empty search lists every group collapsed; a search opens each group with a match.
 func _refresh_tuning() -> void:
@@ -492,6 +608,7 @@ func _refresh_tuning() -> void:
 		_knob_rows.remove_child(child)
 		child.queue_free()
 	var words: PackedStringArray = _search.text.to_lower().split(" ", false)
+	_refresh_controls(words)
 	# Game and kit settings first, then feel stages; each section alphabetical.
 	var ids: Array = Kit.tuning.sets.keys()
 	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
@@ -575,6 +692,10 @@ func _refresh_tuning() -> void:
 		_label("Nothing matches \"%s\". Try a word like range, energy, speed or camera, or press Clear to see every group." % _search.text, _knob_rows).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 func _process(delta: float) -> void:
+	# Wrapped status text can temporarily grow a root container during rebuilding.
+	# Keep the designer's panel inside the viewport; the action list owns scrolling.
+	if _tuning_panel.visible:
+		_tuning_panel.size = get_viewport().get_visible_rect().size - Vector2(80, 135)
 	_refresh_time += delta
 	if _refresh_time >= 0.3 and _inspector.visible:
 		_refresh_time = 0.0

@@ -8,6 +8,7 @@ var _ship_mesh: MeshInstance3D
 var _tool: MeshInstance3D
 var _thruster: MeshInstance3D
 var _hud: Label
+var _hints: Label
 var _target_label: Label
 var _toast: Label
 var _caption: Label
@@ -24,7 +25,6 @@ var _nose_goal: float = 0.0
 var _turn_speed: float = 0.0
 var _pitch: float = 0.38
 var _distance: float = 17.0
-var _orbiting: bool = false
 var _shake: float = 0.0
 var _shake_frequency: float = 20.0
 var _presentation_time: float = 0.0
@@ -44,6 +44,8 @@ func _ready() -> void:
 	_distance = float(Kit.tuning.value("presentation.camera_distance"))
 	_yaw = deg_to_rad(float(Kit.tuning.value("presentation.camera_start_yaw")))
 	_build_hud()
+	Kit.controls.changed.connect(_refresh_hints)
+	Kit.overlay.effect_finished.connect(_effect_finished)
 	Kit.events.fired.connect(_on_event)
 	Kit.feel.stage_started.connect(_on_stage)
 	Kit.clock.advanced.connect(_on_tick)
@@ -192,22 +194,48 @@ func _build_hud() -> void:
 	_toast.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	_toast.offset_left = 120
 	_toast.offset_right = -120
-	_toast.offset_top = -180
-	_toast.offset_bottom = -96
+	_toast.offset_top = -230
+	_toast.offset_bottom = -154
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	_toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_toast.add_theme_font_size_override("font_size", 22)
 	_toast.add_theme_color_override("font_color", Color(1, 0.77, 0.34))
 	root.add_child(_toast)
-	var hints: Label = Label.new()
-	hints.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_hints = Label.new()
+	var hints: Label = _hints
+	hints.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	hints.offset_left = 28
-	hints.offset_top = -84
+	hints.offset_right = -28
+	hints.offset_top = -144
 	hints.offset_bottom = -18
-	hints.text = "WASD: fly (W = away from camera)   Q/E: down/up   Right-drag: orbit   Wheel: zoom\nClick rock: select + face it   Space: drill selected   Enter / Numpad Enter: sell + refuel   F1: Why   F2: tuning\nB: hit look, light/heavy   V: charge policy   F3: finish current effect   F5/F9: save/load   R: restart trials   Esc: exit"
-	hints.add_theme_font_size_override("font_size", 16)
+	hints.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hints.add_theme_font_size_override("font_size", 14)
+	_refresh_hints()
 	root.add_child(hints)
+	_refresh_hints()
+
+func _refresh_hints() -> void:
+	var rows: Array[String] = []
+	var groups: Array = [
+		[&"fly_forward", &"fly_back", &"fly_left", &"fly_right", &"fly_down", &"fly_up"],
+		[&"orbit_camera", &"zoom_in", &"zoom_out"],
+		[&"select_target", &"drill", &"sell_and_refuel"],
+		[&"kit_inspector", &"kit_tuning", &"kit_finish_effect", &"hit_look", &"charge_policy"],
+		[&"save", &"load", &"restart", &"exit"]
+	]
+	# Wording and keys both come from declarations, so rebinds cannot leave stale hints.
+	for group: Array in groups:
+		var labels: Array[String] = []
+		for id: StringName in group:
+			if Kit.controls.actions.has(id):
+				labels.append("%s: %s" % [Kit.controls.text(id), Kit.controls.actions[id].description.to_lower()])
+		rows.append("   ".join(labels))
+	_hints.text = "\n".join(rows)
+	_hints.set_deferred("size", Vector2(get_viewport().get_visible_rect().size.x - 56, 126))
+
+func _effect_finished(playing: bool) -> void:
+	_show_toast("Finished the current effect; rules are unchanged." if playing else "No effect playing. %s finishes a current effect; replay one in %s Feel." % [Kit.controls.text(&"kit_finish_effect"), Kit.controls.text(&"kit_inspector")])
 
 func _on_tick(_tick: int) -> void:
 	if Kit.scenario_mode or Kit.overlay.is_open():
@@ -215,13 +243,13 @@ func _on_tick(_tick: int) -> void:
 	# Flight keys follow the camera: W flies away from it, D to its right. The action records the world direction.
 	var forward: Vector3 = Vector3(-sin(_yaw), 0.0, -cos(_yaw))
 	var right: Vector3 = Vector3(cos(_yaw), 0.0, -sin(_yaw))
-	var direction: Vector3 = right * (float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A))) \
-		+ Vector3.UP * (float(Input.is_physical_key_pressed(KEY_E)) - float(Input.is_physical_key_pressed(KEY_Q))) \
-		+ forward * (float(Input.is_physical_key_pressed(KEY_W)) - float(Input.is_physical_key_pressed(KEY_S)))
+	var direction: Vector3 = right * (float(Input.is_action_pressed(&"fly_right")) - float(Input.is_action_pressed(&"fly_left"))) \
+		+ Vector3.UP * (float(Input.is_action_pressed(&"fly_up")) - float(Input.is_action_pressed(&"fly_down"))) \
+		+ forward * (float(Input.is_action_pressed(&"fly_forward")) - float(Input.is_action_pressed(&"fly_back")))
 	var velocity: Array = Kit.world.field(&"ship:player", "velocity")
 	if direction.length_squared() > 0.0 or Vector3(velocity[0], velocity[1], velocity[2]).length_squared() > 0.00001:
 		Kit.actions.run(&"move_ship", &"ship:player", {"direction": [direction.x, direction.y, direction.z]})
-	if Input.is_physical_key_pressed(KEY_SPACE):
+	if Input.is_action_pressed(&"drill"):
 		if Kit.clock.seconds() >= _next_held_request:
 			_next_held_request = Kit.clock.seconds() + float(Kit.tuning.value("mining.cooldown"))
 			_mine_target()
@@ -229,37 +257,34 @@ func _on_tick(_tick: int) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if Kit.scenario_mode or Kit.overlay.is_open():
 		return
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_RIGHT:
-			_orbiting = event.pressed
-		if event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_distance = maxf(float(Kit.tuning.value("presentation.camera_min")), _distance - float(Kit.tuning.value("presentation.zoom_step")))
-		if event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_distance = minf(float(Kit.tuning.value("presentation.camera_max")), _distance + float(Kit.tuning.value("presentation.zoom_step")))
-		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			_select_at(event.position)
-	if event is InputEventMouseMotion and _orbiting:
+	if event.is_action_pressed(&"zoom_in"):
+		_distance = maxf(float(Kit.tuning.value("presentation.camera_min")), _distance - float(Kit.tuning.value("presentation.zoom_step")))
+	if event.is_action_pressed(&"zoom_out"):
+		_distance = minf(float(Kit.tuning.value("presentation.camera_max")), _distance + float(Kit.tuning.value("presentation.zoom_step")))
+	if event.is_action_pressed(&"select_target"):
+		_select_at(event.position if event is InputEventMouseButton else get_viewport().get_mouse_position())
+	if event is InputEventMouseMotion and Input.is_action_pressed(&"orbit_camera"):
 		_yaw -= event.relative.x * float(Kit.tuning.value("presentation.orbit_sensitivity"))
 		_pitch = clampf(_pitch + event.relative.y * float(Kit.tuning.value("presentation.orbit_sensitivity")), -0.4, 1.2)
-	if event is InputEventKey and event.pressed and not event.echo:
-		match event.keycode:
-			KEY_ENTER, KEY_KP_ENTER: Kit.actions.run(&"sell_and_refuel", &"ship:player", {"dock": "dock:home"})
-			KEY_F3:
-				var playing: bool = Kit.feel.is_playing()
-				Kit.feel.skip()
-				_show_toast("Finished the current effect; rules are unchanged." if playing else "No effect playing. F3 finishes a current effect; replay one in F1 Feel.")
-			KEY_F5: _show_toast("Save written." if Kit.save.write("user://mining.json") else Kit.save.last_message)
-			KEY_F9: _show_toast("Save loaded." if Kit.save.load_file("user://mining.json") else Kit.save.last_message)
-			KEY_V:
-				Kit.tuning.trial("mining.charge_on_attempt", 1 - int(Kit.tuning.value("mining.charge_on_attempt")))
-				_show_toast("Charge policy is a live trial. Apply or Discard in F2.")
-			KEY_B:
-				var heavy: bool = Kit.feel.sequences[&"mine_hit"].id != &"mine_hit_heavy"
-				MiningSetup.use_variant("mine_hit_heavy" if heavy else "mine_hit")
-				_show_toast("Hit look: heavy — same damage, bigger shake and flash." if heavy else "Hit look: light — same damage, smaller shake and flash.")
-			KEY_R:
-				get_tree().reload_current_scene()
-			KEY_ESCAPE: get_tree().quit()
+	if event.is_action_pressed(&"sell_and_refuel"):
+		Kit.actions.run(&"sell_and_refuel", &"ship:player", {"dock": "dock:home"})
+	elif event.is_action_pressed(&"save"):
+		_show_toast("Save written." if Kit.save.write("user://mining.json") else Kit.save.last_message)
+	elif event.is_action_pressed(&"load"):
+		_show_toast("Save loaded." if Kit.save.load_file("user://mining.json") else Kit.save.last_message)
+	elif event.is_action_pressed(&"charge_policy"):
+		Kit.tuning.trial("mining.charge_on_attempt", 1 - int(Kit.tuning.value("mining.charge_on_attempt")))
+		_show_toast("Charge policy is a live trial. Apply or Discard in %s." % Kit.controls.text(&"kit_tuning"))
+	elif event.is_action_pressed(&"hit_look"):
+		var heavy: bool = Kit.feel.sequences[&"mine_hit"].id != &"mine_hit_heavy"
+		MiningSetup.use_variant("mine_hit_heavy" if heavy else "mine_hit")
+		_show_toast("Hit look: heavy — same damage, bigger shake and flash." if heavy else "Hit look: light — same damage, smaller shake and flash.")
+	elif event.is_action_pressed(&"restart"):
+		var error: Error = get_tree().reload_current_scene()
+		if error != OK:
+			_show_toast("Could not restart: " + error_string(error))
+	elif event.is_action_pressed(&"exit"):
+		get_tree().quit()
 
 func _select_at(screen: Vector2) -> bool:
 	var origin: Vector3 = _camera.project_ray_origin(screen)
@@ -285,7 +310,7 @@ func _select_at(screen: Vector2) -> bool:
 
 func _mine_target() -> void:
 	if not _alive(_target):
-		_show_toast("No rock selected. Click a rock to target it.")
+		_show_toast("No rock selected. %s: select a rock to target it." % Kit.controls.text(&"select_target"))
 		Kit.feel.play(Kit.feel.sequences[&"mine_rejected"], {"entity": "ship:player", "actor": "ship:player", "action": "mine"})
 		return
 	Kit.actions.run(&"mine", &"ship:player", {"target": str(_target)})
@@ -363,7 +388,7 @@ func _refresh() -> void:
 	var policy: String = "Policy: %s · Hit look: %s (same damage)" % ["charge on attempt" if int(Kit.tuning.value("mining.charge_on_attempt")) else "charge on success", "heavy" if Kit.feel.sequences[&"mine_hit"].id == &"mine_hit_heavy" else "light"]
 	_selection.visible = _alive(_target)
 	if not _alive(_target):
-		_target_label.text = "No rock selected · click a rock to target it\n" + policy
+		_target_label.text = "No rock selected · %s: select and face a rock\n" % Kit.controls.text(&"select_target") + policy
 	else:
 		var rock: Dictionary = Kit.world.record(_target)
 		var distance: float = _target_distance()
@@ -374,7 +399,7 @@ func _refresh() -> void:
 		var reach_text: String = "in drill reach" if in_reach else "fly %.1f m closer" % maxf(0.1, ceilf((distance - reach) * 10.0) / 10.0)
 		var power: float = float(Kit.tuning.value("mining.tool_power"))
 		if float(rock.hardness) > power:
-			reach_text += " · too hard: power %.1f < hardness %.1f; raise Mining / tool power in F2" % [power, rock.hardness]
+			reach_text += " · too hard: power %.1f < hardness %.1f; raise Mining / tool power in %s" % [power, rock.hardness, Kit.controls.text(&"kit_tuning")]
 		_target_label.text = "Target %s · %s · hardness %.1f · health %.1f\n%s\n%s" % [_target, rock.ore_type, rock.hardness, rock.health, reach_text, policy]
 
 func _process(delta: float) -> void:
@@ -404,7 +429,7 @@ func _process(delta: float) -> void:
 # goal once; there is no automatic target tracking. Turns ease in and out. Looks only.
 func _face(delta: float) -> void:
 	var keys_free: bool = not Kit.scenario_mode and not Kit.overlay.is_open()
-	if keys_free and Input.is_physical_key_pressed(KEY_W):
+	if keys_free and Input.is_action_pressed(&"fly_forward"):
 		_nose_goal = atan2(cos(_yaw), -sin(_yaw))
 	var remaining: float = absf(angle_difference(_ship_yaw, _nose_goal))
 	var top_speed: float = deg_to_rad(float(Kit.tuning.value("presentation.ship_turn_rate")))
