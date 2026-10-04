@@ -134,7 +134,9 @@ GAME_MAP.md         generated
 The kit lives in its own repo (`C:\Dev\Godot_Agent_Kit`) with a VERSION file and
 CHANGELOG. `tools/install_kit.ps1 -Target <project>` copies a version into a game's
 `addons/agent_kit/` with a file-hash manifest, and refuses to overwrite local edits unless
-`-Force` is passed. Kit changes happen in the kit repo only. The game template receives the
+`-Force` is passed. Kit changes happen in the kit repo only. Rules for agents in games travel
+inside the kit (`KIT_RULES.md`); games ask for kit changes through `KIT_REQUESTS.md` instead of
+editing the installed kit, and choose when to update. The game template receives the
 kit once the merged Rust Bucket runs on it and a small Railroad Wars scenario has worked.
 
 ## References (what exactly to borrow)

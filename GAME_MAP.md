@@ -253,13 +253,13 @@ Generated from declarations. Change the source resource and regenerate this map.
   | energy_cost | 4.0 | energy | 0.0 to 20.0 | Energy paid for each successful mining hit. |
   | range | 4.0 | m | 1.0 to 30.0 | Reach from the ship's centre to the rock's centre. About 2 m puts the drill against the rock face. |
   | cooldown | 0.299997 | s | 0.033333 to 3.0 | Rule time between hits, independent of animation. |
-  | tool_power | 3.0 | power | 0.25 to 10.0 | Tool strength compared with the rock's hardness. |
+  | tool_power | 2.0 | power | 0.25 to 10.0 | Tool strength compared with the rock's hardness. |
   | iron_yield | 3.0 | ore | 0.0 to 20.0 | Iron collected when an iron rock breaks. |
   | gold_yield | 1.0 | ore | 0.0 to 20.0 | Gold collected when a gold rock breaks. |
   | stone_yield | 2.0 | ore | 0.0 to 20.0 | Stone collected when a stone rock breaks. |
   | soft_threshold | 1.0 | hardness | 0.25 to 10.0 | Hardness of soft rocks. Restart needed. |
   | medium_threshold | 2.0 | hardness | 0.25 to 10.0 | Hardness of medium rocks. Restart needed. |
-  | hard_threshold | 3.0 | hardness | 0.25 to 10.0 | Hardness of hard rocks. Restart needed. |
+  | hard_threshold | 4.0 | hardness | 0.25 to 10.0 | Hardness of hard rocks. Restart needed. |
   | rock_health | 4.0 | health | 1.0 to 40.0 | Initial health of each rock block. Restart needed. |
   | charge_on_attempt | 0 | policy | 0.0 to 1.0 | 0: charge successful hits only. 1: also charge attempts against hard rocks. |
 

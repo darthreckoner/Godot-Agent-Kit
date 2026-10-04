@@ -9,6 +9,11 @@ A reusable Godot 4.7 addon (`addons/agent_kit/`) plus a mining testbed (`game/`)
 it. Everything reusable goes in the addon. Anything specific to mining, Rust Bucket or any
 other game goes in `game/`. If you're unsure which side something belongs on, it belongs in `game/`.
 
+## Rules for games using the kit
+`addons/agent_kit/KIT_RULES.md` is what agents in games read. When a kit change affects how
+games build on the kit, update KIT_RULES.md in the same task. Starter files for new games live
+in `templates/game/`.
+
 ## Rules for kit code
 - Typed GDScript only. No untyped `var x =` in kit code.
 - The kit must not assume genre, camera, movement, 2D/3D, real-time vs turns, or Rust Bucket's design.
