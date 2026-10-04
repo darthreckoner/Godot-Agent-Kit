@@ -87,9 +87,16 @@ func _run() -> void:
 	var moved: bool = Kit.world.set_field(&"rock:020", "position", [4.5, 0.0, 0.0])
 	Kit.world.writable = false
 	var refused: KitActionResult = Kit.actions.run(&"mine", &"ship:player", {"target": "rock:020"})
-	Kit.overlay.set("_selected", &"rock:020")
+	# The designer may have anything selected; the newest refusal must still be answered.
+	Kit.overlay.set("_selected", &"dock:home")
 	Kit.overlay._refresh_inspector()
-	_checks.append(KitScenario.assertion("Why on a rock explains a refused hit on it.", moved and refused.outcome == "rejected" and why.get_parsed_text().contains("Refused by mining.tool_vs_hardness")))
+	var notice: PanelContainer = Kit.overlay.get("_refusal_box")
+	var notice_text: Label = Kit.overlay.get("_refusal_text")
+	var show_button: Button = Kit.overlay.get("_refusal_show")
+	_checks.append(KitScenario.assertion("Why answers the newest refusal whatever is selected.", moved and refused.outcome == "rejected" and notice.visible and notice_text.text.contains("Refused by mining.tool_vs_hardness") and show_button.visible and show_button.text == "Show rock:020"))
+	_checks.append(KitScenario.assertion("Refusal notice screenshot saved.", await _shot("why_notice")))
+	show_button.pressed.emit()
+	_checks.append(KitScenario.assertion("Why on a rock explains a refused hit on it.", Kit.overlay.get("_selected") == &"rock:020" and why.get_parsed_text().contains("Refused by mining.tool_vs_hardness")))
 	_checks.append(KitScenario.assertion("Refused-hit screenshot saved.", await _shot("why_refused")))
 	var timeline: RichTextLabel = Kit.overlay.get("_timeline")
 	_checks.append(KitScenario.assertion("The Log tab lists actions and refusals with no filter typed.", timeline.get_parsed_text().contains("mine by ship:player") and timeline.get_parsed_text().contains("Refused by mining.tool_vs_hardness")))
@@ -162,4 +169,6 @@ func _run() -> void:
 		passed = passed and bool(check.passed)
 		print("%s: %s" % ["PASS" if check.passed else "FAIL", check.label])
 	error = KitCanonical.write_text(_directory.path_join("report.json"), JSON.stringify({"passed": passed, "checks": _checks}, "  "))
+	# Let feel sounds started by the checks finish so shutdown reports no resources in use.
+	await get_tree().create_timer(1.0).timeout
 	get_tree().quit(0 if passed and error == OK else 1)

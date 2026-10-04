@@ -11,7 +11,8 @@ const KNOBS: Dictionary = {
 	"pulse_decay": {"help": "How quickly the mining tool glow settles."},
 	"flight_pulse_decay": {"help": "How quickly the thruster feedback settles after flight input."},
 	"toast_duration": {"help": "How long rejection and cargo messages remain visible."},
-	"ship_turn_rate": {"help": "How quickly the ship model turns to point away from the camera, or at the rock it is mining. Looks only; flight rules ignore it."},
+	"ship_turn_rate": {"help": "Top speed of the ship model's turn when W points it where the camera looks, or when it noses toward the rock it is mining. Looks only; flight rules ignore it."},
+	"ship_turn_ease": {"help": "Seconds the ship model takes to speed up into a turn and to settle out of it. Higher feels heavier and smoother."},
 	"camera_start_yaw": {"help": "Starting orbit angle around the ship. -90 sits directly behind the ship, looking past its nose at the rocks; 0 looks at its side.", "restart": true}
 }
 @export_range(8, 35, 0.25, "suffix:m") var camera_distance: float = 17.0
@@ -24,5 +25,6 @@ const KNOBS: Dictionary = {
 @export_range(0.1, 10, 0.1, "suffix:strength/s") var pulse_decay: float = 3.0
 @export_range(0.1, 10, 0.1, "suffix:strength/s") var flight_pulse_decay: float = 3.0
 @export_range(0.5, 10, 0.25, "suffix:s") var toast_duration: float = 3.0
-@export_range(30, 1080, 10, "suffix:degrees/s") var ship_turn_rate: float = 360.0
+@export_range(30, 1080, 10, "suffix:degrees/s") var ship_turn_rate: float = 240.0
+@export_range(0.05, 1.5, 0.05, "suffix:s") var ship_turn_ease: float = 0.3
 @export_range(-180, 180, 1, "suffix:degrees") var camera_start_yaw: float = -45.0

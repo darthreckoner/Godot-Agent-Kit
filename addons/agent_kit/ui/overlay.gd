@@ -5,7 +5,13 @@ var _tuning_panel: PanelContainer
 var _entities: ItemList
 var _fields: ItemList
 var _why_fields: OptionButton
+var _why_entities: OptionButton
 var _why: RichTextLabel
+var _refusal_box: PanelContainer
+var _refusal_text: Label
+var _refusal_show: Button
+var _refusal_target: StringName
+var _theme: Theme
 var _timeline: RichTextLabel
 var _event_text: RichTextLabel
 var _action_filter: LineEdit
@@ -22,6 +28,7 @@ var _variant_sequences: Array[KitFeelSequence] = []
 
 func _ready() -> void:
 	layer = 80
+	_theme = _build_theme()
 	_build_inspector()
 	_build_tuning()
 	_inspector.hide()
@@ -51,6 +58,75 @@ func _input(event: InputEvent) -> void:
 func is_open() -> bool:
 	return _inspector.visible or _tuning_panel.visible
 
+const INK: Color = Color(0.035, 0.06, 0.10, 0.97)
+const SURFACE: Color = Color(0.08, 0.12, 0.17)
+const ACCENT: Color = Color(0.39, 0.89, 0.90)
+const ACCENT_DIM: Color = Color(0.26, 0.55, 0.63)
+const WARM: Color = Color(1.0, 0.73, 0.46)
+const MUTED: Color = Color(0.66, 0.74, 0.80)
+
+func _box(fill: Color, border: Color, width: int = 1, radius: int = 5, left_width: int = -1) -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.set_border_width_all(width)
+	if left_width >= 0:
+		style.border_width_left = left_width
+	style.set_corner_radius_all(radius)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 5
+	style.content_margin_bottom = 5
+	return style
+
+## One look for every overlay control: outlined buttons, a filled primary button, banded group
+## headers, boxed inputs, muted help text and accent section labels.
+func _build_theme() -> Theme:
+	var theme: Theme = Theme.new()
+	theme.default_font_size = 17
+	theme.set_stylebox("normal", "Button", _box(Color(0.12, 0.24, 0.29), ACCENT_DIM))
+	theme.set_stylebox("hover", "Button", _box(Color(0.17, 0.34, 0.40), ACCENT))
+	theme.set_stylebox("pressed", "Button", _box(Color(0.08, 0.17, 0.21), ACCENT))
+	theme.set_stylebox("focus", "Button", _box(Color(0, 0, 0, 0), ACCENT, 2))
+	theme.set_stylebox("disabled", "Button", _box(SURFACE, Color(0.2, 0.25, 0.3)))
+	theme.set_color("font_color", "Button", Color(0.92, 0.97, 0.98))
+	theme.set_color("font_hover_color", "Button", Color.WHITE)
+	theme.set_color("font_focus_color", "Button", Color.WHITE)
+	theme.set_type_variation(&"KitPrimary", &"Button")
+	theme.set_stylebox("normal", "KitPrimary", _box(Color(0.30, 0.78, 0.80), ACCENT))
+	theme.set_stylebox("hover", "KitPrimary", _box(Color(0.45, 0.92, 0.93), Color.WHITE))
+	theme.set_stylebox("pressed", "KitPrimary", _box(Color(0.22, 0.62, 0.64), ACCENT))
+	for state: String in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		theme.set_color(state, "KitPrimary", Color(0.02, 0.06, 0.09))
+	theme.set_type_variation(&"KitHeader", &"Button")
+	theme.set_stylebox("normal", "KitHeader", _box(Color(0.09, 0.14, 0.20), ACCENT, 0, 3, 5))
+	theme.set_stylebox("hover", "KitHeader", _box(Color(0.13, 0.21, 0.29), ACCENT, 0, 3, 5))
+	theme.set_stylebox("pressed", "KitHeader", _box(Color(0.07, 0.11, 0.16), ACCENT, 0, 3, 5))
+	theme.set_font_size("font_size", "KitHeader", 18)
+	theme.set_type_variation(&"KitHelp", &"Label")
+	theme.set_color("font_color", "KitHelp", MUTED)
+	theme.set_font_size("font_size", "KitHelp", 15)
+	theme.set_type_variation(&"KitSection", &"Label")
+	theme.set_color("font_color", "KitSection", ACCENT)
+	theme.set_font_size("font_size", "KitSection", 15)
+	theme.set_stylebox("normal", "LineEdit", _box(Color(0.11, 0.16, 0.23), ACCENT_DIM, 2, 4))
+	theme.set_stylebox("focus", "LineEdit", _box(Color(0, 0, 0, 0), ACCENT, 2, 4))
+	theme.set_color("font_placeholder_color", "LineEdit", Color(0.62, 0.70, 0.76))
+	theme.set_stylebox("panel", "ItemList", _box(SURFACE, Color(0.16, 0.24, 0.30), 1, 4))
+	theme.set_stylebox("selected", "ItemList", _box(Color(0.17, 0.34, 0.40), ACCENT, 1, 3))
+	theme.set_stylebox("selected_focus", "ItemList", _box(Color(0.17, 0.34, 0.40), ACCENT, 1, 3))
+	theme.set_stylebox("normal", "RichTextLabel", _box(SURFACE, Color(0.16, 0.24, 0.30), 1, 4))
+	theme.set_stylebox("tab_selected", "TabContainer", _box(Color(0.12, 0.24, 0.29), ACCENT, 0, 3))
+	theme.get_stylebox("tab_selected", "TabContainer").border_width_top = 3
+	theme.set_stylebox("tab_unselected", "TabContainer", _box(Color(0.06, 0.09, 0.13), Color(0.16, 0.24, 0.30), 1, 3))
+	theme.set_stylebox("tab_hovered", "TabContainer", _box(Color(0.10, 0.18, 0.23), ACCENT_DIM, 1, 3))
+	theme.set_stylebox("panel", "TabContainer", _box(Color(0, 0, 0, 0), Color(0.16, 0.24, 0.30), 1, 0))
+	theme.set_color("font_unselected_color", "TabContainer", MUTED)
+	theme.set_color("font_selected_color", "TabContainer", Color.WHITE)
+	theme.set_type_variation(&"KitNotice", &"PanelContainer")
+	theme.set_stylebox("panel", "KitNotice", _box(Color(0.20, 0.13, 0.06), WARM, 2, 5))
+	return theme
+
 func _panel() -> PanelContainer:
 	var panel: PanelContainer = PanelContainer.new()
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -67,8 +143,13 @@ func _panel() -> PanelContainer:
 	style.border_color = Color(0.26, 0.55, 0.63)
 	style.set_border_width_all(2)
 	panel.add_theme_stylebox_override("panel", style)
+	panel.theme = _theme
 	add_child(panel)
 	return panel
+
+func _styled(control: Control, variation: StringName) -> Control:
+	control.theme_type_variation = variation
+	return control
 
 func _label(text: String, parent: Node) -> Label:
 	var label: Label = Label.new()
@@ -112,7 +193,7 @@ func _build_inspector() -> void:
 	var field_column: VBoxContainer = VBoxContainer.new()
 	field_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	world_tab.add_child(field_column)
-	_label("Select a value to read its history in Why.", field_column)
+	_styled(_label("Select a value to read its history in Why.", field_column), &"KitHelp")
 	_fields = ItemList.new()
 	_fields.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	field_column.add_child(_fields)
@@ -126,8 +207,32 @@ func _build_inspector() -> void:
 	var why_tab: VBoxContainer = VBoxContainer.new()
 	why_tab.name = "Why"
 	tabs.add_child(why_tab)
+	# The newest refusal is answered here whatever is selected: it is the most common "why".
+	_refusal_box = PanelContainer.new()
+	_styled(_refusal_box, &"KitNotice")
+	why_tab.add_child(_refusal_box)
+	var refusal_row: HBoxContainer = HBoxContainer.new()
+	_refusal_box.add_child(refusal_row)
+	_refusal_text = _label("", refusal_row)
+	_refusal_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_refusal_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_refusal_show = _button("Show it", refusal_row, func() -> void:
+		_selected = _refusal_target
+		_refresh_inspector())
+	_refusal_show.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var pickers: HBoxContainer = HBoxContainer.new()
+	why_tab.add_child(pickers)
+	_label("Thing", pickers)
+	_why_entities = OptionButton.new()
+	_why_entities.custom_minimum_size.x = 260
+	pickers.add_child(_why_entities)
+	_why_entities.item_selected.connect(func(index: int) -> void:
+		_selected = StringName(_why_entities.get_item_text(index))
+		_refresh_inspector())
+	_label("  Value", pickers)
 	_why_fields = OptionButton.new()
-	why_tab.add_child(_why_fields)
+	_why_fields.custom_minimum_size.x = 220
+	pickers.add_child(_why_fields)
 	_why_fields.item_selected.connect(func(_index: int) -> void: _refresh_why())
 	_why = _rich(why_tab)
 	var log_tab: VBoxContainer = VBoxContainer.new()
@@ -177,13 +282,17 @@ func _play_variant(picker: OptionButton) -> void:
 
 func _refresh_inspector() -> void:
 	_entities.clear()
+	_why_entities.clear()
 	for id: StringName in Kit.world.ids():
 		_entities.add_item(str(id))
+		_why_entities.add_item(str(id))
 		if id == _selected:
 			_entities.select(_entities.item_count - 1)
+			_why_entities.select(_why_entities.item_count - 1)
 	if _selected.is_empty() and _entities.item_count > 0:
 		_selected = StringName(_entities.get_item_text(0))
 		_entities.select(0)
+		_why_entities.select(0)
 	_refresh_fields()
 	for picker: OptionButton in [_a, _b]:
 		picker.clear()
@@ -213,7 +322,26 @@ func _refresh_fields() -> void:
 			_why_fields.select(_why_fields.item_count - 1)
 	_refresh_why()
 
+func _refresh_refusal() -> void:
+	var records: Array[Dictionary] = Kit.log.records()
+	records.reverse()
+	for record: Dictionary in records:
+		var reasons: Array[String] = _refusals(record)
+		if reasons.is_empty():
+			continue
+		_refusal_target = &""
+		for value: Variant in record.params.values():
+			if (value is String or value is StringName) and not Kit.world.record(StringName(value)).is_empty():
+				_refusal_target = StringName(value)
+		_refusal_text.text = "Latest refused action · %s\n%s" % [_log_line(record), "\n".join(reasons)]
+		_refusal_show.text = "Show %s" % _refusal_target
+		_refusal_show.visible = not _refusal_target.is_empty() and _refusal_target != _selected
+		_refusal_box.visible = true
+		return
+	_refusal_box.visible = false
+
 func _refresh_why() -> void:
+	_refresh_refusal()
 	_why.clear()
 	if _why_fields.item_count == 0:
 		return
@@ -248,6 +376,12 @@ func _refresh_why() -> void:
 			_why.append_text("[color=#ffba76]%s[/color]\n" % reason)
 		_why.append_text("\n")
 
+func _append_run(run: Array[Dictionary]) -> void:
+	if run.size() == 1:
+		_timeline.append_text("%s\n" % _log_line(run[0]))
+	elif run.size() > 1:
+		_timeline.append_text("[color=#a8bdcc]Ticks %d–%d · %s by %s · %s ×%d[/color]\n" % [run[0].tick, run[-1].tick, run[0].action, run[0].actor, str(run[0].outcome).replace("_", " "), run.size()])
+
 func _log_line(record: Dictionary) -> String:
 	var line: String = "Tick %d · #%d · %s by %s" % [record.tick, record.seq, record.action, record.actor]
 	for key: String in record.params:
@@ -266,14 +400,24 @@ func _refusals(record: Dictionary) -> Array[String]:
 func _refresh_log() -> void:
 	_timeline.clear()
 	# Godot's contains("") is false, so an empty filter must be treated as "show all".
+	# Runs of the same action, actor and outcome with nothing refused collapse to one line.
+	var run: Array[Dictionary] = []
 	for record: Dictionary in Kit.log.records():
 		if not _action_filter.text.is_empty() and not str(record.action).contains(_action_filter.text):
 			continue
 		if not _outcome_filter.text.is_empty() and not str(record.outcome).contains(_outcome_filter.text):
 			continue
+		var reasons: Array[String] = _refusals(record)
+		if not run.is_empty() and (not reasons.is_empty() or record.action != run[0].action or record.actor != run[0].actor or record.outcome != run[0].outcome):
+			_append_run(run)
+			run.clear()
+		if reasons.is_empty():
+			run.append(record)
+			continue
 		_timeline.append_text("%s\n" % _log_line(record))
-		for reason: String in _refusals(record):
+		for reason: String in reasons:
 			_timeline.append_text("    [color=#ffba76]%s[/color]\n" % reason)
+	_append_run(run)
 	_event_text.clear()
 	for event: Dictionary in Kit.events.history:
 		_event_text.append_text("Tick %d · %s\n%s\n\n" % [event.tick, event.name, JSON.stringify(event.payload)])
@@ -289,36 +433,22 @@ func _build_tuning() -> void:
 	_search = LineEdit.new()
 	_search.placeholder_text = "Type to filter, e.g. range, energy, speed, camera"
 	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_search.add_theme_stylebox_override("normal", _search_style(Color(0.26, 0.55, 0.63)))
-	_search.add_theme_stylebox_override("focus", _search_style(Color(0.39, 0.89, 0.90)))
-	_search.add_theme_color_override("font_placeholder_color", Color(0.62, 0.70, 0.76))
 	search_row.add_child(_search)
 	_search.text_changed.connect(func(_text: String) -> void: _refresh_tuning())
 	_button("Clear", search_row, func() -> void:
 		_search.text = ""
 		_refresh_tuning()
 		_search.grab_focus())
-	_label("Every knob is listed by group. Click a group to open it, or type to filter.", column).modulate = Color(0.75, 0.82, 0.86)
+	_styled(_label("Every knob is listed by group. Click a group to open it, or type to filter.", column), &"KitHelp")
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
 	_knob_rows = VBoxContainer.new()
 	_knob_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_knob_rows.add_theme_constant_override("separation", 6)
 	scroll.add_child(_knob_rows)
-	_status = _label("Moving a slider is a live trial. Each open group has Apply (save to its file) and Discard (undo trials) at its top.", column)
+	_status = _styled(_label("Moving a slider is a live trial. Each open group has Apply (save to its file) and Discard (undo trials) at its top.", column), &"KitHelp")
 	_button("Close tuning", column, func() -> void: _tuning_panel.hide())
-
-func _search_style(border: Color) -> StyleBoxFlat:
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.11, 0.16, 0.23)
-	style.border_color = border
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(4)
-	style.content_margin_left = 10
-	style.content_margin_right = 10
-	style.content_margin_top = 6
-	style.content_margin_bottom = 6
-	return style
 
 ## Empty search lists every group collapsed; a search opens each group with a match.
 func _refresh_tuning() -> void:
@@ -352,26 +482,24 @@ func _refresh_tuning() -> void:
 		var next_section: String = "Feel stages · look and sound only, never rule outcomes" if resource is KitFeelStage else "Game and kit settings"
 		if next_section != section:
 			section = next_section
-			var heading: Label = _label(section, _knob_rows)
-			heading.add_theme_font_size_override("font_size", 16)
-			heading.modulate = Color(0.39, 0.89, 0.90)
+			_styled(_label(section.to_upper(), _knob_rows), &"KitSection")
 		var open: bool = not words.is_empty() or bool(_expanded.get(id, false))
 		var count: String = "%d knobs" % rows.size() if words.is_empty() else "%d of %d knobs match" % [rows.size(), resource.knobs().size()]
 		var header: Button = _button("%s %s — %s · %s%s" % ["▾" if open else "▸", str(id).capitalize(), resource.description, count, " · %d on trial" % trials if trials > 0 else ""], _knob_rows, func() -> void:
 			_expanded[id] = not bool(_expanded.get(id, false))
 			_refresh_tuning())
 		header.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		header.add_theme_font_size_override("font_size", 19)
+		_styled(header, &"KitHeader")
 		header.set_meta("tuning_group", id)
 		if not open:
 			continue
 		# Apply/Discard sit at the top of the group so they stay in view on long groups.
 		var buttons: HBoxContainer = HBoxContainer.new()
 		_knob_rows.add_child(buttons)
-		_button("Apply " + str(id), buttons, func() -> void:
+		_styled(_button("Apply " + str(id), buttons, func() -> void:
 			var error: Error = Kit.tuning.apply(id)
 			_status.text = "Saved " + str(id) if error == OK else "Could not save: " + error_string(error)
-			_refresh_tuning())
+			_refresh_tuning()), &"KitPrimary")
 		_button("Discard", buttons, func() -> void:
 			Kit.tuning.discard(id)
 			_refresh_tuning())
@@ -405,7 +533,8 @@ func _refresh_tuning() -> void:
 				title.modulate = Color(1, 0.8, 0.35) if trial else Color.WHITE
 			slider.value_changed.connect(update)
 			update.call(slider.value)
-			_label("%s  Range: %s–%s %s" % [metadata.get("help", ""), metadata.min, metadata.max, metadata.get("unit", "")], _knob_rows).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			var help: Label = _styled(_label("%s  Range: %s–%s %s" % [metadata.get("help", ""), metadata.min, metadata.max, metadata.get("unit", "")], _knob_rows), &"KitHelp")
+			help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if _knob_rows.get_child_count() == 0:
 		_label("Nothing matches \"%s\". Try a word like range, energy, speed or camera, or press Clear to see every group." % _search.text, _knob_rows).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 

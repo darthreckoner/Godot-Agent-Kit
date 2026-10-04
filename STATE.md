@@ -56,12 +56,20 @@ The designer's first playtest found three testbed problems. All three are fixed 
 - Design note for the designer: with default tuning (tool_power 2, hard_threshold 4), gold can never be mined. The lab has no tool upgrade, so gold only becomes minable by raising mining.tool_power in F2.
 - F2: Apply/Discard moved to the top of each open group; tooltips removed (see CHANGELOG).
 
+## Playtest round 3 (2026-10-04)
+
+- Nose: it followed camera panning, which was not wanted. Now it only turns while W is held, toward where the camera looks, and finishes that turn smoothly after W is released. It eases in and out (presentation.ship_turn_rate 240°/s top speed, new presentation.ship_turn_ease 0.3 s). Orbiting, A/D and S never turn it. When stopped within reach with no flight key held, it still noses toward the selected rock.
+- F1/F2 were hard to read: buttons looked like plain text. The overlay now has a shared theme (see CHANGELOG).
+- F1 Why still didn't answer "why can't I mine gold?", because it showed whatever the World tab had selected (dock:home). Why now has its own pickers, plus a notice that always explains the newest refusal. The Log tab collapses flight repeats.
+- Light vs heavy impact take the same number of hits. That is intended: feel variants never change rule outcomes, and the compare run proves it. The designer found the visual difference too subtle (heavy: shake 0.35 vs 0.10, flash 0.25 vs 0.10, windup 0.16 s vs 0.05 s, seen from a 17 m camera). This is an open feel ticket; tune it under F2 → Feel Mine Hit Heavy 2.
+
 ## Verification
 
 Playtest patch (2026-10-04, Linux sandbox, Godot 4.7.2 official build, PowerShell 7.4.6):
 - tools/kit.ps1 test: exit 0; all seven scenarios passed with repeat and midpoint save/reload.
 - tools/kit.ps1 compare feel_change_is_scoped mine_hit mine_hit_heavy: exit 0; A/B constraints identical.
 - tools/kit.ps1 lint and map: exit 0. GAME_MAP.md regenerated.
+- After round 3: tools/kit.ps1 test (7/7), compare and lint pass. tools/verify_ui.tscn passes 21/21, with new checks that the refusal notice answers while dock:home is selected and that its Show button selects the rock. The harness now waits for feel sounds before quitting: round 2's run had reported a clunk.wav "resource still in use" at shutdown, an artifact of the harness quitting mid-sound. A windowed probe confirmed: orbiting 120° left the nose at 0°, W eased the nose 1→5→10→19→…→142→146→165°, and A/S left it alone. F1/F2 screenshots inspected.
 - After round 2: tools/kit.ps1 test (7/7), compare and lint pass; tools/verify_ui.tscn passes 19/19. New checks: Why on a rock explains a refused hit, the Log tab lists refusals with no filter typed, plus a refusal screenshot. A windowed probe showed the nose staying at 45° during A-strafe and S-reverse, no beam on Enter, and the gold refusal message wrapping on screen.
 - tools/verify_ui.tscn under Xvfb (round 1): all 16 UI checks passed, including 5 new ones: F2 lists every group, the cursor is in search, clicking a group opens it, a no-match search says so, and the empty panel is screenshotted. Against the old overlay.gd the four new behaviour checks fail; the screenshot check passes either way. Screenshots were inspected.
 - A throwaway windowed probe (not committed) drove the real lab with physical keys. Results:

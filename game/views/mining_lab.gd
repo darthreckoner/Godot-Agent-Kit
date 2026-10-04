@@ -20,6 +20,8 @@ var _beam_glow: float = 0.0
 var _target: StringName = &"rock:000"
 var _yaw: float = 0.0
 var _ship_yaw: float = 0.0
+var _nose_goal: float = 0.0
+var _turn_speed: float = 0.0
 var _space_ready: bool = true
 var _pitch: float = 0.38
 var _distance: float = 17.0
@@ -396,16 +398,25 @@ func _process(delta: float) -> void:
 	_face(delta)
 	_update_beam()
 
-# The nose points away from the camera, so A/D strafe and S backs up. Once stopped within reach,
-# the nose turns to the selected rock. Looks only.
+# The nose only turns while W is held, toward the camera's forward direction, so orbiting the
+# camera alone never swings the ship and A/D/S strafe or back up. Once stopped within reach with
+# no flight key held, the nose turns to the selected rock. Turns ease in and out. Looks only.
 func _face(delta: float) -> void:
+	var keys_free: bool = not Kit.scenario_mode and not Kit.overlay.is_open()
+	var flying: bool = keys_free and (Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_Q) or Input.is_physical_key_pressed(KEY_E))
 	var velocity: Array = Kit.world.field(&"ship:player", "velocity")
-	var aim: Vector3 = Vector3(-sin(_yaw), 0.0, -cos(_yaw))
-	if Vector3(velocity[0], velocity[1], velocity[2]).length() < 0.3 and _alive(_target) and _target_distance() <= float(Kit.tuning.value("mining.range")):
-		aim = _rock_position(_target) - _ship_position()
-		aim.y = 0.0
-	if aim.length_squared() > 0.0001:
-		_ship_yaw = rotate_toward(_ship_yaw, atan2(-aim.z, aim.x), deg_to_rad(float(Kit.tuning.value("presentation.ship_turn_rate"))) * delta)
+	if keys_free and Input.is_physical_key_pressed(KEY_W):
+		_nose_goal = atan2(cos(_yaw), -sin(_yaw))
+	elif not flying and Vector3(velocity[0], velocity[1], velocity[2]).length() < 0.3 and _alive(_target) and _target_distance() <= float(Kit.tuning.value("mining.range")):
+		var aim: Vector3 = _rock_position(_target) - _ship_position()
+		if Vector2(aim.x, aim.z).length_squared() > 0.0001:
+			_nose_goal = atan2(-aim.z, aim.x)
+	var remaining: float = absf(angle_difference(_ship_yaw, _nose_goal))
+	var top_speed: float = deg_to_rad(float(Kit.tuning.value("presentation.ship_turn_rate")))
+	var ease_time: float = float(Kit.tuning.value("presentation.ship_turn_ease"))
+	# Speed up over ease_time, then slow down over the last ease_time of the turn.
+	_turn_speed = move_toward(_turn_speed, minf(top_speed, remaining / ease_time), top_speed / ease_time * delta)
+	_ship_yaw = rotate_toward(_ship_yaw, _nose_goal, minf(_turn_speed * delta, remaining))
 	_ship.rotation.y = _ship_yaw
 
 # A short beam from the drill tip to the struck rock's face while the hit glow lasts.
