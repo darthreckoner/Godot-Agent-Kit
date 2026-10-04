@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="KitFeelStage" load_steps=2 format=3]
+[ext_resource type="Script" path="res://addons/agent_kit/feel/feel_stage.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"feel_target_selected_0"
+description = "Immediate target acknowledgement; the nose turn is presentation only."
+stage_name = "Ready to drill"
+duration = 0.12

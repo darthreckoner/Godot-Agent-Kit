@@ -2,7 +2,18 @@
 
 ## Unreleased
 
-UI fix only; no public API, file format or save schema change, so VERSION stays 0.1.0.
+## 0.2.0 — 2026-10-04
+
+- `KitActionDef.charge_policy_key` optionally binds charge policy to an integer tuning knob (0: ON_SUCCESS, 1: ON_ATTEMPT). The runner reads it at execution, including queued actions. Missing or invalid bindings reject by `action.charge_policy`; unbound definitions retain their existing policy. GAME_MAP names the binding. The mining setup bridge is removed.
+- Save schema remains 1. Its existing policy fields store definition defaults for bound actions; restore ignores their legacy duplicated charge value and uses restored tuning. Schema-0 and schema-1 continuation remain covered by scenarios, so no schema migration is needed.
+- Action transactions use a locked world, a permanently read-only planning view and copies of touched records. Only staged records are validated/canonicalized and committed. Atomic rejection, additions/removals, ownership of nested reads, clipping and RNG rollback are covered. `last_transaction_stats` exposes copied/changed/removed counts outside saves and rule hashes. Fractional deltas honor declared float fields even after canonicalization represents a whole value as an integer.
+- RNG audit streams sort by text; `rng_two_streams` draws in reverse order and checks alphabetical audit ordering with repeat/save-reload.
+- Scenarios can declare `requires_play` and use physical key, mouse button/motion, input tick and presentation-wait commands. `tools/kit.ps1 scenario <name> -Play` runs them windowed. `test` runs the sim suite followed by play scenarios, each repeated and save/reloaded; baseline runs capture screenshots. These exercise actual engine input callbacks and physical-key polling, rather than OS hardware input.
+- New scenarios cover live policy binding, 2,000 terrain records, targeting, camera/flight/docking and the default state of every overlay panel/tab. The performance report measures staged action time and the removed five-copy workload, rather than imposing a machine-dependent time limit. Player-visible tasks require screenshot inspection in AGENTS.md.
+- Overlay resets its selections/filters/groups on a new run. Default Log and Events explain their empty state. `KitFeelPlayer.is_playing()` supports clear idle/current-effect feedback. Stage captions identify their emitting sequence when effects overlap.
+- Mining lab: clicks only select and smoothly face a rock once; Space alone mines; broken targets clear. Automatic selection/tracking and the Space-release latch are removed. Numpad Enter trades like Enter. Light/heavy labels explicitly say same damage. F3 and the Feel button say “Finish current effect”; idle F3 explains replay. Gold remains the harder-rock test, with a visible F2 drill-power instruction. Target selection acknowledges immediately through a presentation sequence.
+
+Earlier UI and Windows tooling fixes included in this release:
 
 - F2 tuning panel: an empty search listed nothing, because Godot's `contains("")` is false. F2 now opens with every tuning group listed and collapsed: game and kit settings first, then feel stages, each alphabetical. Clicking a group opens it. A search matches every typed word against group, knob name and help text, and opens each matching group. A search with no match says so.
 - F2 search box: it now has a visible border and background, a Search label, example hint text and a Clear button, and it takes the cursor when F2 opens.

@@ -1,7 +1,7 @@
 extends Node
 ## Exercises actual input/UI callbacks and saves screenshots without native automation.
 var _checks: Array[Dictionary] = []
-var _directory: String = "res://reports/ui-verification"
+var _directory: String = "res://reports/ui-verification/%s-%s" % [Time.get_datetime_string_from_system().replace(":", "").replace("-", ""), Time.get_ticks_usec()]
 func _ready() -> void:
 	call_deferred("_run")
 func _key(code: Key) -> void:
@@ -60,6 +60,10 @@ func _run() -> void:
 	Kit.clock.advance()
 	_release(KEY_A)
 	_checks.append(KitScenario.assertion("Flight input updates the authoritative ship.", Kit.world.field(&"ship:player", "position") != before_position))
+	var driver: KitScenario = load("res://scenarios/support/play_scenario.gd").new()
+	var before_click: String = Kit.world.state_hash()
+	var clicked: bool = await driver.click_rock(lab, &"rock:000")
+	_checks.append(KitScenario.assertion("A physical rock click selects without mining or spending energy.", clicked and before_click == Kit.world.state_hash() and Kit.log.records().size() == 1, {"target": str(lab.get("_target")), "records": Kit.log.records().size()}))
 	_key(KEY_SPACE)
 	await get_tree().process_frame
 	Kit.clock.advance()
@@ -182,6 +186,7 @@ func _run() -> void:
 		passed = passed and bool(check.passed)
 		print("%s: %s" % ["PASS" if check.passed else "FAIL", check.label])
 	error = KitCanonical.write_text(_directory.path_join("report.json"), JSON.stringify({"passed": passed, "checks": _checks}, "  "))
+	print("UI evidence: " + _directory)
 	# Let feel sounds started by the checks finish so shutdown reports no resources in use.
 	await get_tree().create_timer(1.0).timeout
 	get_tree().quit(0 if passed and error == OK else 1)

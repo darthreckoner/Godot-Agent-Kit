@@ -34,7 +34,7 @@ func begin_action() -> void:
 func end_action() -> Array[Dictionary]:
 	var draws: Array[Dictionary] = []
 	var names: Array = _streams.keys()
-	names.sort()
+	names.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
 	for name: StringName in names:
 		var generator: RandomNumberGenerator = _streams[name]
 		var replay: RandomNumberGenerator = RandomNumberGenerator.new()

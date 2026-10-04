@@ -4,23 +4,82 @@ extends RefCounted
 var types: Dictionary = {}
 var _records: Dictionary = {}
 var writable: bool = true
+var _base: KitWorld
+var _removed: Dictionary = {}
+var _read_only: bool = false
+var _locked: bool = false
+var copied_records: int = 0
+
+## Reads still return owned data. A read view cannot be made writable by a handler.
+func read_view(view: KitWorld) -> void:
+	view.types = types
+	view._base = self
+	view.writable = false
+	view._read_only = true
+
+## A transaction stores only changed records, with unchanged reads falling through to this world.
+func begin_transaction(stage: KitWorld) -> bool:
+	if _locked or _base != null or _read_only or stage == null or stage == self or not stage._records.is_empty() or stage._base != null:
+		return false
+	_locked = true
+	stage.types = types
+	stage._base = self
+	return true
+
+func finish_transaction(stage: KitWorld, commit: bool) -> bool:
+	if not _locked or stage == null or stage._base != self:
+		return false
+	if commit:
+		# No callbacks run between validation and these replacements/removals.
+		for id: StringName in stage._removed:
+			_records.erase(id)
+		for id: StringName in stage._records:
+			_records[id] = stage._records[id]
+	_locked = false
+	# A retained planning/staging reference must never be able to edit committed records.
+	stage._records = {}
+	stage._removed = {}
+	stage._read_only = true
+	return true
+
+func _lookup(id: StringName) -> Dictionary:
+	if _removed.has(id):
+		return {}
+	if _records.has(id):
+		return _records[id]
+	return _base._lookup(id) if _base != null else {}
+
+func _can_write() -> bool:
+	return writable and not _read_only and not _locked
+
+func _stage_record(id: StringName) -> void:
+	if _base != null and not _records.has(id):
+		_records[id] = KitCanonical.normalize(_base._lookup(id))
+		copied_records += 1
 
 func register_type(definition: KitRecordType) -> void:
 	types[definition.id] = definition
 
 func ids() -> Array[StringName]:
 	var result: Array[StringName] = []
+	var combined: Dictionary = {}
+	if _base != null:
+		for id: StringName in _base.ids():
+			if not _removed.has(id):
+				combined[id] = true
 	for id: Variant in _records:
+		combined[id] = true
+	for id: Variant in combined:
 		result.append(StringName(id))
 	# Sorting StringNames directly is not alphabetical in Godot; compare their text.
 	result.sort_custom(func(a: StringName, b: StringName) -> bool: return str(a) < str(b))
 	return result
 
 func record(id: StringName) -> Dictionary:
-	return _records.get(id, {}).duplicate(true)
+	return _lookup(id).duplicate(true)
 
 func field(id: StringName, path: String) -> Variant:
-	var value: Variant = _records.get(id, {})
+	var value: Variant = _lookup(id)
 	for part: String in path.split("."):
 		if not value is Dictionary or not value.has(part):
 			return null
@@ -28,7 +87,7 @@ func field(id: StringName, path: String) -> Variant:
 	return value.duplicate(true) if value is Dictionary or value is Array else value
 
 func put(id: StringName, type_id: StringName, fields: Dictionary) -> bool:
-	if not writable or id.is_empty() or _records.has(id) or not types.has(type_id):
+	if not _can_write() or id.is_empty() or not _lookup(id).is_empty() or not types.has(type_id):
 		return false
 	var definition: KitRecordType = types[type_id]
 	if fields.size() != definition.fields.size():
@@ -39,29 +98,34 @@ func put(id: StringName, type_id: StringName, fields: Dictionary) -> bool:
 	var data: Dictionary = fields.duplicate(true)
 	data["type"] = str(type_id)
 	_records[id] = data
+	_removed.erase(id)
 	return true
 
 func set_field(id: StringName, path: String, value: Variant) -> bool:
-	if not writable or not _records.has(id):
+	if not _can_write() or _lookup(id).is_empty():
 		return false
 	var parts: PackedStringArray = path.split(".")
-	var definition: KitRecordType = types[StringName(_records[id].type)]
+	var definition: KitRecordType = types[StringName(_lookup(id).type)]
 	if not definition.fields.has(parts[0]):
 		return false
 	if parts.size() == 1 and not _matches(value, str(definition.fields[parts[0]])):
 		return false
+	_stage_record(id)
 	var container: Dictionary = _records[id]
 	for index: int in range(parts.size() - 1):
 		if not container.get(parts[index]) is Dictionary:
 			return false
 		container = container[parts[index]]
-	container[parts[-1]] = value
+	container[parts[-1]] = value.duplicate(true) if value is Array or value is Dictionary else value
 	return true
 
 func remove(id: StringName) -> bool:
-	if not writable or not _records.has(id):
+	if not _can_write() or _lookup(id).is_empty():
 		return false
-	return _records.erase(id)
+	_records.erase(id)
+	if _base != null:
+		_removed[id] = true
+	return true
 
 func dump() -> Dictionary:
 	var result: Dictionary = {}
@@ -73,6 +137,8 @@ func snapshot() -> Dictionary:
 	return dump()
 
 func restore(data: Dictionary) -> bool:
+	if _read_only or _locked or _base != null:
+		return false
 	var previous: Dictionary = _records
 	_records = {}
 	var was_writable: bool = writable
@@ -112,9 +178,28 @@ func state_hash() -> String:
 	return KitCanonical.hash_value(dump())
 
 func validate(clip: bool = false) -> Dictionary:
+	return _validate_ids(ids(), clip)
+
+## Validate and canonicalize only the staged records; untouched records were already valid.
+func validate_changes() -> Dictionary:
+	if _base == null or not _can_write():
+		return {"ok": false, "message": "Only a writable transaction may validate staged changes."}
+	for id: StringName in _records:
+		_records[id] = KitCanonical.normalize(_records[id])
+	var changed: Array[StringName] = []
+	for id: StringName in _records:
+		changed.append(id)
+	changed.sort_custom(func(a: StringName, b: StringName) -> bool: return str(a) < str(b))
+	return _validate_ids(changed, false)
+
+func _validate_ids(record_ids: Array[StringName], clip: bool) -> Dictionary:
+	if clip and not _can_write():
+		return {"ok": false, "message": "A read-only world cannot clip records."}
 	var clipped: bool = false
-	for id: StringName in ids():
-		var data: Dictionary = _records[id]
+	for id: StringName in record_ids:
+		if clip:
+			_stage_record(id)
+		var data: Dictionary = _lookup(id)
 		var definition: KitRecordType = types[StringName(data.type)]
 		for key: String in definition.fields:
 			if not _matches(data.get(key), str(definition.fields[key])):

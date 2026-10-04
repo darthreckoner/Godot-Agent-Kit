@@ -57,6 +57,7 @@ func reset(seed_value: int = 1, scenarios: bool = false) -> void:
 	feel.sequences.clear()
 	feel.views.clear()
 	overlay.clear_feel_variants()
+	overlay.reset_view()
 	feel.enabled = not scenarios
 
 func snapshot() -> Dictionary:

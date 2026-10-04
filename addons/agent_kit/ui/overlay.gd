@@ -42,6 +42,19 @@ func add_feel_variant(sequence: KitFeelSequence) -> void:
 func clear_feel_variants() -> void:
 	_variant_sequences.clear()
 
+func reset_view() -> void:
+	_why_entity_popup.hide()
+	_inspector.hide()
+	_tuning_panel.hide()
+	_selected = &""
+	_refusal_target = &""
+	_search.clear()
+	_action_filter.clear()
+	_outcome_filter.clear()
+	_expanded.clear()
+	var tabs: TabContainer = _inspector.get_child(0).get_child(1)
+	tabs.current_tab = 0
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_F1:
@@ -274,7 +287,7 @@ func _build_inspector() -> void:
 	_button("Replay last", controls, func() -> void: Kit.feel.replay())
 	_button("0.25×", controls, func() -> void: Kit.feel.time_scale = 0.25)
 	_button("1×", controls, func() -> void: Kit.feel.time_scale = 1.0)
-	_button("Skip to final stage", controls, func() -> void: Kit.feel.skip())
+	_button("Finish current effect", controls, func() -> void: Kit.feel.skip())
 	_a = OptionButton.new()
 	_b = OptionButton.new()
 	feel_tab.add_child(_a)
@@ -437,9 +450,13 @@ func _refresh_log() -> void:
 		for reason: String in reasons:
 			_timeline.append_text("    [color=#ffba76]%s[/color]\n" % reason)
 	_append_run(run)
+	if _timeline.get_parsed_text().is_empty():
+		_timeline.append_text("No actions recorded yet." if Kit.log.records().is_empty() else "No actions match these filters.")
 	_event_text.clear()
 	for event: Dictionary in Kit.events.history:
 		_event_text.append_text("Tick %d · %s\n%s\n\n" % [event.tick, event.name, JSON.stringify(event.payload)])
+	if Kit.events.history.is_empty():
+		_event_text.append_text("No events recorded yet. Committed actions and refusals appear here.")
 
 func _build_tuning() -> void:
 	_tuning_panel = _panel()

@@ -77,6 +77,9 @@ func replay() -> void:
 	if last_sequence != null:
 		play(last_sequence, last_payload)
 
+func is_playing() -> bool:
+	return not _playing.is_empty()
+
 func skip() -> void:
 	for playback: Dictionary in _playing:
 		_stop_audio(playback)
@@ -113,7 +116,10 @@ func _hit(playback: Dictionary) -> void:
 	var stage: KitFeelStage = playback.sequence.stages[playback.index]
 	var target: Node = view_for(StringName(playback.payload.get(stage.target, "")))
 	last_stage = stage
-	stage_started.emit(stage, playback.payload, target)
+	# Overlapping effects must caption their own sequence, rather than the most recently started one.
+	var stage_payload: Dictionary = playback.payload.duplicate(true)
+	stage_payload["_sequence_description"] = playback.sequence.description
+	stage_started.emit(stage, stage_payload, target)
 	var opacity: float = maxf(_flash.color.a, stage.screen_flash)
 	_flash.color = stage.flash_color
 	_flash.color.a = opacity
