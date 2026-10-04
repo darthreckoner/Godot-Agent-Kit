@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="KitControlSet" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://addons/agent_kit/controls/control_set.gd" id="1"]
+[ext_resource type="Script" path="res://addons/agent_kit/controls/control_action.gd" id="2"]
+
+[sub_resource type="Resource" id="inspector"]
+script = ExtResource("2")
+id = &"kit_inspector"
+description = "Ask your game why"
+group = "Kit"
+keys = Array[Dictionary]([{"key": 4194332}])
+
+[sub_resource type="Resource" id="tuning"]
+script = ExtResource("2")
+id = &"kit_tuning"
+description = "Open tuning and controls"
+group = "Kit"
+keys = Array[Dictionary]([{"key": 4194333}])
+
+[sub_resource type="Resource" id="finish"]
+script = ExtResource("2")
+id = &"kit_finish_effect"
+description = "Finish current effect"
+group = "Kit"
+keys = Array[Dictionary]([{"key": 4194334}])
+
+[resource]
+script = ExtResource("1")
+actions = Array[ExtResource("2")]([SubResource("inspector"), SubResource("tuning"), SubResource("finish")])

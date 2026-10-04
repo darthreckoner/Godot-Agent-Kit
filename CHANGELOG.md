@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.3.0 — 2026-10-04
+
+- New `KitControlAction` and `KitControlSet` resources declare named controls, plain-English descriptions, groups, and up to two physical keyboard or mouse slots. `Kit.controls` registers them in InputMap, checks conflicts across kit and game, and exposes Trial, Apply, Discard, Reset to defaults, current slots and readable labels.
+- F2 starts with a Controls group. Click a slot and press a key or mouse button; conflicts name the action already using it. Trials highlight immediately. Apply saves bindings into the game's project controls resource, including overrides for the kit's inspector, tuning and current-effect shortcuts. Reset uses the declaration's original keys; Discard uses the last applied bindings. No personal machine keymap is added.
+- The lab reads named actions for flight, targeting, camera, drilling, docking and session commands. Enter/Numpad Enter are two slots of one control. Hints come from live declarations and bindings. Rule handlers, camera-relative direction mapping, outcomes and simulation timing are unchanged.
+- Play scenarios resolve named controls to real keyboard/mouse events and start from declared reset defaults, independently of saved project rebinds. `play_controls` exercises actual slot clicks, key capture, conflict refusal, old/new flight keys, mouse slots, kit shortcut rebinds, Discard, Reset and Apply/reload against report copies. Default F2 and UI verification check Controls placement.
+- GAME_MAP includes a source-linked Controls inventory. Save schema remains 1; bindings stay outside save payloads and rule hashes. Existing save fixtures need no migration.
+
 ## 0.2.0 — 2026-10-04
 
 - `KitActionDef.charge_policy_key` optionally binds charge policy to an integer tuning knob (0: ON_SUCCESS, 1: ON_ATTEMPT). The runner reads it at execution, including queued actions. Missing or invalid bindings reject by `action.charge_policy`; unbound definitions retain their existing policy. GAME_MAP names the binding. The mining setup bridge is removed.

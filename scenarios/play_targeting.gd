@@ -14,43 +14,49 @@ func setup() -> bool:
 	Kit.world.writable = false
 	return ok
 func steps() -> Array[Dictionary]:
+	var settle: float = 0.0
+	for sequence: KitFeelSequence in Kit.feel.sequences.values():
+		var duration: float = 0.0
+		for stage: KitFeelStage in sequence.stages:
+			duration += maxf(stage.duration, stage.sound_marker_sec)
+		settle = maxf(settle, duration / Kit.feel.time_scale)
 	return [
 		{"command": "initial"},
-		{"command": "key", "key": KEY_W},
+		{"command": "control", "action": "fly_forward"},
 		{"command": "wait_presentation", "seconds": 0.4},
-		{"command": "key", "key": KEY_W, "pressed": false},
+		{"command": "control", "action": "fly_forward", "pressed": false},
 		{"command": "wait_presentation", "seconds": 0.9},
 		{"command": "click"},
 		{"command": "screenshot", "name": "click_selects_only"},
 		{"command": "wait_presentation", "seconds": 1.0},
 		{"command": "faced"},
-		{"command": "mouse_button", "button": MOUSE_BUTTON_RIGHT, "position": [800, 350]},
+		{"command": "control", "action": "orbit_camera", "position": [800, 350]},
 		{"command": "mouse_motion", "relative": [-150, 0]},
-		{"command": "mouse_button", "button": MOUSE_BUTTON_RIGHT, "position": [800, 350], "pressed": false},
+		{"command": "control", "action": "orbit_camera", "position": [800, 350], "pressed": false},
 		{"command": "wait_presentation", "seconds": 0.5},
 		{"command": "orbit_check"},
-		{"command": "key", "key": KEY_SPACE},
+		{"command": "control", "action": "drill"},
 		{"command": "input_ticks", "ticks": 9},
 		{"command": "one_hit"},
 		{"command": "finish_current"},
 		{"command": "input_ticks", "ticks": 12},
 		{"command": "broken"},
 		{"command": "screenshot", "name": "broken_target_cleared"},
-		{"command": "key", "key": KEY_SPACE, "pressed": false},
+		{"command": "control", "action": "drill", "pressed": false},
 		{"command": "gold"},
-		{"command": "key", "key": KEY_SPACE},
+		{"command": "control", "action": "drill"},
 		{"command": "input_ticks", "ticks": 12},
-		{"command": "key", "key": KEY_SPACE, "pressed": false},
+		{"command": "control", "action": "drill", "pressed": false},
 		{"command": "gold_refused"},
 		{"command": "screenshot", "name": "gold_power_explained"},
 		{"command": "look_before"},
-		{"command": "key", "key": KEY_B},
-		{"command": "key", "key": KEY_B, "pressed": false},
+		{"command": "control", "action": "hit_look"},
+		{"command": "control", "action": "hit_look", "pressed": false},
 		{"command": "look_after"},
 		{"command": "screenshot", "name": "heavy_same_damage"},
-		{"command": "wait_presentation", "seconds": 0.8},
-		{"command": "key", "key": KEY_F3},
-		{"command": "key", "key": KEY_F3, "pressed": false},
+		{"command": "wait_presentation", "seconds": settle + 0.1},
+		{"command": "control", "action": "kit_finish_effect"},
+		{"command": "control", "action": "kit_finish_effect", "pressed": false},
 		{"command": "idle_f3"}
 	]
 func execute_custom(command: Dictionary, view: Node) -> bool:
@@ -73,12 +79,12 @@ func execute_custom(command: Dictionary, view: Node) -> bool:
 		"finish_current":
 			var before: String = Kit.simulation_hash()
 			var playing: bool = Kit.feel.is_playing()
-			await key(KEY_F3)
-			await key(KEY_F3, false)
+			await control(&"kit_finish_effect")
+			await control(&"kit_finish_effect", false)
 			_checks.append(assertion("Active F3 finishes presentation without changing rules or timing.", playing and before == Kit.simulation_hash() and str(view.get("_toast").text).begins_with("Finished the current effect")))
 		"broken":
 			_checks.append(assertion("The broken target clears; held Space never mines another rock.", view.get("_target") == &"" and Kit.log.records().size() == 2 and float(Kit.world.field(&"rock:000", "health")) == 0.0))
-			_checks.append(assertion("No-target Space gives a click-to-target instruction.", str(view.get("_toast").text).contains("No rock selected. Click a rock to target it.")))
+			_checks.append(assertion("No-target Space names the current select control.", str(view.get("_toast").text).contains("No rock selected. %s: select a rock to target it." % Kit.controls.text(&"select_target"))))
 		"gold":
 			_checks.append(assertion("A gold click only selects and explains how to raise drill power.", await click_rock(view, &"rock:020") and str(view.get("_target_label").text).contains("raise Mining / tool power in F2") and Kit.log.records().size() == 2))
 		"gold_refused":
@@ -89,5 +95,5 @@ func execute_custom(command: Dictionary, view: Node) -> bool:
 		"look_after":
 			_checks.append(assertion("B says same damage, bigger shake and flash; rule state/timing are unchanged.", _look_hash == Kit.simulation_hash() and str(view.get("_toast").text).contains("same damage, bigger shake and flash") and str(view.get("_target_label").text).contains("Hit look: heavy")))
 		"idle_f3":
-			_checks.append(assertion("Idle F3 explains that it finishes a current effect.", str(view.get("_toast").text).begins_with("No effect playing.")))
+			_checks.append(assertion("Idle F3 explains that it finishes a current effect.", str(view.get("_toast").text).begins_with("No effect playing."), str(view.get("_toast").text)))
 	return true

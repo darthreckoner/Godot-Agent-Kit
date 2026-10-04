@@ -1,4 +1,4 @@
-# Godot Agent Kit 0.2
+# Godot Agent Kit 0.3
 
 A reusable Godot 4.7 addon and a small mining lab. The kit records what your game did, explains why values changed, and lets you try tuning and feel changes safely. It works offline.
 
@@ -25,13 +25,21 @@ Fly left toward the dock. Within 3 metres, Enter sells every ore type and buys a
 | R | Restart from the saved tuning resources; unsaved trials are discarded |
 | Esc | Exit |
 
-The default tool cannot mine hard gold blocks. Under **charge on success**, those hits reject and spend no energy. Under **charge on attempt**, those hits spend energy and start the rule cooldown, but yield nothing. Increase Tool Power in F2 to mine harder rocks.
+With the original mining defaults, the tool cannot mine hard gold blocks. The current project has saved designer tuning (tool power 3, gold hardness 3, reach 4 m), so gold can be mined; scenario fixtures still test the harder-rock refusal explicitly. Under **charge on success**, those hits reject and spend no energy. Under **charge on attempt**, those hits spend energy and start the rule cooldown, but yield nothing. Increase Tool Power in F2 to mine harder rocks.
 
 ## Ask why with F1
 
 The World tab lists stable entity IDs in order. Select ship:player, then click Energy. The Why tab shows each recorded operation: the action, tick, input source, old and new values, and the rule or tuning knob responsible. Rejected attempts show their failed checks.
 
 Recently changed fields are highlighted. The Log tab filters the timeline by action or outcome. Events shows the declared event trail. Feel lets you replay the last sequence, slow it to 0.25×, skip to its final stage, and select light/heavy A/B resources. Using A or B subscribes that sequence to its event.
+
+## Edit controls in F2
+
+The table above shows reset defaults. The lab's hint lines always show the current bindings. Open F2, expand **Controls** at the top, click either key slot, then press a keyboard key or mouse button. A conflicting key is refused with the other action's name. Click **×** to clear a slot, or **Cancel key capture** to stop listening. Search also finds controls by description, group or current key.
+
+Changes are live **Trials**. **Apply controls** saves the game's default bindings into `game/data/controls.tres`; **Discard** returns to the last applied bindings. **Reset to defaults** trials the original declaration keys and still needs Apply to save. Kit shortcuts are in the same list and can be rebound. Keep a tuning shortcut bound so you can reopen the panel, or restore its binding in the project resource. There are no personal machine profiles or gamepad bindings.
+
+Games declare a `KitControlSet` containing `KitControlAction` resources (`id`, `description`, `group`, `keys`). Each `keys` array has zero to two dictionaries: `{"key": KEY_W}` for a physical keyboard position or `{"mouse": MOUSE_BUTTON_LEFT}` for a mouse button. Call `Kit.controls.register(resource, "res://game/data/controls.tres")` at boot and check its boolean result and `last_message`. The resource's `bindings` dictionary holds applied overrides, including kit actions; `keys` remain the reset defaults. Duplicate actions, unsupported bindings and conflicts refuse registration before InputMap changes. `trial(id, slot, binding)`, `apply()`, `discard()`, `reset_defaults()`, `slot()` and `text()` support custom tools; check Trial's boolean and Apply's Error result. InputMap registers physical keyboard positions without modifiers. Bindings are excluded from saves and rule hashes; save schema remains 1.
 
 These controls replay presentation after the action has committed. They cannot alter energy, ore, action order, or cooldowns.
 
@@ -69,7 +77,7 @@ From PowerShell in this folder:
 
 Test discovers every declared scenario, runs the rule suite headlessly and then runs the input scenarios windowed. Both suites repeat each run and compare continuous play with a midpoint save/reload continuation. Save/reload verification clears the live world, clock, pending queue and RNG before restoring the file. The feel scenario also compares its two variants automatically. Render uses the same rules and the actual mining view, and writes PNGs at marked presentation stages.
 
-Play scenarios set `requires_play = true`, supply a render scene and send engine `InputEventKey` events with physical keycodes, mouse button/motion events, and `input_ticks` commands. The real scene handles input and polls physical keys while rules advance only through the manual clock. `wait_presentation` lets cosmetic turns/effects settle without advancing rules. This verifies engine input handling, camera behavior and UI defaults; it does not simulate hardware drivers or establish human feel acceptance. Screenshots are baseline evidence and must be inspected for any player-visible task.
+Play scenarios set `requires_play = true`, supply a render scene and use `{"command": "control", "action": "fly_forward", "pressed": true, "slot": 0}` to press the current binding. Their setup starts from declared reset defaults, so saved project rebinds cannot break the suite. Controls resolve to real engine key/mouse events, with motion and `input_ticks` commands. Direct physical-key events remain available to test old keys and key capture. The real scene handles input and polls named actions while rules advance only through the manual clock. `wait_presentation` lets cosmetic turns/effects settle without advancing rules. This verifies engine input handling, camera behavior and UI defaults; it does not simulate hardware drivers or establish human feel acceptance. Screenshots are baseline evidence and must be inspected for any player-visible task.
 
 Reports are saved under reports/scenario/date-time/. Open report.md for the plain-English result or report.json for the complete checks, operation records, repeated/reloaded evidence, numbers and comparisons. Render reports link their screenshots. Failed reports remain available beside reruns.
 
@@ -81,7 +89,7 @@ Additional verification:
 .\tools\verify_install.ps1
 ~~~
 
-This creates an empty Godot project under reports, checks clean and forced installs, unchanged reinstalls and edited-file refusal, imports it, and proves Kit boots with all nine services and a manual clock.
+This creates an empty Godot project under reports, checks clean and forced installs, unchanged reinstalls and edited-file refusal, imports it, and proves Kit boots with all ten services and default kit controls and a manual clock.
 
 tools/verify_ui.tscn exercises the actual overlay input and control callbacks. Run that scene windowed for screenshots in reports/ui-verification. It checks Why, trials, Apply, Discard, variants, and feel replay/skip. These checks do not establish whether the game feels good.
 
@@ -105,7 +113,7 @@ Installed kit code should be changed in this source repository and reinstalled. 
 |---|---|
 | addons/agent_kit | Reusable kit code and resources |
 | game/rules | Mining, flight and dock handlers; no presentation |
-| game/data | Action, event and record-type declarations |
+| game/data | Action, event, controls and record-type declarations |
 | game/tuning | Small tuning groups and policy variants |
 | game/feel | Feel sequences, stages, placeholder sounds and particles |
 | game/views | The scene and views that read records |
@@ -114,7 +122,7 @@ Installed kit code should be changed in this source repository and reinstalled. 
 | tools | Command wrapper, installer and verification helpers |
 | GAME_MAP.md | Generated source-linked inventory |
 
-[GAME_MAP.md](GAME_MAP.md) lists actions, requirements, policies, declared events, tuning units/ranges/help, record types, feel stages and scenarios. Regenerate it after changing declarations.
+[GAME_MAP.md](GAME_MAP.md) lists controls and bindings, actions, requirements, policies, declared events, tuning units/ranges/help, record types, feel stages and scenarios. Regenerate it after changing declarations.
 
 ## How an action stays safe
 

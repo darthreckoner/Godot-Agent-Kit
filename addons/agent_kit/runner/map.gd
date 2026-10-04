@@ -25,14 +25,28 @@ static func paths(directory: String, extension: String) -> Array[String]:
 
 static func generate() -> Error:
 	var text: String = "# Game map\n\nGenerated from declarations. Change the source resource and regenerate this map.\n\n"
-	var categories: Dictionary = {"Actions": [], "Events": [], "Tuning": [], "Record types": [], "Feel sequences": [], "Scenarios": []}
+	var categories: Dictionary = {"Controls": [], "Actions": [], "Events": [], "Tuning": [], "Record types": [], "Feel sequences": [], "Scenarios": []}
 	var resources: Array[String] = paths("res://addons/agent_kit", "tres")
 	if DirAccess.dir_exists_absolute("res://game"):
 		resources.append_array(paths("res://game", "tres"))
+	var control_overrides: Dictionary = {}
+	for path: String in resources:
+		var declaration: Resource = load(path)
+		if declaration is KitControlSet:
+			for id: Variant in declaration.bindings:
+				control_overrides[StringName(id)] = declaration.bindings[id]
 	for path: String in resources:
 		var resource: Resource = load(path)
 		var link: String = "[%s](%s)" % [path.trim_prefix("res://"), path.trim_prefix("res://")]
-		if resource is KitActionDef:
+		if resource is KitControlSet:
+			for action: KitControlAction in resource.actions:
+				var slots: Array = control_overrides.get(action.id, action.keys)
+				var labels: Array[String] = []
+				for binding: Dictionary in slots:
+					if not binding.is_empty():
+						labels.append(KitControls.label(binding))
+				categories.Controls.append("- **%s** — %s. Group: %s. Keys: %s. %s\n" % [action.id, action.description, action.group, " / ".join(labels) if not labels.is_empty() else "Unbound", link])
+		elif resource is KitActionDef:
 			var charge: String = KitActionDef.ChargePolicy.keys()[resource.charge_policy]
 			if not resource.charge_policy_key.is_empty():
 				charge = "tuning/%s (0: ON_SUCCESS; 1: ON_ATTEMPT)" % resource.charge_policy_key
