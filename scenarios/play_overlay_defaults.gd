@@ -5,7 +5,7 @@ func _init() -> void:
 	description = "Inspect every default F1 tab and empty-search F2 before filling panels; explain an input-driven refusal."
 func setup() -> bool:
 	_checks.clear()
-	return start_from_launch()
+	return start_from_launch() and use_play_fixture()
 func steps() -> Array[Dictionary]:
 	return [
 		{"command": "default_tabs"},
@@ -16,8 +16,8 @@ func steps() -> Array[Dictionary]:
 func execute_custom(command: Dictionary, view: Node) -> bool:
 	match str(command.command):
 		"default_tabs":
-			await key(KEY_F1)
-			await key(KEY_F1, false)
+			await control(&"kit_inspector")
+			await control(&"kit_inspector", false)
 			var panel: PanelContainer = Kit.overlay.get("_inspector")
 			var tabs: TabContainer = panel.get_child(0).get_child(1)
 			_checks.append(assertion("F1 opens on World with no prefilled selection.", panel.visible and tabs.current_tab == 0 and Kit.overlay.get("_selected") == &"dock:home"))
@@ -39,11 +39,11 @@ func execute_custom(command: Dictionary, view: Node) -> bool:
 					4:
 						_checks.append(assertion("Default Feel offers both cosmetic variants without any action history.", Kit.overlay.get("_a").item_count == 2 and Kit.overlay.get("_b").item_count == 2 and Kit.overlay.get("_b").get_item_text(1).contains("same damage")))
 				_checks.append(assertion("Default %s screenshot saved." % tabs.get_tab_title(index), await shot("default_" + tabs.get_tab_title(index).to_lower())))
-			await key(KEY_F1)
-			await key(KEY_F1, false)
+			await control(&"kit_inspector")
+			await control(&"kit_inspector", false)
 		"default_tuning":
-			await key(KEY_F2)
-			await key(KEY_F2, false)
+			await control(&"kit_tuning")
+			await control(&"kit_tuning", false)
 			var rows: VBoxContainer = Kit.overlay.get("_knob_rows")
 			var search: LineEdit = Kit.overlay.get("_search")
 			var groups: int = 0
@@ -51,16 +51,18 @@ func execute_custom(command: Dictionary, view: Node) -> bool:
 				if child is Button and child.has_meta("tuning_group"):
 					groups += 1
 			_checks.append(assertion("Default F2 lists all groups, collapsed, with a visible focused empty search.", search.text.is_empty() and search.has_focus() and groups == Kit.tuning.sets.size() and search.size.y >= 30))
+			_checks.append(assertion("Controls is the first collapsed group in default F2.", rows.get_child(0) is Button and rows.get_child(0).has_meta("controls_group") and not Kit.overlay.get("_expanded").get(&"controls", false)))
+			_checks.append(assertion("Default F2 explains trials without a stale Apply message.", str(Kit.overlay.get("_status").text).begins_with("Changes are live trials.")))
 			_checks.append(assertion("Default F2 screenshot saved.", await shot("default_tuning")))
-			await key(KEY_F2)
-			await key(KEY_F2, false)
+			await control(&"kit_tuning")
+			await control(&"kit_tuning", false)
 		"refuse":
 			var clicked: bool = await click_rock(view, &"rock:000")
-			await key(KEY_SPACE)
+			await control(&"drill")
 			Kit.clock.advance()
-			await key(KEY_SPACE, false)
-			await key(KEY_F1)
-			await key(KEY_F1, false)
+			await control(&"drill", false)
+			await control(&"kit_inspector")
+			await control(&"kit_inspector", false)
 			var tabs: TabContainer = Kit.overlay.get("_inspector").get_child(0).get_child(1)
 			tabs.current_tab = 1
 			var text: Label = Kit.overlay.get("_refusal_text")

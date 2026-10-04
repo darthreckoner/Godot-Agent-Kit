@@ -6,7 +6,8 @@ func setup() -> bool:
 	if not super.setup():
 		return false
 	Kit.world.writable = true
-	var ok: bool = Kit.world.set_field(&"rock:020", "position", [4.5, 0.0, 0.0])
+	# This scenario explicitly needs a rock harder than the tool, even after designer tuning.
+	var ok: bool = Kit.world.set_field(&"rock:020", "position", [4.5, 0.0, 0.0]) and Kit.world.set_field(&"rock:020", "hardness", float(Kit.tuning.value("mining.tool_power")) + 1.0)
 	Kit.world.writable = false
 	return ok
 func steps() -> Array[Dictionary]:

@@ -1,0 +1,134 @@
+[gd_resource type="Resource" script_class="KitControlSet" load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://addons/agent_kit/controls/control_set.gd" id="1"]
+[ext_resource type="Script" path="res://addons/agent_kit/controls/control_action.gd" id="2"]
+
+[sub_resource type="Resource" id="fly_forward"]
+script = ExtResource("2")
+id = &"fly_forward"
+description = "Fly forward"
+group = "Flight"
+keys = Array[Dictionary]([{"key":87}])
+
+[sub_resource type="Resource" id="fly_back"]
+script = ExtResource("2")
+id = &"fly_back"
+description = "Fly back"
+group = "Flight"
+keys = Array[Dictionary]([{"key":83}])
+
+[sub_resource type="Resource" id="fly_left"]
+script = ExtResource("2")
+id = &"fly_left"
+description = "Fly left"
+group = "Flight"
+keys = Array[Dictionary]([{"key":65}])
+
+[sub_resource type="Resource" id="fly_right"]
+script = ExtResource("2")
+id = &"fly_right"
+description = "Fly right"
+group = "Flight"
+keys = Array[Dictionary]([{"key":68}])
+
+[sub_resource type="Resource" id="fly_up"]
+script = ExtResource("2")
+id = &"fly_up"
+description = "Fly up"
+group = "Flight"
+keys = Array[Dictionary]([{"key":69}])
+
+[sub_resource type="Resource" id="fly_down"]
+script = ExtResource("2")
+id = &"fly_down"
+description = "Fly down"
+group = "Flight"
+keys = Array[Dictionary]([{"key":81}])
+
+[sub_resource type="Resource" id="select_target"]
+script = ExtResource("2")
+id = &"select_target"
+description = "Select and face a rock"
+group = "Camera and targeting"
+keys = Array[Dictionary]([{"mouse":1}])
+
+[sub_resource type="Resource" id="orbit_camera"]
+script = ExtResource("2")
+id = &"orbit_camera"
+description = "Orbit camera (hold and drag)"
+group = "Camera and targeting"
+keys = Array[Dictionary]([{"mouse":2}])
+
+[sub_resource type="Resource" id="zoom_in"]
+script = ExtResource("2")
+id = &"zoom_in"
+description = "Zoom in"
+group = "Camera and targeting"
+keys = Array[Dictionary]([{"mouse":4}])
+
+[sub_resource type="Resource" id="zoom_out"]
+script = ExtResource("2")
+id = &"zoom_out"
+description = "Zoom out"
+group = "Camera and targeting"
+keys = Array[Dictionary]([{"mouse":5}])
+
+[sub_resource type="Resource" id="drill"]
+script = ExtResource("2")
+id = &"drill"
+description = "Drill selected target"
+group = "Mining and dock"
+keys = Array[Dictionary]([{"key":32}])
+
+[sub_resource type="Resource" id="sell_and_refuel"]
+script = ExtResource("2")
+id = &"sell_and_refuel"
+description = "Sell and refuel"
+group = "Mining and dock"
+keys = Array[Dictionary]([{"key":4194309},{"key":4194310}])
+
+[sub_resource type="Resource" id="hit_look"]
+script = ExtResource("2")
+id = &"hit_look"
+description = "Switch hit look (same damage)"
+group = "Trials and session"
+keys = Array[Dictionary]([{"key":66}])
+
+[sub_resource type="Resource" id="charge_policy"]
+script = ExtResource("2")
+id = &"charge_policy"
+description = "Switch charge policy"
+group = "Trials and session"
+keys = Array[Dictionary]([{"key":86}])
+
+[sub_resource type="Resource" id="save"]
+script = ExtResource("2")
+id = &"save"
+description = "Save"
+group = "Trials and session"
+keys = Array[Dictionary]([{"key":4194336}])
+
+[sub_resource type="Resource" id="load"]
+script = ExtResource("2")
+id = &"load"
+description = "Load"
+group = "Trials and session"
+keys = Array[Dictionary]([{"key":4194340}])
+
+[sub_resource type="Resource" id="restart"]
+script = ExtResource("2")
+id = &"restart"
+description = "Restart trials"
+group = "Trials and session"
+keys = Array[Dictionary]([{"key":82}])
+
+[sub_resource type="Resource" id="exit"]
+script = ExtResource("2")
+id = &"exit"
+description = "Exit"
+group = "Trials and session"
+keys = Array[Dictionary]([{"key":4194305}])
+
+[resource]
+script = ExtResource("1")
+actions = Array[ExtResource("2")]([SubResource("fly_forward"), SubResource("fly_back"), SubResource("fly_left"), SubResource("fly_right"), SubResource("fly_up"), SubResource("fly_down"), SubResource("select_target"), SubResource("orbit_camera"), SubResource("zoom_in"), SubResource("zoom_out"), SubResource("drill"), SubResource("sell_and_refuel"), SubResource("hit_look"), SubResource("charge_policy"), SubResource("save"), SubResource("load"), SubResource("restart"), SubResource("exit")])

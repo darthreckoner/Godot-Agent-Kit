@@ -4,17 +4,11 @@ var _checks: Array[Dictionary] = []
 var _directory: String = "res://reports/ui-verification/%s-%s" % [Time.get_datetime_string_from_system().replace(":", "").replace("-", ""), Time.get_ticks_usec()]
 func _ready() -> void:
 	call_deferred("_run")
-func _key(code: Key) -> void:
-	var event: InputEventKey = InputEventKey.new()
-	event.keycode = code
-	event.physical_keycode = code
-	event.pressed = true
+func _key(id: StringName) -> void:
+	var event: InputEvent = KitControls.input_event(Kit.controls.slot(id))
 	Input.parse_input_event(event)
-func _release(code: Key) -> void:
-	var event: InputEventKey = InputEventKey.new()
-	event.keycode = code
-	event.physical_keycode = code
-	event.pressed = false
+func _release(id: StringName) -> void:
+	var event: InputEvent = KitControls.input_event(Kit.controls.slot(id), false)
 	Input.parse_input_event(event)
 func _shot(name: String) -> bool:
 	await get_tree().process_frame
@@ -46,6 +40,7 @@ func _run() -> void:
 	var lab: Node = load("res://game/views/mining_lab.tscn").instantiate()
 	add_child(lab)
 	await get_tree().process_frame
+	Kit.controls.reset_defaults()
 	# Drive the playable scene's real physical-key and clock callbacks.
 	Kit.clock.mode = KitClock.Mode.MANUAL_TURN
 	Kit.actions.input_source = "ui_verification"
@@ -55,20 +50,21 @@ func _run() -> void:
 	Kit.world.writable = false
 	_checks.append(KitScenario.assertion("The harness parked the ship within drill reach.", parked))
 	var before_position: Variant = Kit.world.field(&"ship:player", "position")
-	_key(KEY_A)
+	_key(&"fly_left")
 	await get_tree().process_frame
 	Kit.clock.advance()
-	_release(KEY_A)
+	_release(&"fly_left")
 	_checks.append(KitScenario.assertion("Flight input updates the authoritative ship.", Kit.world.field(&"ship:player", "position") != before_position))
 	var driver: KitScenario = load("res://scenarios/support/play_scenario.gd").new()
+	_checks.append(KitScenario.assertion("UI verification uses explicit mining fixtures without writing tuning.", driver.use_play_fixture()))
 	var before_click: String = Kit.world.state_hash()
 	var clicked: bool = await driver.click_rock(lab, &"rock:000")
 	_checks.append(KitScenario.assertion("A physical rock click selects without mining or spending energy.", clicked and before_click == Kit.world.state_hash() and Kit.log.records().size() == 1, {"target": str(lab.get("_target")), "records": Kit.log.records().size()}))
-	_key(KEY_SPACE)
+	_key(&"drill")
 	await get_tree().process_frame
 	Kit.clock.advance()
-	_release(KEY_SPACE)
-	_key(KEY_F1)
+	_release(&"drill")
+	_key(&"kit_inspector")
 	await get_tree().process_frame
 	_checks.append(KitScenario.assertion("F1 opens the inspector.", Kit.overlay.is_open()))
 	Kit.overlay.set("_selected", &"ship:player")
@@ -117,11 +113,12 @@ func _run() -> void:
 	_checks.append(KitScenario.assertion("Refused-hit screenshot saved.", await _shot("why_refused")))
 	var timeline: RichTextLabel = Kit.overlay.get("_timeline")
 	_checks.append(KitScenario.assertion("The Log tab lists actions and refusals with no filter typed.", timeline.get_parsed_text().contains("mine by ship:player") and timeline.get_parsed_text().contains("Refused by mining.tool_vs_hardness")))
-	_key(KEY_F2)
+	_key(&"kit_tuning")
 	await get_tree().process_frame
 	var search: LineEdit = Kit.overlay.get("_search")
 	var rows: VBoxContainer = Kit.overlay.get("_knob_rows")
 	_checks.append(KitScenario.assertion("F2 opens with every tuning group listed.", _groups(rows).size() == Kit.tuning.sets.size() and _sliders(rows) == 0, _groups(rows).size(), Kit.tuning.sets.size()))
+	_checks.append(KitScenario.assertion("Controls is the first collapsed F2 group.", rows.get_child(0) is Button and rows.get_child(0).has_meta("controls_group")))
 	_checks.append(KitScenario.assertion("F2 puts the cursor in the search box.", search.has_focus()))
 	_checks.append(KitScenario.assertion("Empty tuning screenshot saved.", await _shot("tuning_groups")))
 	for header: Button in _groups(rows):

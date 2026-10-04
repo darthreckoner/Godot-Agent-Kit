@@ -2,6 +2,30 @@
 
 Generated from declarations. Change the source resource and regenerate this map.
 
+## Controls
+
+- **kit_inspector** — Ask your game why. Group: Kit. Keys: F1. [addons/agent_kit/controls/kit.tres](addons/agent_kit/controls/kit.tres)
+- **kit_tuning** — Open tuning and controls. Group: Kit. Keys: F2. [addons/agent_kit/controls/kit.tres](addons/agent_kit/controls/kit.tres)
+- **kit_finish_effect** — Finish current effect. Group: Kit. Keys: F3. [addons/agent_kit/controls/kit.tres](addons/agent_kit/controls/kit.tres)
+- **fly_forward** — Fly forward. Group: Flight. Keys: W. [game/data/controls.tres](game/data/controls.tres)
+- **fly_back** — Fly back. Group: Flight. Keys: S. [game/data/controls.tres](game/data/controls.tres)
+- **fly_left** — Fly left. Group: Flight. Keys: A. [game/data/controls.tres](game/data/controls.tres)
+- **fly_right** — Fly right. Group: Flight. Keys: D. [game/data/controls.tres](game/data/controls.tres)
+- **fly_up** — Fly up. Group: Flight. Keys: E. [game/data/controls.tres](game/data/controls.tres)
+- **fly_down** — Fly down. Group: Flight. Keys: Q. [game/data/controls.tres](game/data/controls.tres)
+- **select_target** — Select and face a rock. Group: Camera and targeting. Keys: Left mouse. [game/data/controls.tres](game/data/controls.tres)
+- **orbit_camera** — Orbit camera (hold and drag). Group: Camera and targeting. Keys: Right mouse. [game/data/controls.tres](game/data/controls.tres)
+- **zoom_in** — Zoom in. Group: Camera and targeting. Keys: Wheel up. [game/data/controls.tres](game/data/controls.tres)
+- **zoom_out** — Zoom out. Group: Camera and targeting. Keys: Wheel down. [game/data/controls.tres](game/data/controls.tres)
+- **drill** — Drill selected target. Group: Mining and dock. Keys: Space. [game/data/controls.tres](game/data/controls.tres)
+- **sell_and_refuel** — Sell and refuel. Group: Mining and dock. Keys: Enter / Numpad Enter. [game/data/controls.tres](game/data/controls.tres)
+- **hit_look** — Switch hit look (same damage). Group: Trials and session. Keys: B. [game/data/controls.tres](game/data/controls.tres)
+- **charge_policy** — Switch charge policy. Group: Trials and session. Keys: V. [game/data/controls.tres](game/data/controls.tres)
+- **save** — Save. Group: Trials and session. Keys: F5. [game/data/controls.tres](game/data/controls.tres)
+- **load** — Load. Group: Trials and session. Keys: F9. [game/data/controls.tres](game/data/controls.tres)
+- **restart** — Restart trials. Group: Trials and session. Keys: R. [game/data/controls.tres](game/data/controls.tres)
+- **exit** — Exit. Group: Trials and session. Keys: Escape. [game/data/controls.tres](game/data/controls.tres)
+
 ## Actions
 
 - **mine** — Hit a selected rock; pay energy and collect ore on break. [game/data/mine.tres](game/data/mine.tres)
@@ -297,6 +321,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 - **mine_full_cargo** — Clip new ore at shared capacity without removing existing cargo. [scenarios/mine_full_cargo.gd](scenarios/mine_full_cargo.gd)
 - **mine_hard_rock** — Prove success-only rejection and paid zero-yield attempts. [scenarios/mine_hard_rock.gd](scenarios/mine_hard_rock.gd)
 - **mine_out_of_range** — A rock out of drill reach rejects without cost; flying in and stopping makes it minable. [scenarios/mine_out_of_range.gd](scenarios/mine_out_of_range.gd)
+- **play_controls** — Rebind through F2; new keys fly, old keys stop, conflicts refuse, Discard/reset restore, and Apply persists project defaults. [scenarios/play_controls.gd](scenarios/play_controls.gd)
 - **play_flight_and_dock** — Drive camera orbit and WASD through physical input; Numpad Enter and Enter both trade at the dock. [scenarios/play_flight_and_dock.gd](scenarios/play_flight_and_dock.gd)
 - **play_overlay_defaults** — Inspect every default F1 tab and empty-search F2 before filling panels; explain an input-driven refusal. [scenarios/play_overlay_defaults.gd](scenarios/play_overlay_defaults.gd)
 - **play_targeting** — Physical clicks select and face once; Space alone drills, clears broken targets and explains hard gold. [scenarios/play_targeting.gd](scenarios/play_targeting.gd)

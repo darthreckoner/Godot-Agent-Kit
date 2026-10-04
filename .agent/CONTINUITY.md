@@ -1,8 +1,7 @@
 # Continuity
 
-- Completed all nine open STATE.md tickets on codex/open-tickets-2026-10-04, based on fetched main 05c66d87227871d45c0753564d439cc54ad5c01a. Initial checkout was clean.
-- Kit version 0.2.0; save schema 1 is preserved. Charge policy binds to tuning; actions stage touched records; RNG audit sorts names as text. Kit remains independent of mining/camera/dimensionality.
-- Lab uses click-only selection and one-time smooth facing, Space-only drilling, cleared broken targets and both Enter keys. Designer confirmed clearer F3/current-effect and gold/F2-power labels, with no upgrade system or persistent effects toggle.
-- tools/kit.ps1 test passes 10 sim + 3 windowed physical-input scenarios, all with repeat/save-reload. UI verification passes 25 checks. Rendered feel compare and installer checks pass; GAME_MAP, lint and diff checks pass.
-- STATE.md records reports, performance measurements, inspected screenshots and preserved failed runs. Generated evidence, engine profiles and kit.local.json remain ignored.
-- Delivery is the local implementation branch. Human feel acceptance of the new targeting/nose workflow remains pending. The sandbox certificate-store warning does not prevent offline verification.
+- Ticket 10 is merged into main through PR #3 on 2026-10-04. Implementation b30a1252b237f5f90018941dce5b0068642dcbb5; merge 114e7fedf002cb8e4c6f33a4c17adf9f5b4e0270. GitHub reports MERGED; the local checkout is on main. The designer reported "play test passes" and authorized delivery.
+- Kit 0.3.0 adds declared keyboard/mouse controls, Kit.controls, shared kit/game conflict checks and the top F2 Controls group with Trial/Apply/Discard/Reset. Apply writes game/data/controls.tres. Bindings stay outside schema-1 saves and rule hashes. Lab input and hints use named controls.
+- tools/kit.ps1 test passes 10 sim + 4 play scenarios with repeat/save-reload, including the pre-publication rerun at 16:54-16:55. UI verification passes 27 checks; rendered feel compare, map, lint and installer retry pass. STATE.md records reports, inspected screenshots and the preserved unexplained first installer-import failure.
+- Designer gameplay tuning/feel files are unchanged. Test fixtures explicitly establish hard-rock/refusal conditions; the idle probe waits for declared effect durations. Play scenarios reset declared controls independently of saved rebinds.
+- Human acceptance is recorded from that passing 0.3.0 playtest; individual manual steps were not enumerated. Ticket 11 and distribution work on origin/claude/v0-1-review-issues-1ntmju at bc43b44 remain outside this merge. STATE.md is authoritative for current status.

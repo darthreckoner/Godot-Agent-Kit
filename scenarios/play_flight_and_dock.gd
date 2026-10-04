@@ -7,7 +7,7 @@ func _init() -> void:
 	description = "Drive camera orbit and WASD through physical input; Numpad Enter and Enter both trade at the dock."
 func setup() -> bool:
 	_checks.clear()
-	if not start_from_launch():
+	if not start_from_launch() or not use_play_fixture():
 		return false
 	Kit.world.writable = true
 	var ok: bool = Kit.world.set_field(&"ship:player", "energy", 20.0) and Kit.world.set_field(&"ship:player", "cargo.iron", 3.0)
@@ -17,32 +17,32 @@ func steps() -> Array[Dictionary]:
 	var orbit: float = deg_to_rad(float(Kit.tuning.value("presentation.camera_start_yaw"))) / float(Kit.tuning.value("presentation.orbit_sensitivity"))
 	return [
 		{"command": "remember"},
-		{"command": "mouse_button", "button": MOUSE_BUTTON_RIGHT, "position": [800, 350]},
+		{"command": "control", "action": "orbit_camera", "position": [800, 350]},
 		{"command": "mouse_motion", "relative": [orbit, 0]},
-		{"command": "mouse_button", "button": MOUSE_BUTTON_RIGHT, "position": [800, 350], "pressed": false},
+		{"command": "control", "action": "orbit_camera", "position": [800, 350], "pressed": false},
 		{"command": "wait_presentation", "seconds": 0.3},
 		{"command": "orbit_check"},
-		{"command": "key", "key": KEY_W},
+		{"command": "control", "action": "fly_forward"},
 		{"command": "input_ticks", "ticks": 8},
-		{"command": "key", "key": KEY_W, "pressed": false},
+		{"command": "control", "action": "fly_forward", "pressed": false},
 		{"command": "input_ticks", "ticks": 20},
 		{"command": "wait_presentation", "seconds": 1.0},
 		{"command": "forward_check"},
 		{"command": "screenshot", "name": "camera_relative_flight"},
-		{"command": "key", "key": KEY_S},
+		{"command": "control", "action": "fly_back"},
 		{"command": "input_ticks", "ticks": 8},
-		{"command": "key", "key": KEY_S, "pressed": false},
+		{"command": "control", "action": "fly_back", "pressed": false},
 		{"command": "input_ticks", "ticks": 20},
 		{"command": "strafe_start"},
-		{"command": "key", "key": KEY_A},
+		{"command": "control", "action": "fly_left"},
 		{"command": "input_ticks", "ticks": 33},
-		{"command": "key", "key": KEY_A, "pressed": false},
+		{"command": "control", "action": "fly_left", "pressed": false},
 		{"command": "input_ticks", "ticks": 20},
 		{"command": "strafe_check"},
-		{"command": "key", "key": KEY_KP_ENTER},
-		{"command": "key", "key": KEY_KP_ENTER, "pressed": false},
-		{"command": "key", "key": KEY_ENTER},
-		{"command": "key", "key": KEY_ENTER, "pressed": false},
+		{"command": "control", "action": "sell_and_refuel", "slot": 1},
+		{"command": "control", "action": "sell_and_refuel", "slot": 1, "pressed": false},
+		{"command": "control", "action": "sell_and_refuel"},
+		{"command": "control", "action": "sell_and_refuel", "pressed": false},
 		{"command": "dock_check"},
 		{"command": "screenshot", "name": "numpad_enter_docks"},
 		{"command": "wait_presentation", "seconds": 1.0}

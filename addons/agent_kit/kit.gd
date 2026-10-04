@@ -7,12 +7,15 @@ var log: KitActionLog = KitActionLog.new()
 var rng: KitRng = KitRng.new()
 var clock: KitClock = KitClock.new()
 var tuning: KitTuningRegistry = KitTuningRegistry.new()
+var controls: KitControls = KitControls.new()
 var feel: KitFeelPlayer
 var save: KitSaveStore = KitSaveStore.new()
 var overlay: KitOverlay
 var scenario_mode: bool = false
 
 func _ready() -> void:
+	if not controls.register(load("res://addons/agent_kit/controls/kit.tres")):
+		push_error(controls.last_message)
 	tuning.register(load("res://addons/agent_kit/tuning/system.tres"))
 	rng.reset(1)
 	clock.advanced.connect(actions.resolve)
@@ -32,6 +35,9 @@ func _process(delta: float) -> void:
 		clock.process(delta)
 
 func reset(seed_value: int = 1, scenarios: bool = false) -> void:
+	controls.clear()
+	if not controls.register(load("res://addons/agent_kit/controls/kit.tres")):
+		push_error(controls.last_message)
 	scenario_mode = scenarios
 	world = KitWorld.new()
 	actions.definitions.clear()

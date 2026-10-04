@@ -13,7 +13,7 @@ this file.
 ```
 addons/agent_kit/   the kit: never edit it inside a game (see "When the kit is not enough")
 game/rules/         action handlers and conditions, with no presentation
-game/data/          ActionDefs, record types, event declarations (.tres)
+game/data/          ActionDefs, record types, event declarations, controls (.tres)
 game/tuning/        one TuningSet per system
 game/feel/          FeelSequences and presentation scripts
 game/views/         scenes that show the world and turn input into actions
@@ -31,6 +31,9 @@ reports/            generated, gitignored
   or views.
 - **Rules never call audio, particles, camera, tweens or UI.** They emit declared events;
   FeelSequences and views react after the action commits.
+- **Player input is declared as named controls** in the game's KitControlSet (each with a
+  plain-English description and up to two keys or mouse buttons). Views read named actions,
+  never key codes. Key hints and instructions read the live bindings, so they cannot go stale.
 - **Randomness and time** come from `Kit.rng` streams and `Kit.clock` only. Never `randf()`,
   `randi()` or wall-clock time in rules.
 - Typed GDScript. Plain-English labels and messages: the designer is not a traditional
@@ -46,6 +49,9 @@ reports/            generated, gitignored
 - Run `tools/kit.ps1 test` before finishing any task. Report actual results.
 - New rules get a scenario. Changes to what the player sees or does get an input-driven play
   scenario, and someone inspects its screenshots before the task is called done.
+- Scenarios must not depend on the designer's live tuning or bindings. Set the tuning values an
+  assertion depends on, press named controls (starting from declared default bindings), and
+  wait for effects to finish instead of waiting a fixed time.
 - A passing test does not mean it feels good. Say what the designer should playtest.
 - If you cannot run something, say so plainly.
 

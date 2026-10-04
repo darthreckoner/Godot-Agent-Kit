@@ -211,6 +211,18 @@ func _release_inputs() -> void:
 
 func _execute_command(command: Dictionary, scenario: KitScenario, view: Node) -> bool:
 	match str(command.command):
+		"control":
+			if not scenario.requires_play:
+				return false
+			var binding: Dictionary = Kit.controls.slot(StringName(command.action), int(command.get("slot", 0)))
+			var mapped: InputEvent = KitControls.input_event(binding, bool(command.get("pressed", true)))
+			if mapped == null:
+				return false
+			if mapped is InputEventKey:
+				return await _execute_command({"command": "key", "key": int(mapped.physical_keycode), "pressed": mapped.pressed}, scenario, view)
+			if mapped is InputEventMouseButton:
+				return await _execute_command({"command": "mouse_button", "button": int(mapped.button_index), "position": command.get("position", [800, 350]), "pressed": mapped.pressed}, scenario, view)
+			return false
 		"key":
 			if not scenario.requires_play:
 				return false
