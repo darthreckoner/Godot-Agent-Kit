@@ -58,6 +58,7 @@ Generated from declarations. Change the source resource and regenerate this map.
   | tick_rate | 30.0 | Hz | 1.0 to 120.0 | Simulation ticks each second. Restart needed. |
   | log_capacity | 512 | records | 32.0 to 8192.0 | Recent operations and events kept during play. |
   | flash_decay | 2.5 | opacity/s | 0.1 to 20.0 | How quickly the screen flash fades; no rule effects. |
+  | tuning_panel_width | 0.4 | of window width | 0.25 to 0.7 | Width of the tuning panel when it is docked to the side, as a share of the window width. |
 
 - **feel_cargo_clipped_0** — Cargo full warning presentation. [game/feel/stages/cargo_clipped_0.tres](game/feel/stages/cargo_clipped_0.tres)
 
@@ -325,6 +326,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 - **play_flight_and_dock** — Drive camera orbit and WASD through physical input; Numpad Enter and Enter both trade at the dock. [scenarios/play_flight_and_dock.gd](scenarios/play_flight_and_dock.gd)
 - **play_overlay_defaults** — Inspect every default F1 tab and empty-search F2 before filling panels; explain an input-driven refusal. [scenarios/play_overlay_defaults.gd](scenarios/play_overlay_defaults.gd)
 - **play_targeting** — Physical clicks select and face once; Space alone drills, clears broken targets and explains hard gold. [scenarios/play_targeting.gd](scenarios/play_targeting.gd)
+- **play_tuning_side_panel** — Dock the tuning panel to the side with a real click; fly and drag a slider with it open; typing borrows the keyboard until Esc or a click on the game. [scenarios/play_tuning_side_panel.gd](scenarios/play_tuning_side_panel.gd)
 - **rng_two_streams** — Audit two rule RNG streams in alphabetical order, even when drawn in reverse order. [scenarios/rng_two_streams.gd](scenarios/rng_two_streams.gd)
 - **scenario_tuning_pins** — Scenario pins validate together, preserve resources and files, and establish the Discard baseline. [scenarios/scenario_tuning_pins.gd](scenarios/scenario_tuning_pins.gd)
 - **shipped_default_balance** — Report changes to shipped mining, ship and economy defaults separately from rule fixtures. [scenarios/shipped_default_balance.gd](scenarios/shipped_default_balance.gd)

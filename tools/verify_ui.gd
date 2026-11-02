@@ -154,7 +154,7 @@ func _run() -> void:
 		var original_path: String = Kit.tuning.paths[&"mining"]
 		Kit.tuning.paths[&"mining"] = _directory.path_join("mining.tres")
 		for row: Node in rows.get_children():
-			if row is HBoxContainer:
+			if row is HBoxContainer or row is HFlowContainer:
 				for child: Node in row.get_children():
 					if child is Button and child.text == "Apply mining":
 						child.pressed.emit()
@@ -163,14 +163,14 @@ func _run() -> void:
 		Kit.tuning.trial("mining.energy_cost", initial + 0.5)
 		Kit.overlay._refresh_tuning()
 		for row: Node in rows.get_children():
-			if row is HBoxContainer:
+			if row is HBoxContainer or row is HFlowContainer:
 				for child: Node in row.get_children():
 					if child is Button and child.text == "Discard":
 						child.pressed.emit()
 		_checks.append(KitScenario.assertion("Discard returns to the applied value.", float(Kit.tuning.value("mining.energy_cost")) == initial + 0.25))
 		Kit.overlay._refresh_tuning()
 		for row: Node in rows.get_children():
-			if row is HBoxContainer:
+			if row is HBoxContainer or row is HFlowContainer:
 				for child: Node in row.get_children():
 					if child is LineEdit:
 						child.text = "ui_verified_" + str(Time.get_ticks_usec())

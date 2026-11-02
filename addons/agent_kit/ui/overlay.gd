@@ -33,6 +33,8 @@ var _capture_slot: int = 0
 var _capture_cancel: Button
 var _inspector_title: Label
 var _tuning_title: Label
+var _dock_button: Button
+var _docked: bool = false
 
 func _ready() -> void:
 	layer = 80
@@ -65,6 +67,14 @@ func reset_view() -> void:
 	tabs.current_tab = 0
 
 func _input(event: InputEvent) -> void:
+	# Side panel: clicking the game or pressing Esc hands the keyboard back from a text box.
+	if _docked and _tuning_panel.visible and _capture_action.is_empty() and _typing_in_tuning():
+		var outside_click: bool = event is InputEventMouseButton and event.pressed and not _tuning_panel.get_global_rect().has_point(event.position)
+		if outside_click or (event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE):
+			get_viewport().gui_get_focus_owner().release_focus()
+			if not outside_click:
+				get_viewport().set_input_as_handled()
+				return
 	if not _capture_action.is_empty() and event.is_pressed() and not event.is_echo():
 		if event is InputEventMouseButton and _capture_cancel != null and _capture_cancel.get_global_rect().has_point(event.position):
 			return
@@ -85,8 +95,10 @@ func _input(event: InputEvent) -> void:
 		_tuning_panel.visible = not _tuning_panel.visible
 		_inspector.hide()
 		_refresh_tuning()
-		if _tuning_panel.visible:
+		if _tuning_panel.visible and not _docked:
 			_search.grab_focus()
+		elif _typing_in_tuning():
+			get_viewport().gui_get_focus_owner().release_focus()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"kit_finish_effect"):
 		var playing: bool = Kit.feel.is_playing()
@@ -98,10 +110,48 @@ func _controls_changed() -> void:
 	if _inspector_title != null:
 		_inspector_title.text = "%s · Ask your game why" % Kit.controls.text(&"kit_inspector")
 	if _tuning_title != null:
-		_tuning_title.text = "%s · Tuning and controls · trial, then Apply or Discard" % Kit.controls.text(&"kit_tuning")
+		_tuning_title.text = ("%s · Tuning" if _docked else "%s · Tuning and controls · trial, then Apply or Discard") % Kit.controls.text(&"kit_tuning")
 
 func is_open() -> bool:
 	return _inspector.visible or _tuning_panel.visible
+
+## True while the overlay should keep keys and clicks from the game: the inspector, the full-screen
+## tuning panel, a key capture, or typing in a text box of the side panel. Games gate their own input on this.
+func captures_input() -> bool:
+	if _inspector.visible or not _capture_action.is_empty():
+		return true
+	if not _tuning_panel.visible:
+		return false
+	return not _docked or _typing_in_tuning()
+
+## Side panel: the tuning panel sits at the right edge at kit.tuning_panel_width of the window, and
+## the game stays visible and keeps the keyboard. Full screen (the default) covers the game. A game
+## may choose its default at boot; the panel's own button switches during a session.
+func set_tuning_docked(docked: bool) -> void:
+	_docked = docked
+	_dock_button.text = "Full screen" if docked else "Side panel"
+	_controls_changed()
+	if docked and _typing_in_tuning():
+		get_viewport().gui_get_focus_owner().release_focus()
+	_refresh_tuning()
+	_layout_tuning()
+
+func is_tuning_docked() -> bool:
+	return _docked
+
+func _typing_in_tuning() -> bool:
+	var owner: Control = get_viewport().gui_get_focus_owner()
+	return owner != null and _tuning_panel.is_ancestor_of(owner)
+
+func _layout_tuning() -> void:
+	var view: Vector2 = get_viewport().get_visible_rect().size
+	if _docked:
+		var width: float = clampf(view.x * float(Kit.tuning.value("kit.tuning_panel_width")), minf(440.0, view.x - 40.0), view.x - 40.0)
+		_tuning_panel.position = Vector2(view.x - width - 20.0, 20.0)
+		_tuning_panel.size = Vector2(width, view.y - 40.0)
+	else:
+		_tuning_panel.position = Vector2(40.0, 90.0)
+		_tuning_panel.size = view - Vector2(80, 135)
 
 const INK: Color = Color(0.035, 0.06, 0.10, 0.97)
 const SURFACE: Color = Color(0.08, 0.12, 0.17)
@@ -199,7 +249,8 @@ func _styled(control: Control, variation: StringName) -> Control:
 func _label(text: String, parent: Node) -> Label:
 	var label: Label = Label.new()
 	label.text = text
-	parent.add_child(label)
+	if parent != null:
+		parent.add_child(label)
 	return label
 
 func _button(text: String, parent: Node, callback: Callable) -> Button:
@@ -493,9 +544,16 @@ func _build_tuning() -> void:
 	_tuning_panel = _panel()
 	var column: VBoxContainer = VBoxContainer.new()
 	_tuning_panel.add_child(column)
-	_tuning_title = _label("", column)
+	var title_row: HBoxContainer = HBoxContainer.new()
+	column.add_child(title_row)
+	_tuning_title = _label("", title_row)
 	_tuning_title.add_theme_font_size_override("font_size", 24)
+	_tuning_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tuning_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_controls_changed()
+	_dock_button = _button("Side panel", title_row, func() -> void: set_tuning_docked(not _docked))
+	_dock_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_dock_button.tooltip_text = "Side panel keeps the game visible and keeps the keyboard for the game."
 	var search_row: HBoxContainer = HBoxContainer.new()
 	column.add_child(search_row)
 	_label("Search", search_row).add_theme_font_size_override("font_size", 18)
@@ -508,7 +566,7 @@ func _build_tuning() -> void:
 		_search.text = ""
 		_refresh_tuning()
 		_search.grab_focus())
-	_styled(_label("Controls and tuning are listed by group. Click a group to open it, or type to filter.", column), &"KitHelp")
+	_styled(_label("Controls and tuning are listed by group. Click a group to open it, or type to filter.", column), &"KitHelp").autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
@@ -544,11 +602,11 @@ func _refresh_controls(words: PackedStringArray) -> void:
 		_capture_action = &""
 		_refresh_tuning())
 	header.set_meta("controls_group", true)
-	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_fit_header(header)
 	_styled(header, &"KitHeader")
 	if not open:
 		return
-	var buttons: HBoxContainer = HBoxContainer.new()
+	var buttons: HFlowContainer = HFlowContainer.new()
 	_knob_rows.add_child(buttons)
 	var apply_button: Button = _button("Apply controls", buttons, func() -> void:
 		_capture_action = &""
@@ -594,7 +652,7 @@ func _refresh_controls(words: PackedStringArray) -> void:
 				_status.text = "Press a key or mouse button for %s, or click Cancel key capture." % action.description.to_lower()
 				_refresh_tuning())
 			slot_button.text = "Press a key…" if _capture_action == id and _capture_slot == index else slot_button.text
-			slot_button.custom_minimum_size.x = 170
+			slot_button.custom_minimum_size.x = 110 if _docked else 170
 			slot_button.set_meta("control_action", id)
 			slot_button.set_meta("control_slot", index)
 			_button("×", row, func() -> void:
@@ -641,17 +699,17 @@ func _refresh_tuning() -> void:
 		var header: Button = _button("%s %s — %s · %s%s" % ["▾" if open else "▸", str(id).capitalize(), resource.description, count, " · %d on trial" % trials if trials > 0 else ""], _knob_rows, func() -> void:
 			_expanded[id] = not bool(_expanded.get(id, false))
 			_refresh_tuning())
-		header.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		_fit_header(header)
 		_styled(header, &"KitHeader")
 		header.set_meta("tuning_group", id)
 		if not open:
 			continue
 		# Apply/Discard sit at the top of the group so they stay in view on long groups.
-		var buttons: HBoxContainer = HBoxContainer.new()
+		var buttons: HFlowContainer = HFlowContainer.new()
 		_knob_rows.add_child(buttons)
 		_styled(_button("Apply " + str(id), buttons, func() -> void:
 			var error: Error = Kit.tuning.apply(id)
-			_status.text = "Saved " + str(id) if error == OK else "Could not save: " + error_string(error)
+			_status.text = "Saved " + str(id) if error == OK else Kit.tuning.last_message
 			_refresh_tuning()), &"KitPrimary")
 		_button("Discard", buttons, func() -> void:
 			Kit.tuning.discard(id)
@@ -665,20 +723,24 @@ func _refresh_tuning() -> void:
 			_status.text = "Variant saved." if error == OK else "Could not save variant: " + error_string(error))
 		for knob: String in rows:
 			var metadata: Dictionary = resource.metadata(knob)
+			# The side panel is narrow: the knob name gets its own line above the slider.
+			var title: Label = _label("%s (%s)" % [knob.capitalize(), metadata.get("unit", "")], _knob_rows if _docked else null)
 			var row: HBoxContainer = HBoxContainer.new()
 			_knob_rows.add_child(row)
-			var title: Label = _label("%s (%s)" % [knob.capitalize(), metadata.get("unit", "")], row)
-			title.custom_minimum_size.x = 265
+			if not _docked:
+				row.add_child(title)
+				title.custom_minimum_size.x = 265
 			var slider: HSlider = HSlider.new()
 			slider.min_value = metadata.min
 			slider.max_value = metadata.max
 			slider.step = metadata.step
 			slider.value = float(resource.get(knob))
-			slider.custom_minimum_size.x = 260
+			slider.custom_minimum_size.x = 160 if _docked else 260
 			slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			slider.set_meta("tuning_knob", "%s.%s" % [id, knob])
 			row.add_child(slider)
 			var value_label: Label = _label("", row)
-			value_label.custom_minimum_size.x = 180
+			value_label.custom_minimum_size.x = 120 if _docked else 180
 			var update: Callable = func(next: float) -> void:
 				Kit.tuning.trial("%s.%s" % [id, knob], next)
 				var trial: bool = Kit.tuning.is_trial(id, knob)
@@ -690,12 +752,31 @@ func _refresh_tuning() -> void:
 			help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if _knob_rows.get_child_count() == 0:
 		_label("Nothing matches \"%s\". Try a word like range, energy, speed or camera, or press Clear to see every group." % _search.text, _knob_rows).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_apply_focus_modes()
+
+## Long group names would force a narrow side panel wider than the window; trim them there instead.
+func _fit_header(header: Button) -> void:
+	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	header.clip_text = _docked
+	header.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS if _docked else TextServer.OVERRUN_NO_TRIMMING
+	header.tooltip_text = header.text if _docked else ""
+
+## In the side panel the game keeps the keyboard: buttons and sliders work with the mouse but never
+## hold focus, so Space or Enter can't press Apply again. Text boxes still take keys once clicked.
+func _apply_focus_modes() -> void:
+	for node: Node in _tuning_panel.find_children("*", "Control", true, false):
+		var control: Control = node as Control
+		if control is LineEdit:
+			continue
+		if not control.has_meta("kit_focus_mode"):
+			control.set_meta("kit_focus_mode", control.focus_mode)
+		control.focus_mode = Control.FOCUS_NONE if _docked else int(control.get_meta("kit_focus_mode")) as Control.FocusMode
 
 func _process(delta: float) -> void:
 	# Wrapped status text can temporarily grow a root container during rebuilding.
 	# Keep the designer's panel inside the viewport; the action list owns scrolling.
 	if _tuning_panel.visible:
-		_tuning_panel.size = get_viewport().get_visible_rect().size - Vector2(80, 135)
+		_layout_tuning()
 	_refresh_time += delta
 	if _refresh_time >= 0.3 and _inspector.visible:
 		_refresh_time = 0.0

@@ -27,8 +27,9 @@ static func generate() -> Error:
 	var text: String = "# Game map\n\nGenerated from declarations. Change the source resource and regenerate this map.\n\n"
 	var categories: Dictionary = {"Controls": [], "Actions": [], "Events": [], "Tuning": [], "Record types": [], "Feel sequences": [], "Scenarios": []}
 	var resources: Array[String] = paths("res://addons/agent_kit", "tres")
-	if DirAccess.dir_exists_absolute("res://game"):
-		resources.append_array(paths("res://game", "tres"))
+	for folder: String in KitProject.content_folders():
+		if DirAccess.dir_exists_absolute(folder):
+			resources.append_array(paths(folder, "tres"))
 	var control_overrides: Dictionary = {}
 	for path: String in resources:
 		var declaration: Resource = load(path)
@@ -71,8 +72,9 @@ static func generate() -> Error:
 			for stage: KitFeelStage in resource.stages:
 				stages.append("%s (%ss)" % [stage.stage_name, stage.duration])
 			categories["Feel sequences"].append("- **%s** — %s Event: %s; stages: %s. %s\n" % [resource.id, resource.description, resource.trigger_event, " → ".join(stages), link])
-	if DirAccess.dir_exists_absolute("res://scenarios"):
-		for path: String in paths("res://scenarios", "gd"):
+	var scenario_folder: String = KitProject.scenario_folder()
+	if DirAccess.dir_exists_absolute(scenario_folder):
+		for path: String in paths(scenario_folder, "gd"):
 			var script: Script = load(path)
 			if script == null or not script.can_instantiate():
 				return ERR_PARSE_ERROR

@@ -49,7 +49,9 @@ Search any name, group, or help text. Every numeric knob has a unit, range, help
 
 - **Apply** writes that group's resource to disk. This becomes the new value Discard returns to.
 - **Discard** restores the last registered or applied values.
+- A game that already keeps its numbers in its own file can take over Apply: `Kit.tuning.use_store(&"handling", func(set_id: StringName, values: Dictionary) -> Error: ...)`. Apply then calls that function with every knob's value instead of writing the kit resource, and the panel shows `Kit.tuning.last_message` if it returns an error. `Kit.tuning.applied` fires after any successful Apply.
 - **Save as variant** writes a separate resource named set.name.tres. It refuses an existing name.
+- **Side panel** (button at the top right of the panel) docks tuning to the right edge so the game stays visible and keeps the keyboard while you drag sliders. Buttons and sliders work with the mouse and never hold focus; click the search box to type, and press Esc or click the game to hand the keys back. Its width is the `kit.tuning_panel_width` knob. A game can open in side mode with `Kit.overlay.set_tuning_docked(true)` at boot, and should gate its own input on `Kit.overlay.captures_input()` (true for the inspector, full-screen tuning, key capture, or typing in the side panel).
 - **Restart needed** marks setup values such as ship capacities, rock health, and tick rate. Apply, then restart to rebuild those records.
 
 Stage timing, sound markers, shake, flash and presentation fades are tuning resources too. Art meshes, colors, and particle scene assets remain normal Godot resources. Saving a stage variant creates a standalone stage resource; assign it to a sequence in Godot to use it.
@@ -114,6 +116,10 @@ Create an empty Godot 4.7 project, then run:
 The installer copies addons/agent_kit and tools/kit.ps1, writes the installed VERSION and SHA-256 manifest, and registers the one Kit autoload while preserving existing project settings. It rejects a conflicting autoload or a kit whose files have changed. Use -Force only when you intend to overwrite those installed files.
 
 Open the target project in Godot to import its scripts. Kit boots without the mining lab. Your game registers its own record types, tuning, actions, events and feel resources. Kit does not supply a genre, movement model, camera, dimensionality, or rule content.
+
+A game whose folders differ from the kit's convention (`game/`, `game/rules/`, `scenarios/`) adds `kit.project.json` at its root, for example `{ "content_folders": ["res://data/kit_tuning"], "rules_folders": [], "scenario_folder": "res://tests/kit_scenarios" }`. Every setting is optional; a misspelled one is refused by name. `map` reads declarations from the content folders, `lint` checks the rules folders, and the runner reads scenarios from the scenario folder. `test` passes with a plain notice when the game has no kit scenarios yet.
+
+To try the kit on a copy of an existing game first, run `.\tools\verify_install_game.ps1 -Source 'C:\Dev\YourGame'` (add `-Mutex <name>` if the game serializes Godot runs). It copies the game under `reports/game-smoke/`, installs the kit there, checks the game's own autoloads, a 120-knob tuning group with screenshots, a game save function, and test/map/lint. The source game is never written.
 
 Installed kit code should be changed in this source repository and reinstalled. The installer preserves unrelated target files. An extra untracked file inside the installed kit is reported before an ordinary reinstall.
 

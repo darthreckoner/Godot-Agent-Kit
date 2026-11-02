@@ -115,6 +115,33 @@ func execute_custom(command: Dictionary, _view: Node) -> bool:
 			var loaded: KitTuningSet = ResourceLoader.load(variant_path, "", ResourceLoader.CACHE_MODE_IGNORE)
 			_checks.append(assertion("Saved tuning can be loaded.", loaded != null and close(float(loaded.get("energy_cost")), float(resource.get("energy_cost")))))
 			Kit.tuning.paths[&"mining"] = original_path
+			# A game store receives Apply instead of the kit file, and its refusal keeps the trial.
+			var stored: Array[Dictionary] = []
+			var applied_ids: Array[StringName] = []
+			var on_applied: Callable = func(set_id: StringName) -> void: applied_ids.append(set_id)
+			Kit.tuning.applied.connect(on_applied)
+			var store_path: String = report_dir.path_join("mining.store-must-not-exist.tres")
+			Kit.tuning.paths[&"mining"] = store_path
+			_checks.append(assertion("A save function needs a known tuning group.", not Kit.tuning.use_store(&"no_such_group", func(_id: StringName, _values: Dictionary) -> Error: return OK) and Kit.tuning.last_message.contains("no_such_group")))
+			_checks.append(assertion("A game can attach its own save function.", Kit.tuning.use_store(&"mining", func(_id: StringName, values: Dictionary) -> Error:
+				stored.append(values.duplicate())
+				return OK)))
+			Kit.tuning.trial("mining.energy_cost", initial + 0.5)
+			_checks.append(assertion("Apply goes to the game's save function with every knob.", Kit.tuning.apply(&"mining") == OK and stored.size() == 1 and close(float(stored[0].get("energy_cost", -1.0)), initial + 0.5) and stored[0].size() == resource.knobs().size()))
+			_checks.append(assertion("A stored Apply becomes the new Discard baseline and says so.", not Kit.tuning.is_trial(&"mining", "energy_cost") and applied_ids == [&"mining"]))
+			_checks.append(assertion("A stored Apply does not write the kit file.", not FileAccess.file_exists(store_path)))
+			Kit.tuning.use_store(&"mining", func(_id: StringName, _values: Dictionary) -> Error:
+				Kit.tuning.last_message = "The game file is read-only."
+				return ERR_FILE_CANT_WRITE)
+			Kit.tuning.trial("mining.energy_cost", initial + 0.75)
+			_checks.append(assertion("A refused save keeps the trial and shows the game's reason.", Kit.tuning.apply(&"mining") == ERR_FILE_CANT_WRITE and Kit.tuning.is_trial(&"mining", "energy_cost") and Kit.tuning.last_message == "The game file is read-only." and applied_ids.size() == 1))
+			Kit.tuning.use_store(&"mining", func(_id: StringName, _values: Dictionary) -> Variant: return null)
+			_checks.append(assertion("A save function that reports nothing is a plain failure.", Kit.tuning.apply(&"mining") != OK and Kit.tuning.last_message.contains("did not report")))
+			Kit.tuning.stores.erase(&"mining")
+			Kit.tuning.applied.disconnect(on_applied)
+			Kit.tuning.paths[&"mining"] = original_path
+			Kit.tuning.trial("mining.energy_cost", initial)
+			_checks.append(assertion("The store probe leaves energy cost as it found it.", close(float(Kit.tuning.value("mining.energy_cost")), initial)))
 	return true
 func expect() -> Array[Dictionary]:
 	var results: Array[Dictionary] = _checks.duplicate(true)
