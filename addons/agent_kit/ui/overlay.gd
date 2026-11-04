@@ -35,6 +35,7 @@ var _inspector_title: Label
 var _tuning_title: Label
 var _dock_button: Button
 var _docked: bool = false
+var _faded: bool = false
 
 func _ready() -> void:
 	layer = 80
@@ -67,6 +68,9 @@ func reset_view() -> void:
 	tabs.current_tab = 0
 
 func _input(event: InputEvent) -> void:
+	# Side panel: a click on the game fades the panel back; a click on the panel brings it forward.
+	if _docked and _tuning_panel.visible and event is InputEventMouseButton and event.pressed:
+		_faded = not _tuning_panel.get_global_rect().has_point(event.position)
 	# Side panel: clicking the game or pressing Esc hands the keyboard back from a text box.
 	if _docked and _tuning_panel.visible and _capture_action.is_empty() and _typing_in_tuning():
 		var outside_click: bool = event is InputEventMouseButton and event.pressed and not _tuning_panel.get_global_rect().has_point(event.position)
@@ -93,6 +97,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"kit_tuning"):
 		_tuning_panel.visible = not _tuning_panel.visible
+		_faded = false
 		_inspector.hide()
 		_refresh_tuning()
 		if _tuning_panel.visible and not _docked:
@@ -129,6 +134,7 @@ func captures_input() -> bool:
 ## may choose its default at boot; the panel's own button switches during a session.
 func set_tuning_docked(docked: bool) -> void:
 	_docked = docked
+	_faded = false
 	_dock_button.text = "Full screen" if docked else "Side panel"
 	_controls_changed()
 	if docked and _typing_in_tuning():
@@ -139,6 +145,10 @@ func set_tuning_docked(docked: bool) -> void:
 func is_tuning_docked() -> bool:
 	return _docked
 
+## True while the side panel is faded back because the last click went to the game.
+func is_tuning_faded() -> bool:
+	return _docked and _faded
+
 func _typing_in_tuning() -> bool:
 	var owner: Control = get_viewport().gui_get_focus_owner()
 	return owner != null and _tuning_panel.is_ancestor_of(owner)
@@ -146,7 +156,9 @@ func _typing_in_tuning() -> bool:
 func _layout_tuning() -> void:
 	var view: Vector2 = get_viewport().get_visible_rect().size
 	if _docked:
-		var width: float = clampf(view.x * float(Kit.tuning.value("kit.tuning_panel_width")), minf(440.0, view.x - 40.0), view.x - 40.0)
+		# Honour the width knob down to what the panel's contents need, so it never spills off screen.
+		var width: float = minf(view.x * float(Kit.tuning.value("kit.tuning_panel_width")), view.x - 40.0)
+		width = maxf(width, _tuning_panel.get_combined_minimum_size().x)
 		_tuning_panel.position = Vector2(view.x - width - 20.0, 20.0)
 		_tuning_panel.size = Vector2(width, view.y - 40.0)
 	else:
@@ -569,6 +581,8 @@ func _build_tuning() -> void:
 	_styled(_label("Controls and tuning are listed by group. Click a group to open it, or type to filter.", column), &"KitHelp").autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Rows always fit the panel's width; only the list scrolls, and only up and down.
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	column.add_child(scroll)
 	_knob_rows = VBoxContainer.new()
 	_knob_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -639,11 +653,12 @@ func _refresh_controls(words: PackedStringArray) -> void:
 		var action: KitControlAction = Kit.controls.actions[id]
 		if action.group != group:
 			group = action.group
-			_styled(_label(group.to_upper(), _knob_rows), &"KitSection")
+			_styled(_label(group.to_upper(), _knob_rows), &"KitSection").autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var row: HBoxContainer = HBoxContainer.new()
 		_knob_rows.add_child(row)
 		var title: Label = _label(action.description + (" · Trial" if Kit.controls.is_trial(id) else ""), row)
 		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if _docked else TextServer.AUTOWRAP_OFF
 		title.modulate = WARM if Kit.controls.is_trial(id) else Color.WHITE
 		for index: int in range(2):
 			var slot_button: Button = _button(KitControls.label(Kit.controls.slot(id, index)), row, func() -> void:
@@ -693,7 +708,7 @@ func _refresh_tuning() -> void:
 		var next_section: String = "Feel stages · look and sound only, never rule outcomes" if resource is KitFeelStage else "Game and kit settings"
 		if next_section != section:
 			section = next_section
-			_styled(_label(section.to_upper(), _knob_rows), &"KitSection")
+			_styled(_label(section.to_upper(), _knob_rows), &"KitSection").autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var open: bool = not words.is_empty() or bool(_expanded.get(id, false))
 		var count: String = "%d knobs" % rows.size() if words.is_empty() else "%d of %d knobs match" % [rows.size(), resource.knobs().size()]
 		var header: Button = _button("%s %s — %s · %s%s" % ["▾" if open else "▸", str(id).capitalize(), resource.description, count, " · %d on trial" % trials if trials > 0 else ""], _knob_rows, func() -> void:
@@ -735,12 +750,14 @@ func _refresh_tuning() -> void:
 			slider.max_value = metadata.max
 			slider.step = metadata.step
 			slider.value = float(resource.get(knob))
-			slider.custom_minimum_size.x = 160 if _docked else 260
+			slider.custom_minimum_size.x = 120 if _docked else 260
 			slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			slider.set_meta("tuning_knob", "%s.%s" % [id, knob])
 			row.add_child(slider)
 			var value_label: Label = _label("", row)
-			value_label.custom_minimum_size.x = 120 if _docked else 180
+			value_label.custom_minimum_size.x = 96 if _docked else 180
+			if _docked:
+				value_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			var update: Callable = func(next: float) -> void:
 				Kit.tuning.trial("%s.%s" % [id, knob], next)
 				var trial: bool = Kit.tuning.is_trial(id, knob)
@@ -777,6 +794,12 @@ func _process(delta: float) -> void:
 	# Keep the designer's panel inside the viewport; the action list owns scrolling.
 	if _tuning_panel.visible:
 		_layout_tuning()
+		var target: float = float(Kit.tuning.value("kit.tuning_panel_faded_opacity")) if is_tuning_faded() else 1.0
+		var fade_time: float = float(Kit.tuning.value("kit.tuning_panel_fade_time"))
+		var alpha: float = _tuning_panel.modulate.a
+		_tuning_panel.modulate.a = target if fade_time <= 0.0 else move_toward(alpha, target, delta / fade_time)
+	else:
+		_tuning_panel.modulate.a = 1.0
 	_refresh_time += delta
 	if _refresh_time >= 0.3 and _inspector.visible:
 		_refresh_time = 0.0

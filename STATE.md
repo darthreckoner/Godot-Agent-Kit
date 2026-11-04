@@ -15,6 +15,14 @@ Why: the designer approved a staged plan to use the kit in Backcountry Expeditio
 - Backcountry copy: `verify_install_game.ps1` exit 0, all 7 checks, under Backcountry's GPU mutex: `reports/game-smoke/bbed010c19aa4795b1ad21e7a6500520/verification.json`. Its own autoloads (Events, MCPRuntimeServer) still load, and there are no engine errors from the game or the kit. A 120-knob group opens in 163 ms, scrolls to the last knob, and search narrows to one knob. Apply reached the game store without writing the kit file. `kit test`/`map`/`lint` work through kit.project.json.
 - Screenshots inspected: panel_top.png, panel_bottom.png and panel_search.png in that run's `project/kit_smoke/`. Labels, units, ranges, restart labels and scrolling are readable at 1920x1080. **Remaining issue for Backcountry:** the tuning panel covers about 96% of the screen at 97% opacity, and opening it moves keyboard focus into search. A designer can't watch the truck, or drive with the keyboard, while dragging a slider. The designer approved K-2 on 2026-11-02 and asked to bundle it with K-1.
 
+## K-2 playtest follow-up (2026-11-04)
+
+The designer's playtest: the keys came back after typing, and nothing felt wrong. The width stopped at 0.34; that was my fixed 440 px minimum. Request: fade the side panel while playing.
+Player should feel (designer): "When I go back to playing, the panel steps back so I can see the game; one click on it brings it right back."
+- The width now honors the knob down to its 0.25 minimum, limited only by what the panel's contents need. At 0.25 the list showed a sideways scroll, because the feel-stage heading never wrapped. The list now never scrolls sideways, and headings, slider values and control names wrap in side mode.
+- Fade: a click on the game fades the side panel to `kit.tuning_panel_faded_opacity` (0.35) over `kit.tuning_panel_fade_time` (0.15 s). A click on the panel restores it, and the click still works on the control under it. Rule outcomes are unaffected (overlay presentation only).
+- Evidence: `play_tuning_side_panel` passes with repeat and save/reload (reports/play_tuning_side_panel/20261104-105454-1907675). It checks the fade to 0.35, flying under the faded panel, the return to 1.0, 0.25 width giving 320 px at 1280, rows fitting inside it, and Discard restoring the width. Images inspected: side_panel_faded.png (game visible through it, text still legible) and side_panel_narrow.png (headers trimmed with an ellipsis, buttons wrap, no sideways scroll bar; about one knob visible at 720p).
+
 ## K-2: side tuning panel (2026-11-02)
 
 Player should feel (the designer, tuning): "I keep playing while I drag a slider, and the change shows up in the game straight away."
@@ -285,7 +293,7 @@ Original build (2026-10-03):
 
 ## Next steps
 
-- Designer playtest: in the mining lab, press F2, click Side panel, and fly while dragging Mining sliders. Is 0.4 of the window the right width? Do the keys come back reliably after typing in search?
+- Designer playtest: try the fade. Is 0.35 opacity and 0.15 s right? Does 0.25 width feel usable on your screen?
 - After Backcountry's slice gate: install 0.3.2 there and run T-053 (`C:\Dev\Backcountry Expedition\docs	ickets\T-053-kit-tuning-panel-for-handling.md`).
 
 0. Ticket 11 is merged through PR #5. Future scenarios pin assertion inputs before world creation, press named controls and use actual effect completion for idle checks. Investigate intermittent HUD capture text loss in a separate scoped task; preserve the recorded comparisons.

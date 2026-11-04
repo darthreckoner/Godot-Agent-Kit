@@ -3,7 +3,7 @@ extends "res://scenarios/support/play_scenario.gd"
 func _init() -> void:
 	requires_play = true
 	id = &"play_tuning_side_panel"
-	description = "Dock the tuning panel to the side with a real click; fly and drag a slider with it open; typing borrows the keyboard until Esc or a click on the game."
+	description = "Dock the tuning panel to the side with a real click; fly and drag a slider with it open; typing borrows the keyboard until Esc or a click on the game; the panel fades while you play and narrows to its width knob."
 
 func setup() -> bool:
 	_checks.clear()
@@ -12,7 +12,7 @@ func setup() -> bool:
 	return start_from_launch()
 
 func steps() -> Array[Dictionary]:
-	return [{"command": "dock"}, {"command": "fly_and_tune"}, {"command": "typing"}, {"command": "undock"}]
+	return [{"command": "dock"}, {"command": "fly_and_tune"}, {"command": "typing"}, {"command": "fade"}, {"command": "width"}, {"command": "undock"}]
 
 func click_at(point: Vector2) -> void:
 	await Kit.get_tree().process_frame
@@ -128,6 +128,34 @@ func execute_custom(command: Dictionary, _view: Node) -> bool:
 			await click_at(search.get_global_rect().get_center())
 			await click_at(Vector2(view_size.x * 0.2, view_size.y * 0.5))
 			_checks.append(assertion("A click on the game hands the keyboard back.", focus_owner() == null and panel.visible and not Kit.overlay.captures_input()))
+		"fade":
+			var wait: float = float(Kit.tuning.value("kit.tuning_panel_fade_time")) + 0.2
+			var faded: float = float(Kit.tuning.value("kit.tuning_panel_faded_opacity"))
+			await click_at(Vector2(view_size.x * 0.2, view_size.y * 0.5))
+			await Kit.get_tree().create_timer(wait).timeout
+			_checks.append(assertion("A click on the game fades the open side panel.", Kit.overlay.is_tuning_faded() and is_equal_approx(panel.modulate.a, faded) and panel.visible, panel.modulate.a))
+			_checks.append(assertion("Faded side panel screenshot saved.", await shot("side_panel_faded")))
+			var before: Array = ship()
+			await fly(4)
+			_checks.append(assertion("The game keeps playing under the faded panel.", ship() != before and is_equal_approx(panel.modulate.a, faded)))
+			var help: Control = Kit.overlay.get("_status")
+			await click_at(help.get_global_rect().get_center())
+			await Kit.get_tree().create_timer(wait).timeout
+			_checks.append(assertion("A click on the panel brings it back to full strength.", not Kit.overlay.is_tuning_faded() and is_equal_approx(panel.modulate.a, 1.0), panel.modulate.a))
+		"width":
+			var original: float = float(Kit.tuning.value("kit.tuning_panel_width"))
+			Kit.tuning.trial("kit.tuning_panel_width", 0.25)
+			await Kit.get_tree().process_frame
+			await Kit.get_tree().process_frame
+			var narrow: Rect2 = panel.get_global_rect()
+			_checks.append(assertion("The width knob narrows the side panel below the old 0.34 floor and keeps it on screen.", narrow.size.x < view_size.x * 0.34 and narrow.position.x >= 0.0 and narrow.end.x <= view_size.x, {"panel": narrow, "window": view_size}))
+			var cost: HSlider = slider("mining.energy_cost")
+			var value_label: Control = cost.get_parent().get_child(cost.get_parent().get_child_count() - 1) if cost != null else null
+			var header_rect: Rect2 = header(&"mining").get_global_rect()
+			_checks.append(assertion("Narrow rows fit inside the panel: no sideways scrolling, values and group names stay in view.", value_label != null and value_label.get_global_rect().end.x <= narrow.end.x and header_rect.end.x <= narrow.end.x, {"value": value_label.get_global_rect() if value_label != null else null, "header": header_rect, "panel": narrow}))
+			_checks.append(assertion("Narrow side panel screenshot saved.", await shot("side_panel_narrow")))
+			Kit.tuning.discard(&"kit")
+			_checks.append(assertion("Discard restores the side panel width.", is_equal_approx(float(Kit.tuning.value("kit.tuning_panel_width")), original)))
 		"undock":
 			await click_at((Kit.overlay.get("_dock_button") as Button).get_global_rect().get_center())
 			await Kit.get_tree().process_frame
