@@ -60,6 +60,28 @@ foreach ($name in @('AGENTS.md', 'KIT_REQUESTS.md', 'addons/agent_kit/KIT_RULES.
 if ((Get-Content -LiteralPath (Join-Path $testRoot 'AGENTS.md') -Raw) -notmatch 'addons/agent_kit/KIT_RULES\.md') { throw 'Starter AGENTS.md does not point at the kit rules.' }
 $installedManifest = Get-Content -LiteralPath (Join-Path $testRoot 'addons/agent_kit/install_manifest.json') -Raw | ConvertFrom-Json
 if ($installedManifest.source -ne [System.IO.Path]::GetFullPath($sourceRoot)) { throw 'Install manifest does not record the kit repo it came from.' }
+# project.godot stays plain UTF-8: no byte-order mark, non-ASCII text intact, and the game's
+# own autoloads kept. Covers both an existing [autoload] section and appending a new one.
+$plainUtf8 = New-Object System.Text.UTF8Encoding($false)
+function Assert-ProjectFile([string]$Root, [string]$ExpectedName, [string]$Label) {
+    $bytes = [System.IO.File]::ReadAllBytes((Join-Path $Root 'project.godot'))
+    if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) { throw "$Label`: installer added a byte-order mark to project.godot." }
+    $text = $plainUtf8.GetString($bytes)
+    if (-not $text.Contains("config/name=`"$ExpectedName`"")) { throw "$Label`: installer changed the game name in project.godot." }
+    if (([regex]::Matches($text, '(?m)^Kit="\*res://addons/agent_kit/kit\.gd"')).Count -ne 1) { throw "$Label`: project.godot does not have exactly one Kit autoload." }
+    return $text
+}
+$null = Assert-ProjectFile $testRoot 'Kit Install Smoke' 'New autoload section'
+$encodingRoot = Join-Path $testRoot 'encoding-check'
+New-Item -ItemType Directory -Path $encodingRoot -Force | Out-Null
+$accentedName = "Caf$([char]0xE9) Rally $([char]0x2013) $([char]0xD1)"
+[System.IO.File]::WriteAllText((Join-Path $encodingRoot 'project.godot'), "config_version=5`n`n[application]`n`nconfig/name=`"$accentedName`"`n`n[autoload]`n`nEvents=`"*res://events.gd`"`n", $plainUtf8)
+& (Join-Path $PSScriptRoot 'install_kit.ps1') -Target $encodingRoot | Out-Null
+$encodedText = Assert-ProjectFile $encodingRoot $accentedName 'Existing autoload section'
+if (-not $encodedText.Contains('Events="*res://events.gd"')) { throw "Existing autoload section: installer dropped the game's own autoload." }
+& (Join-Path $PSScriptRoot 'install_kit.ps1') -Target $encodingRoot | Out-Null
+$null = Assert-ProjectFile $encodingRoot $accentedName 'Reinstall over existing autoload section'
+Remove-Item -LiteralPath $encodingRoot -Recurse -Force
 # An unchanged reinstall must be safe.
 & (Join-Path $PSScriptRoot 'install_kit.ps1') -Target $testRoot
 $targetFile = Join-Path $testRoot 'addons/agent_kit/core/clock.gd'
@@ -96,7 +118,7 @@ try {
     $olderManifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestFile -Encoding utf8
     $notice = (& (Join-Path $testRoot 'tools/kit.ps1') lint | ForEach-Object { "$_" }) -join "`n"
     if ($notice -notmatch 'Kit notice: this game has kit 0\.0\.1') { throw 'Installed kit.ps1 did not report the newer kit version.' }
-    @{passed=$true; target=$testRoot; checks=@('clean install','starter AGENTS.md and KIT_REQUESTS.md','kit rules inside the kit','manifest records kit source','unchanged reinstall','modified-file refusal','forced reinstall','headless import','all-service boot','manual turn','reinstall after import','existing AGENTS.md preserved with warning','newer-kit notice')} |
+    @{passed=$true; target=$testRoot; checks=@('clean install','starter AGENTS.md and KIT_REQUESTS.md','kit rules inside the kit','manifest records kit source','project.godot stays plain UTF-8 with game autoloads','unchanged reinstall','modified-file refusal','forced reinstall','headless import','all-service boot','manual turn','reinstall after import','existing AGENTS.md preserved with warning','newer-kit notice')} |
         ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $testRoot 'verification.json') -Encoding utf8
 }
 finally { $env:APPDATA = $previousAppData }

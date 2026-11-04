@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.3.4 — 2026-11-04
+
+- `tools/install_kit.ps1` no longer damages a game's `project.godot` when it adds the Kit autoload. Under Windows PowerShell 5.1 it read the file in the system codepage and wrote it back with a byte-order mark, so any non-ASCII text, such as an accented game name, was corrupted ("Café" became "CafÃ©"). It now reads and writes plain UTF-8, keeps the game's own autoloads, and checks that the file was written. `tools/verify_install.ps1` now checks both an existing `[autoload]` section with non-ASCII text and a project with no `[autoload]` section. Save schema remains 1.
+
 ## 0.3.3 — 2026-11-04
 
 - The mining save fixture `schema0_mining.json` moved from `addons/agent_kit/fixtures/` to the testbed's `scenarios/fixtures/`. Installed games no longer receive a Rust Bucket save. The generic `schema0_shape.json` stays in the kit. If your game referenced the old path, copy the file into your own project. Save schema remains 1; no migration is needed.
