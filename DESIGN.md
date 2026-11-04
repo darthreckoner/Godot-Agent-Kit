@@ -28,10 +28,10 @@ change the right thing, and feel the difference, without worrying that something
 ## Features
 
 ### World state with stable IDs
-- Developer should feel: "There is one true version of my ship, however I'm looking at it."
+- Developer should feel: "There is one true version of each thing in my game, however I'm looking at it."
 - Serves pillar: 1, 2
 - Rules: game state lives in plain data records in `Kit.world`, keyed by stable string IDs
-  (`ship:player`, `rock:014`). Scenes are views: they read state and react to events, and
+  (`player:1`, `door:north`, `card:017`). Scenes are views: they read state and react to events, and
   never own a competing copy. Iteration order is always sorted by ID. Games define their
   own record types; the kit doesn't dictate cameras, movement or genre.
 - Feedback: `Kit.world.dump()` gives readable JSON; `state_hash()` gives a canonical hash.
@@ -40,13 +40,13 @@ change the right thing, and feel the difference, without worrying that something
 ### Declared actions
 - Developer should feel: "An action either happened completely or not at all, and I can see which."
 - Serves pillar: 2
-- Rules: every gameplay action (mine, buy, dock, repair) has an `ActionDef` resource listing
+- Rules: every gameplay action (attack, buy, open a door, play a card) has an `ActionDef` resource listing
   its requirements, costs, effects, events and policies. A handler script *plans* a change
   set without mutating anything; the runner validates and commits it atomically, or rejects
   it with named reasons. Two explicit policies per action:
   - `charge`: `ON_SUCCESS` (pay only if the action yields) or `ON_ATTEMPT` (pay even when it
     yields nothing, recorded as such).
-  - `overflow`: `REJECT` or `CLIP` (e.g. cargo fills partially; the record marks it clipped).
+  - `overflow`: `REJECT` or `CLIP` (e.g. an inventory fills partially; the record marks it clipped).
 - Feedback: each run writes an `ActionRecord` (tick, sequence number, actor, inputs, checks
   passed/failed with rule IDs, deltas with the tuning knob behind each, events, RNG draws).
 - Tuning knobs: per-action values live in tuning sets, never in handlers.
@@ -56,7 +56,7 @@ change the right thing, and feel the difference, without worrying that something
 - Serves pillar: 1
 - Rules: in-game overlay (F1). Entity list, selected entity's state, and a Why panel:
   pick a field and see every recorded change to it, e.g.
-  `energy 18 → 8 · mine −4 (tuning/mining.energy_cost) · requested by input at tick 312`.
+  `health 18 → 8 · attack −10 (tuning/combat.damage) · requested by input at tick 312`.
   Rejected actions show which check failed. Also shows the event log and action timeline.
 - Feedback: values that changed this second briefly highlight.
 
@@ -64,7 +64,7 @@ change the right thing, and feel the difference, without worrying that something
 - Developer should feel: "Every feel number is one search away, and experiments are safe."
 - Serves pillar: 3
 - Rules: one in-game panel (F2) over many small `TuningSet` resources (one per system:
-  `tuning/mining.tres`, `tuning/flight.tres`). Every knob has a unit, range and one-line help.
+  `tuning/combat.tres`, `tuning/movement.tres`). Every knob has a unit, range and one-line help.
   Moving a slider is a **trial**; nothing is saved until **Apply**. **Discard** reverts.
   Changed knobs are highlighted. Structural changes say when a restart is needed rather than
   pretending to hot-reload.

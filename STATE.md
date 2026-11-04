@@ -2,9 +2,19 @@
 
 ## Build version
 
-0.3.1 — ticket 11 (scenario tuning independence) merged on 2026-10-04, verified on Windows with Godot 4.7.2. Save schema remains 1.
-Current branch: main. Ticket 11 implementation 61486cd3475d9687f59a61ceda250ce20c3f919b was pushed and merged through [PR #5](https://github.com/darthreckoner/Godot-Agent-Kit/pull/5) at 08185c8ed67610d0564b7244b1aa3c72e4878ecd, as requested by the designer. GitHub reports MERGED at 2026-10-04T23:08:39Z, and local main was fast-forwarded to that merge. The HUD capture limitation below remains recorded.
-Earlier ticket 10 delivery: implementation b30a1252b237f5f90018941dce5b0068642dcbb5 was pushed and merged through [PR #3](https://github.com/darthreckoner/Godot-Agent-Kit/pull/3) at 114e7fedf002cb8e4c6f33a4c17adf9f5b4e0270. The designer's passing 0.3.0 playtest and delivery authorization are retained below.
+0.3.2 — kit made genre-neutral (2026-11-04), branch claude/kit-genre-neutral, not yet committed or merged. Verified on Windows with Godot 4.7.2. Save schema remains 1.
+Previous: 0.3.1, ticket 11 (scenario tuning independence), merged through [PR #5](https://github.com/darthreckoner/Godot-Agent-Kit/pull/5) at 08185c8ed67610d0564b7244b1aa3c72e4878ecd on 2026-10-04. Ticket 10 merged through [PR #3](https://github.com/darthreckoner/Godot-Agent-Kit/pull/3) at 114e7fedf002cb8e4c6f33a4c17adf9f5b4e0270.
+
+## Genre-neutral kit, 0.3.2 (2026-11-04)
+
+- Why: a game that installs the kit should not receive anything mining or Rust Bucket specific. The designer's next kit game is an off-road driving game.
+- The mining save fixture moved from addons/agent_kit/fixtures/schema0_mining.json to scenarios/fixtures/schema0_mining.json. kit_integrity reads the new path, and "The committed legacy save fixture loads." passes. The generic schema0_shape.json stays in the addon.
+- Example IDs and terms in KIT_RULES.md, templates/game/AGENTS.md, DESIGN.md (kit feature sections only; the testbed sections still describe mining) and two kit code comments (action_runner.gd, overlay.gd) are now genre-neutral: player:1, door:north, card:017, combat/movement tuning. Comments only; no kit behaviour changed.
+- VERSION, addon VERSION, plugin.cfg and save_store KIT_VERSION are 0.3.2. CHANGELOG 0.3.2 also releases the entries that were previously listed as Unreleased (KIT_RULES.md, starter files, installer fixes).
+- tools/kit.ps1 test: exit 0, 12/12 sim and 4/4 play scenarios with repeat and save/reload. Sim reports 20261104-110805* through 110828*. Play reports: reports/play_controls/20261104-110830-1726271, reports/play_flight_and_dock/20261104-110833-4646507, reports/play_overlay_defaults/20261104-110843-15195090, reports/play_targeting/20261104-110844-16403752. Player-visible behaviour is unchanged, so no screenshots were inspected for this task.
+- tools/verify_install.ps1 FAILS, and fails the same way on unchanged main (checked in a temporary worktree). Cause: the script writes its own smoke.tscn with Windows PowerShell 5.1 `Set-Content -Encoding utf8`, which adds a byte-order mark, and Godot 4.7.2 reports "res://smoke.tscn:1 - Parse Error: Expected '['". This is a bug in the test harness, not the kit, and it was not fixed in this task. Evidence: reports/install-smoke/7007c26b2a9d41bdaef3e7520a539699/import.log.
+- Known gap: the installer copies files but never deletes kit files that a newer version removed. A game that installed 0.3.1 or earlier keeps addons/agent_kit/fixtures/schema0_mining.json after reinstalling. The file is harmless, but you should delete it by hand.
+- GAME_MAP not regenerated: no actions, events, tuning or scenarios changed.
 
 ## Ticket 11 implementation and verification (2026-10-04)
 
@@ -264,6 +274,8 @@ Original build (2026-10-03):
 
 ## Next steps
 
+- Fix verify_install.ps1 so it writes smoke files without a BOM, then rerun it. Consider making the installer remove kit files that a newer version no longer ships.
+- Before the off-road driving game installs the kit, list which kit concepts it needs (vehicle physics stays in Godot; fuel, damage, checkpoints and lap times as records?) and log anything the kit can't express in KIT_REQUESTS.md. That game is the second real check that the kit is genre-neutral.
 0. Ticket 11 is merged through PR #5. Future scenarios pin assertion inputs before world creation, press named controls and use actual effect completion for idle checks. Investigate intermittent HUD capture text loss in a separate scoped task; preserve the recorded comparisons.
 
 1. Optional designer smoke check: change a mining knob in F2, Apply, then run tools/kit.ps1 test. Rule fixtures should stay green and shipped_default_balance should show the balance change. Update its reference only when accepting the new shipped defaults. Current player feel and the earlier overlap issue are outside ticket 11's changes.

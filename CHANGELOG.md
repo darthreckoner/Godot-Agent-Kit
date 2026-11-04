@@ -1,7 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.3.2 — 2026-11-04
 
+- The mining save fixture `schema0_mining.json` moved from `addons/agent_kit/fixtures/` to the testbed's `scenarios/fixtures/`. Installed games no longer receive a Rust Bucket save. The generic `schema0_shape.json` stays in the kit. If your game referenced the old path, copy the file into your own project. Save schema remains 1; no migration is needed.
+- Examples in KIT_RULES.md, the starter `templates/game/AGENTS.md`, DESIGN.md and kit code comments no longer use ships, rocks and cargo. They now use genre-neutral examples (`player:1`, `door:north`, `card:017`), so agents in other games don't pick up mining terms.
+- Also released in this version (previously listed as Unreleased):
 - `addons/agent_kit/KIT_RULES.md`: the rules agents in a game follow to build on the kit, including the kit-request process and how to update. It ships inside the kit and updates on reinstall.
 - `tools/install_kit.ps1` adds starter `AGENTS.md` and `KIT_REQUESTS.md` (from `templates/game/`) to a game that has none, never overwrites existing ones, and warns when an existing AGENTS.md does not point at KIT_RULES.md. The install manifest now records the kit repo it came from.
 - An installed game's `tools/kit.ps1` prints a notice when that kit repo has a newer VERSION.

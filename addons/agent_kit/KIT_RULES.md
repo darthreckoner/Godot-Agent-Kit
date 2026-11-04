@@ -22,7 +22,7 @@ reports/            generated, gitignored
 ```
 
 ## How gameplay is built
-- **State** lives in `Kit.world` records with stable IDs (`ship:player`, `rock:014`). Scenes
+- **State** lives in `Kit.world` records with stable IDs (`player:1`, `door:north`, `card:017`). Scenes
   read records; they never keep a competing copy of game state.
 - **Every player verb is a declared action** (an ActionDef plus a handler). Handlers check and
   plan; only the action runner changes records. A rejected action names the rule that refused
