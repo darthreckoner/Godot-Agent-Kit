@@ -88,10 +88,10 @@ func execute_custom(command: Dictionary, _view: Node) -> bool:
 				return false
 			_checks.append(assertion("Schema 0 migrates through v0_to_v1.", Kit.save.load_file(migration_path) and Kit.simulation_hash() == before))
 			var current_snapshot: Dictionary = Kit.snapshot()
-			var archived: Dictionary = KitCanonical.read_json("res://addons/agent_kit/fixtures/schema0_mining.json")
+			var archived: Dictionary = KitCanonical.read_json("res://scenarios/fixtures/schema0_mining.json")
 			if not archived.ok:
 				return false
-			_checks.append(assertion("The committed legacy save fixture loads.", Kit.save.load_file("res://addons/agent_kit/fixtures/schema0_mining.json") and Kit.world.state_hash() == KitCanonical.hash_value(archived.data.payload.records)))
+			_checks.append(assertion("The committed legacy save fixture loads.", Kit.save.load_file("res://scenarios/fixtures/schema0_mining.json") and Kit.world.state_hash() == KitCanonical.hash_value(archived.data.payload.records)))
 			if not Kit.restore(current_snapshot):
 				return false
 		"tuning_checks":

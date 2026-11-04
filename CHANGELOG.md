@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.3.3 — 2026-11-04
+
+- The mining save fixture `schema0_mining.json` moved from `addons/agent_kit/fixtures/` to the testbed's `scenarios/fixtures/`. Installed games no longer receive a Rust Bucket save. The generic `schema0_shape.json` stays in the kit. If your game referenced the old path, copy the file into your own project. Save schema remains 1; no migration is needed.
+- Examples in KIT_RULES.md, the starter `templates/game/AGENTS.md`, DESIGN.md and kit code comments no longer use ships, rocks and cargo. They now use genre-neutral examples (`player:1`, `door:north`, `card:017`), so agents in other games don't pick up mining terms.
+
 ## 0.3.2 — 2026-11-02
 
 - `Kit.tuning.use_store(set_id, store)`: a game that keeps its numbers in its own file supplies a save function. Apply calls `store(set_id, values)` with every knob's value instead of writing the kit resource; on OK the values become the Discard baseline. A refused save keeps the trial and the panel shows `Kit.tuning.last_message` (the store may set its own plain-English reason). New `Kit.tuning.applied(set_id)` signal after any successful Apply. `apply()` now always sets `last_message` on failure, and F2 shows it instead of a bare error code. `Kit.reset` clears stores.

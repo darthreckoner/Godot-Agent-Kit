@@ -92,7 +92,7 @@ func _execute(action: StringName, actor: StringName, params: Dictionary, source:
 				passed = false
 				result.message = "A planned change could not be applied: " + change.describe()
 				break
-			# Clip only new positive cargo, preserving cargo already owned.
+			# Clip only the new positive amount, preserving what the record already holds.
 			if change is KitResourceDelta and change.amount > 0.0 and definition.overflow_policy == KitActionDef.OverflowPolicy.CLIP:
 				var data: Dictionary = stage.record(change.entity)
 				var type_def: KitRecordType = stage.types[StringName(data.type)]

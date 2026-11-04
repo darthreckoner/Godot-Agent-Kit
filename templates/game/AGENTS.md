@@ -10,8 +10,8 @@
 never change without asking.]
 
 ## Game-specific rules
-- [Add rules that apply only to this game, e.g. "the ship's physics stays in Godot physics;
-  energy, cargo and terrain are kit records".]
+- [Add rules that apply only to this game, e.g. "movement stays in Godot physics; health,
+  inventory and score are kit records".]
 
 ## Scope discipline
 - Change only what the task asks. If a fix needs a wider change, stop and describe it first.

@@ -408,7 +408,7 @@ func _refresh_inspector() -> void:
 		_entities.add_item(str(id))
 		if id == _selected:
 			_entities.select(_entities.item_count - 1)
-		# Group the Why picker by record type, e.g. "Dock", "Rock", "Ship".
+		# Group the Why picker by record type, e.g. "Card", "Door", "Player".
 		if str(Kit.world.record(id).get("type", "")) != kind:
 			kind = str(Kit.world.record(id).get("type", ""))
 			var heading: int = _why_entity_list.add_item(kind.capitalize())
