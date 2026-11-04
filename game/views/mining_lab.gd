@@ -238,7 +238,7 @@ func _effect_finished(playing: bool) -> void:
 	_show_toast("Finished the current effect; rules are unchanged." if playing else "No effect playing. %s finishes a current effect; replay one in %s Feel." % [Kit.controls.text(&"kit_finish_effect"), Kit.controls.text(&"kit_inspector")])
 
 func _on_tick(_tick: int) -> void:
-	if Kit.scenario_mode or Kit.overlay.is_open():
+	if Kit.scenario_mode or Kit.overlay.captures_input():
 		return
 	# Flight keys follow the camera: W flies away from it, D to its right. The action records the world direction.
 	var forward: Vector3 = Vector3(-sin(_yaw), 0.0, -cos(_yaw))
@@ -255,7 +255,7 @@ func _on_tick(_tick: int) -> void:
 			_mine_target()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if Kit.scenario_mode or Kit.overlay.is_open():
+	if Kit.scenario_mode or Kit.overlay.captures_input():
 		return
 	if event.is_action_pressed(&"zoom_in"):
 		_distance = maxf(float(Kit.tuning.value("presentation.camera_min")), _distance - float(Kit.tuning.value("presentation.zoom_step")))
@@ -428,7 +428,7 @@ func _process(delta: float) -> void:
 # camera alone never swings the ship and A/D/S strafe or back up. Clicking captures a rock-facing
 # goal once; there is no automatic target tracking. Turns ease in and out. Looks only.
 func _face(delta: float) -> void:
-	var keys_free: bool = not Kit.scenario_mode and not Kit.overlay.is_open()
+	var keys_free: bool = not Kit.scenario_mode and not Kit.overlay.captures_input()
 	if keys_free and Input.is_action_pressed(&"fly_forward"):
 		_nose_goal = atan2(cos(_yaw), -sin(_yaw))
 	var remaining: float = absf(angle_difference(_ship_yaw, _nose_goal))

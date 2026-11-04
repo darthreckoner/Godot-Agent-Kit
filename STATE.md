@@ -2,6 +2,35 @@
 
 ## Build version
 
+0.3.2 (K-1 and K-2, kit prep for Backcountry Expedition) on branch claude/k1-kit-0-3-2. Save schema remains 1.
+
+## K-1: kit prep for Backcountry Expedition (2026-11-02)
+
+Why: the designer approved a staged plan to use the kit in Backcountry Expedition (`C:\Dev\Backcountry Expedition\docs\process6-11-01-agent-kit-roadmap.md`, ticket T-053). Backcountry keeps every number in its own `data/tuning.tres` and uses its own folder layout.
+
+- `Kit.tuning.use_store(set_id, store)` lets a game save Apply into its own file. The kit resource is not written, a refused save keeps the trial, and the panel shows `Kit.tuning.last_message`. New `applied(set_id)` signal. `Kit.reset` clears stores.
+- Optional `kit.project.json` (`content_folders`, `rules_folders`, `scenario_folder`), read by the runner, map and lint (`addons/agent_kit/core/project.gd`, `tools/kit.ps1`). Misspelled settings are refused by name. `test` passes with a notice when a game has no kit scenarios.
+- New `tools/verify_install_game.ps1 -Source <game> [-Mutex <name>]`. Fixed a BOM bug in `tools/verify_install.ps1` under Windows PowerShell 5.1. VERSION, addon VERSION, plugin and save kit_version are 0.3.2. CHANGELOG, README and KIT_RULES updated.
+- Evidence: `tools/kit.ps1 test` exit 0, 12/12 sim and 4/4 play (log `reports/k1-test-final.log`). kit_integrity has eight new save-function checks, all passing. Map and lint exit 0; GAME_MAP content unchanged. `verify_ui.tscn` exit 0. `verify_install.ps1` exit 0 after the BOM fix; its first run failed on the BOM, see `reports/install-smoke/cfecd92dea3b44fa8d3657a2d10ccd97/import.log`.
+- Backcountry copy: `verify_install_game.ps1` exit 0, all 7 checks, under Backcountry's GPU mutex: `reports/game-smoke/bbed010c19aa4795b1ad21e7a6500520/verification.json`. Its own autoloads (Events, MCPRuntimeServer) still load, and there are no engine errors from the game or the kit. A 120-knob group opens in 163 ms, scrolls to the last knob, and search narrows to one knob. Apply reached the game store without writing the kit file. `kit test`/`map`/`lint` work through kit.project.json.
+- Screenshots inspected: panel_top.png, panel_bottom.png and panel_search.png in that run's `project/kit_smoke/`. Labels, units, ranges, restart labels and scrolling are readable at 1920x1080. **Remaining issue for Backcountry:** the tuning panel covers about 96% of the screen at 97% opacity, and opening it moves keyboard focus into search. A designer can't watch the truck, or drive with the keyboard, while dragging a slider. The designer approved K-2 on 2026-11-02 and asked to bundle it with K-1.
+
+## K-2 playtest follow-up (2026-11-04)
+
+The designer's playtest: the keys came back after typing, and nothing felt wrong. The width stopped at 0.34; that was my fixed 440 px minimum. Request: fade the side panel while playing.
+Player should feel (designer): "When I go back to playing, the panel steps back so I can see the game; one click on it brings it right back."
+- The width now honors the knob down to its 0.25 minimum, limited only by what the panel's contents need. At 0.25 the list showed a sideways scroll, because the feel-stage heading never wrapped. The list now never scrolls sideways, and headings, slider values and control names wrap in side mode.
+- Fade: a click on the game fades the side panel to `kit.tuning_panel_faded_opacity` (0.35) over `kit.tuning_panel_fade_time` (0.15 s). A click on the panel restores it, and the click still works on the control under it. Rule outcomes are unaffected (overlay presentation only).
+- Evidence: `play_tuning_side_panel` passes with repeat and save/reload (reports/play_tuning_side_panel/20261104-105454-1907675). It checks the fade to 0.35, flying under the faded panel, the return to 1.0, 0.25 width giving 320 px at 1280, rows fitting inside it, and Discard restoring the width. Images inspected: side_panel_faded.png (game visible through it, text still legible) and side_panel_narrow.png (headers trimmed with an ellipsis, buttons wrap, no sideways scroll bar; about one knob visible at 720p).
+
+## K-2: side tuning panel (2026-11-02)
+
+Player should feel (the designer, tuning): "I keep playing while I drag a slider, and the change shows up in the game straight away."
+- A **Side panel / Full screen** button, plus `Kit.overlay.set_tuning_docked(bool)` and `is_tuning_docked()`. Side mode docks the panel to the right edge at the new `kit.tuning_panel_width` knob (0.25 to 0.7 of the window width; default 0.4). Its title is shorter, group names trim, button rows wrap, and knob names sit above their sliders.
+- Side mode leaves the keyboard with the game. Buttons and sliders never hold focus. Clicking the search or variant box borrows keys; Esc or a click on the game gives them back. New `Kit.overlay.captures_input()` tells a game when to ignore its input. The mining lab uses it instead of `is_open()`, which changes nothing in full screen. Full screen stays the default.
+- Evidence: `tools/kit.ps1 test` exit 0: 12/12 sim and 5/5 play, including the new `play_tuning_side_panel` with repeat and save/reload (reports/play_tuning_side_panel/20261102-095731-33878974). It covers a real click to dock, flying 8 ticks with the panel open, a real mouse drag that starts a trial, no focus left behind, typing blocking flight, and Esc or a click on the game handing keys back. Map regenerated (new knob and scenario); lint exit 0; install exit 0. UI verification first failed 3 checks: it looked for Apply/Discard/variant buttons only in HBoxContainer rows, which now wrap. The check accepts both, and it passes 27/27. The Backcountry copy passes all 7 checks again: reports/game-smoke/ee47f2ff9410490287409018673d7e50.
+- Images inspected: side_panel_trial.png (ship, dock and rocks visible; the trial is highlighted; the title fits; two knobs visible at 720p) and default_tuning.png (full screen unchanged apart from the Side panel button). The side panel covers the right end of the lab's hint line; that is the lab's own layout.
+
 0.3.1 — ticket 11 (scenario tuning independence) merged on 2026-10-04, verified on Windows with Godot 4.7.2. Save schema remains 1.
 Current branch: main. Ticket 11 implementation 61486cd3475d9687f59a61ceda250ce20c3f919b was pushed and merged through [PR #5](https://github.com/darthreckoner/Godot-Agent-Kit/pull/5) at 08185c8ed67610d0564b7244b1aa3c72e4878ecd, as requested by the designer. GitHub reports MERGED at 2026-10-04T23:08:39Z, and local main was fast-forwarded to that merge. The HUD capture limitation below remains recorded.
 Earlier ticket 10 delivery: implementation b30a1252b237f5f90018941dce5b0068642dcbb5 was pushed and merged through [PR #3](https://github.com/darthreckoner/Godot-Agent-Kit/pull/3) at 114e7fedf002cb8e4c6f33a4c17adf9f5b4e0270. The designer's passing 0.3.0 playtest and delivery authorization are retained below.
@@ -263,6 +292,9 @@ Original build (2026-10-03):
 - A single post-generation map-process stall occurred; its immediate rerun passed. Investigate if it recurs.
 
 ## Next steps
+
+- Designer playtest: try the fade. Is 0.35 opacity and 0.15 s right? Does 0.25 width feel usable on your screen?
+- After Backcountry's slice gate: install 0.3.2 there and run T-053 (`C:\Dev\Backcountry Expedition\docs	ickets\T-053-kit-tuning-panel-for-handling.md`).
 
 0. Ticket 11 is merged through PR #5. Future scenarios pin assertion inputs before world creation, press named controls and use actual effect completion for idle checks. Investigate intermittent HUD capture text loss in a separate scoped task; preserve the recorded comparisons.
 

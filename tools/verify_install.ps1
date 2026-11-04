@@ -29,7 +29,7 @@ run/main_scene="res://smoke.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 [rendering]
 renderer/rendering_method="gl_compatibility"
-'@ | Set-Content -LiteralPath (Join-Path $testRoot 'project.godot') -Encoding utf8
+'@ | Set-Content -LiteralPath (Join-Path $testRoot 'project.godot') -Encoding ascii
 @'
 extends Node
 func _ready() -> void:
@@ -45,13 +45,13 @@ func _ready() -> void:
         return
     print("INSTALL PASS: Kit booted with all ten services and default kit controls and manual clock.")
     get_tree().quit(0)
-'@ | Set-Content -LiteralPath (Join-Path $testRoot 'smoke.gd') -Encoding utf8
+'@ | Set-Content -LiteralPath (Join-Path $testRoot 'smoke.gd') -Encoding ascii
 @'
 [gd_scene load_steps=2 format=3]
 [ext_resource type="Script" path="res://smoke.gd" id="1"]
 [node name="Smoke" type="Node"]
 script = ExtResource("1")
-'@ | Set-Content -LiteralPath (Join-Path $testRoot 'smoke.tscn') -Encoding utf8
+'@ | Set-Content -LiteralPath (Join-Path $testRoot 'smoke.tscn') -Encoding ascii
 & (Join-Path $PSScriptRoot 'install_kit.ps1') -Target $testRoot
 # A new game gets the starter AGENTS.md and KIT_REQUESTS.md, and the kit rules travel inside the kit.
 foreach ($name in @('AGENTS.md', 'KIT_REQUESTS.md', 'addons/agent_kit/KIT_RULES.md')) {

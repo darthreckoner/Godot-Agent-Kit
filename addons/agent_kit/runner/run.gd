@@ -16,9 +16,10 @@ func _argument(args: PackedStringArray, key: String, fallback: String = "") -> S
 
 func _scenario_paths() -> Array[String]:
 	var result: Array[String] = []
-	if not DirAccess.dir_exists_absolute("res://scenarios"):
+	var folder: String = KitProject.scenario_folder()
+	if not DirAccess.dir_exists_absolute(folder):
 		return result
-	for path: String in KitMap.paths("res://scenarios", "gd"):
+	for path: String in KitMap.paths(folder, "gd"):
 		var script: Script = load(path)
 		if script == null or not script.can_instantiate():
 			_all_passed = false
@@ -45,12 +46,17 @@ func _entry() -> void:
 		return
 	var paths: Array[String] = _scenario_paths()
 	if paths.is_empty():
-		push_error("No declared scenarios were found.")
+		# A game that uses the kit only for tuning or inspection has nothing to run, which is not a failure.
+		if command == "test" and _all_passed:
+			print("No kit scenarios in %s, so there is nothing to run. Add KitScenario scripts there to test rules." % KitProject.scenario_folder())
+			get_tree().quit(0)
+			return
+		push_error("No declared scenarios were found in %s." % KitProject.scenario_folder())
 		get_tree().quit(1)
 		return
 	var selected: String = _argument(args, "--scenario", paths[0].get_file().get_basename())
 	if command == "dump":
-		var scenario: KitScenario = load("res://scenarios/%s.gd" % selected).new()
+		var scenario: KitScenario = load(KitProject.scenario_folder().path_join("%s.gd" % selected)).new()
 		if not scenario.setup():
 			get_tree().quit(1)
 			return
@@ -58,7 +64,7 @@ func _entry() -> void:
 		get_tree().quit(0)
 		return
 	if command != "test":
-		paths = ["res://scenarios/%s.gd" % selected]
+		paths = [KitProject.scenario_folder().path_join("%s.gd" % selected)]
 	for path: String in paths:
 		if not ResourceLoader.exists(path):
 			push_error("Scenario not found: " + path)

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.3.2 — 2026-11-02
+
+- `Kit.tuning.use_store(set_id, store)`: a game that keeps its numbers in its own file supplies a save function. Apply calls `store(set_id, values)` with every knob's value instead of writing the kit resource; on OK the values become the Discard baseline. A refused save keeps the trial and the panel shows `Kit.tuning.last_message` (the store may set its own plain-English reason). New `Kit.tuning.applied(set_id)` signal after any successful Apply. `apply()` now always sets `last_message` on failure, and F2 shows it instead of a bare error code. `Kit.reset` clears stores.
+- Optional `kit.project.json` at the game root: `content_folders` (declarations for `map` and the kit-file write check in `lint`), `rules_folders` (rule lint) and `scenario_folder` (runner and map). Defaults are the existing `game/`, `game/rules/` and `scenarios/`. Unknown settings and non-`res://` folders are refused by name.
+- Tuning panel side mode: a **Side panel / Full screen** button, `Kit.overlay.set_tuning_docked(bool)` and `is_tuning_docked()`. Side mode docks the panel to the right edge at the new `kit.tuning_panel_width` knob (default 0.4 of the window), shortens its title, wraps long rows, and leaves the keyboard with the game: buttons and sliders never hold focus, and a text box gives keys back on Esc or a click outside the panel. New `Kit.overlay.captures_input()` tells a game when to ignore its own input; the mining lab now uses it, so you can fly while tuning in side mode. Full screen stays the default and behaves as before. Button rows in the panel now wrap. After a click on the game, the side panel fades back to `kit.tuning_panel_faded_opacity` (default 0.35) over `kit.tuning_panel_fade_time` (default 0.15 s). A click on the panel restores it, and that click still reaches the control under it. The width knob now goes down to 0.25; the panel only stays wider when its contents need it. The list never scrolls sideways, and headings, values and control names wrap. New `play_tuning_side_panel` scenario.
+- `tools/kit.ps1 test` passes with a plain notice when a game has no kit scenarios; `scenario`, `dump` and `compare` still fail clearly.
+- `tools/verify_install_game.ps1 -Source <game>` installs the kit into a copy of a real game and checks it there (see README). Save schema remains 1; saves record kit_version 0.3.2.
+- `tools/verify_install.ps1` writes its smoke project as ASCII. Under Windows PowerShell 5.1, `-Encoding utf8` adds a byte-order mark that Godot rejects in `smoke.tscn` ("Expected '['").
+
 - `addons/agent_kit/KIT_RULES.md`: the rules agents in a game follow to build on the kit, including the kit-request process and how to update. It ships inside the kit and updates on reinstall.
 - `tools/install_kit.ps1` adds starter `AGENTS.md` and `KIT_REQUESTS.md` (from `templates/game/`) to a game that has none, never overwrites existing ones, and warns when an existing AGENTS.md does not point at KIT_RULES.md. The install manifest now records the kit repo it came from.
 - An installed game's `tools/kit.ps1` prints a notice when that kit repo has a newer VERSION.

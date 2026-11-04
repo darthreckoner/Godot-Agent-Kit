@@ -21,6 +21,15 @@ scenarios/          scenario and play-scenario scripts
 reports/            generated, gitignored
 ```
 
+## If your game keeps its own folders or files
+- Folders that differ from the layout above go in `kit.project.json` at the game root
+  (`content_folders`, `rules_folders`, `scenario_folder`). Don't rename the game's folders to fit the kit.
+- If the game already keeps tuning numbers in its own file, keep one copy of the numbers: register
+  the kit TuningSets for their labels, units and ranges, `pin` them from the game's file at boot,
+  and call `Kit.tuning.use_store(set_id, store)` so Apply saves into the game's file. The store
+  returns an Error, checks its own file write, and sets `Kit.tuning.last_message` to a plain reason
+  on failure.
+
 ## How gameplay is built
 - **State** lives in `Kit.world` records with stable IDs (`ship:player`, `rock:014`). Scenes
   read records; they never keep a competing copy of game state.
@@ -31,6 +40,8 @@ reports/            generated, gitignored
   or views.
 - **Rules never call audio, particles, camera, tweens or UI.** They emit declared events;
   FeelSequences and views react after the action commits.
+- **Gate the game's own input on `Kit.overlay.captures_input()`**, not `is_open()`, so the side
+  tuning panel can stay open while the game is played.
 - **Player input is declared as named controls** in the game's KitControlSet (each with a
   plain-English description and up to two keys or mouse buttons). Views read named actions,
   never key codes. Key hints and instructions read the live bindings, so they cannot go stale.
