@@ -35,7 +35,12 @@ if ((Test-Path -LiteralPath $targetWrapper) -and -not (Test-Path -LiteralPath $m
 }
 # Validate autoload collision before copying anything.
 $projectPath = Join-Path $targetRoot 'project.godot'
-$projectText = Get-Content -LiteralPath $projectPath -Raw
+# Read and write project.godot as UTF-8 without a byte-order mark, the way Godot writes it.
+# Windows PowerShell 5.1 Get-Content reads BOM-less files in the system codepage, which
+# corrupts non-ASCII text such as a game name, and Set-Content -Encoding utf8 adds a BOM.
+$plainUtf8 = New-Object System.Text.UTF8Encoding($false)
+$projectText = [System.IO.File]::ReadAllText($projectPath, $plainUtf8)
+if ($projectText.Length -gt 0 -and $projectText[0] -eq [char]0xFEFF) { $projectText = $projectText.Substring(1) }
 if ($projectText -match '(?m)^Kit=' -and $projectText -notmatch '(?m)^Kit="\*res://addons/agent_kit/kit.gd"\s*$') { throw 'Target already has a different Kit autoload.' }
 New-Item -ItemType Directory -Path $targetKit -Force | Out-Null
 foreach ($entry in Get-ChildItem -LiteralPath $sourceKit -Force) {
@@ -56,12 +61,14 @@ $hashes['tools/kit.ps1'] = (Get-FileHash -LiteralPath $targetWrapper -Algorithm 
     ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestPath -Encoding utf8
 if ($projectText -notmatch '(?m)^Kit=') {
     if ($projectText -match '(?m)^\[autoload\]\s*$') {
-        $projectText = $projectText -replace '(?m)^\[autoload\][ \t]*\r?$', "[autoload]`nKit=`"*res://addons/agent_kit/kit.gd`""
-        Set-Content -LiteralPath $projectPath -Value $projectText -Encoding utf8
+        $newProjectText = $projectText -replace '(?m)^\[autoload\][ \t]*\r?$', "[autoload]`nKit=`"*res://addons/agent_kit/kit.gd`""
     }
     else {
-        Add-Content -LiteralPath $projectPath -Value "`n[autoload]`nKit=`"*res://addons/agent_kit/kit.gd`"" -Encoding utf8
+        $separator = if ($projectText.Length -eq 0 -or $projectText.EndsWith("`n")) { '' } else { "`n" }
+        $newProjectText = $projectText + $separator + "`n[autoload]`n`nKit=`"*res://addons/agent_kit/kit.gd`"`n"
     }
+    [System.IO.File]::WriteAllText($projectPath, $newProjectText, $plainUtf8)
+    if ([System.IO.File]::ReadAllText($projectPath, $plainUtf8) -cne $newProjectText) { throw 'project.godot was not written correctly. Check the file and add the Kit autoload by hand.' }
 }
 # Game-owned starter files: copied only when missing, never overwritten.
 foreach ($name in @('AGENTS.md', 'KIT_REQUESTS.md')) {

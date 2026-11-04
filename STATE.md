@@ -2,7 +2,17 @@
 
 ## Build version
 
-0.3.3 — kit made genre-neutral (2026-11-04), branch claude/kit-genre-neutral ([PR #7](https://github.com/darthreckoner/Godot-Agent-Kit/pull/7)), merged with main's 0.3.2 (PR #6). Verified on Windows with Godot 4.7.2. Save schema remains 1.
+0.3.4 — installer keeps a game's project.godot intact (2026-11-04), branch claude/installer-project-godot-encoding. Verified on Windows with Godot 4.7.2. Save schema remains 1.
+
+## Installer project.godot encoding, 0.3.4 (2026-11-04)
+
+- Why: Backcountry Expedition's T-053 starts by running install_kit.ps1, which edits the game's project.godot. Under Windows PowerShell 5.1 the installer read that file in the system codepage and wrote it back with a byte-order mark, so non-ASCII text was corrupted ("Café" became "CafÃ©").
+- install_kit.ps1 now reads and writes project.godot as UTF-8 without a byte-order mark, keeps the game's own autoloads, and reads the file back to check the write. It appends an [autoload] section with a separating newline when the project has none.
+- verify_install.ps1 now checks a new [autoload] section, an existing one holding a non-ASCII game name and a game autoload, and a reinstall over it: no byte-order mark, name intact, exactly one Kit line, the game autoload kept.
+- No public API, file format or save schema changed. VERSION, addon VERSION, plugin.cfg and save kit_version are 0.3.4. GAME_MAP not regenerated: no actions, events, tuning or scenarios changed.
+- Evidence: tools/kit.ps1 test exit 0, 12/12 sim and 5/5 play scenarios (play_tuning_side_panel reports/play_tuning_side_panel/20261104-115201-34050293). tools/verify_install.ps1 exit 0, reports/install-smoke/60df05d2263b476d818efd75ab361db8. Player-visible behaviour is unchanged, so no screenshots were inspected.
+- tools/verify_install_game.ps1 -Source "C:\Dev\Backcountry Expedition" -Mutex Local\BackcountryExpeditionGodot exit 0 (GAME SMOKE PASS, reports/game-smoke/e5631a2d052a4999890b956f0c48231c). The copy's project.godot has no byte-order mark, its name intact and one Kit line; the real game was not written. The expected "AGENTS.md does not point at the kit rules" warning appeared; T-053 adds that line.
+- Backcountry's T-053 ticket now requires kit 0.3.4 or later (edited in that repo, not committed there).
 
 ## Genre-neutral kit, 0.3.3 (2026-11-04)
 
@@ -308,7 +318,7 @@ Original build (2026-10-03):
 ## Next steps
 
 - Designer playtest: try the fade. Is 0.35 opacity and 0.15 s right? Does 0.25 width feel usable on your screen?
-- After Backcountry's slice gate: install 0.3.2 there and run T-053 (`C:\Dev\Backcountry Expedition\docs	ickets\T-053-kit-tuning-panel-for-handling.md`).
+- Backcountry's slice gate has closed: install 0.3.4 there and run T-053 (`C:\Dev\Backcountry Expedition\docs	ickets\T-053-kit-tuning-panel-for-handling.md`).
 - Consider making the installer remove kit files that a newer version no longer ships.
 
 0. Ticket 11 is merged through PR #5. Future scenarios pin assertion inputs before world creation, press named controls and use actual effect completion for idle checks. Investigate intermittent HUD capture text loss in a separate scoped task; preserve the recorded comparisons.
