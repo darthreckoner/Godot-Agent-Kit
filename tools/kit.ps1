@@ -22,11 +22,27 @@ if (Test-Path -LiteralPath $installManifest) {
         }
     }
 }
+# Folders a game declares in kit.project.json (see addons/agent_kit/core/project.gd); the kit convention otherwise.
+$kitFolders = @{ content_folders = @('res://game'); rules_folders = @('res://game/rules'); scenario_folder = 'res://scenarios' }
+$projectConfig = Join-Path $projectRoot 'kit.project.json'
+if (Test-Path -LiteralPath $projectConfig) {
+    try { $declared = Get-Content -LiteralPath $projectConfig -Raw | ConvertFrom-Json }
+    catch { throw "kit.project.json is not valid JSON: $($_.Exception.Message)" }
+    foreach ($property in $declared.PSObject.Properties) {
+        if (-not $kitFolders.ContainsKey($property.Name)) { throw "kit.project.json has an unknown setting `"$($property.Name)`". Known settings: content_folders, rules_folders, scenario_folder." }
+        foreach ($folder in @($property.Value)) {
+            if (-not ($folder -is [string]) -or -not $folder.StartsWith('res://') -or $folder.Contains('..')) { throw "kit.project.json: `"$($property.Name)`" has $folder, which is not a res:// folder inside the project." }
+        }
+        $kitFolders[$property.Name] = $property.Value
+    }
+}
+function Resolve-ResFolder([string]$Folder) { return Join-Path $projectRoot ($Folder.Substring('res://'.Length)) }
 if ($Command -eq 'lint') {
     Write-Output 'Heuristic regex lint (not a proof of correctness).'
     $findings = @()
-    $rulesRoot = Join-Path $projectRoot 'game/rules'
-    if (Test-Path -LiteralPath $rulesRoot) {
+    foreach ($rulesFolder in @($kitFolders.rules_folders)) {
+        $rulesRoot = Resolve-ResFolder $rulesFolder
+        if (-not (Test-Path -LiteralPath $rulesRoot)) { continue }
         foreach ($file in Get-ChildItem -LiteralPath $rulesRoot -Recurse -File -Filter '*.gd') {
             $lineNumber = 0
             foreach ($line in Get-Content -LiteralPath $file.FullName) {
@@ -40,7 +56,8 @@ if ($Command -eq 'lint') {
             }
         }
     }
-    foreach ($folder in @('game','addons/agent_kit')) {
+    $lintFolders = @('addons/agent_kit') + @($kitFolders.content_folders | ForEach-Object { $_.Substring('res://'.Length) })
+    foreach ($folder in $lintFolders) {
         $folderPath = Join-Path $projectRoot $folder
         if (-not (Test-Path -LiteralPath $folderPath)) { continue }
         foreach ($file in Get-ChildItem -LiteralPath $folderPath -Recurse -File -Filter '*.gd') {
@@ -51,7 +68,7 @@ if ($Command -eq 'lint') {
                 if ($folder -eq 'addons/agent_kit' -and $line -match '\bvar\s+\w+\s*=(?!=)') {
                     $findings += "$($file.FullName):$lineNumber : untyped kit variable"
                 }
-                if ($folder -eq 'game' -and $line -match '(?:FileAccess\.(?:open|WRITE)|ResourceSaver\.save|DirAccess\.(?:remove|rename|copy)|store_\w+).*(?:res://)?addons[/\\]agent_kit') {
+                if ($folder -ne 'addons/agent_kit' -and $line -match '(?:FileAccess\.(?:open|WRITE)|ResourceSaver\.save|DirAccess\.(?:remove|rename|copy)|store_\w+).*(?:res://)?addons[/\\]agent_kit') {
                     $findings += "$($file.FullName):$lineNumber : game code writes kit files"
                 }
             }

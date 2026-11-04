@@ -51,6 +51,7 @@ func reset(seed_value: int = 1, scenarios: bool = false) -> void:
 	events.unbounded = scenarios
 	tuning.sets.clear()
 	tuning.paths.clear()
+	tuning.stores.clear()
 	tuning.register(load("res://addons/agent_kit/tuning/system.tres"))
 	log.capacity = int(tuning.value("kit.log_capacity"))
 	events.capacity = log.capacity

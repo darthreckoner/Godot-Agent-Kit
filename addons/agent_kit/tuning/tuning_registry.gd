@@ -1,8 +1,11 @@
 class_name KitTuningRegistry
 extends RefCounted
 signal changed(key: String)
+## Emitted after Apply succeeds, whether the kit or a game store saved the values.
+signal applied(set_id: StringName)
 var sets: Dictionary = {}
 var paths: Dictionary = {}
+var stores: Dictionary = {}
 var _original: Dictionary = {}
 var last_message: String = ""
 
@@ -63,13 +66,38 @@ func trial(key: String, next: Variant) -> bool:
 func is_trial(set_id: StringName, knob: String) -> bool:
 	return sets[set_id].get(knob) != _original[set_id].get(knob)
 
+## For a game that keeps its numbers in its own file: Apply calls store(set_id, values) instead
+## of saving the kit resource. values maps each knob name to its current value. The store returns
+## OK or an error, and may set last_message to a plain-English reason that the panel shows.
+func use_store(set_id: StringName, store: Callable) -> bool:
+	if not sets.has(set_id) or not store.is_valid():
+		last_message = "Cannot attach a save function: no tuning group named %s." % set_id if not sets.has(set_id) else "Cannot attach a save function to %s: it is not callable." % set_id
+		return false
+	stores[set_id] = store
+	return true
+
 func apply(set_id: StringName) -> Error:
-	var path: String = paths.get(set_id, "")
-	if path.is_empty():
-		return ERR_FILE_BAD_PATH
-	var error: Error = ResourceSaver.save(sets[set_id], path)
+	last_message = ""
+	if not sets.has(set_id):
+		last_message = "There is no tuning group named %s." % set_id
+		return ERR_DOES_NOT_EXIST
+	var error: Error = OK
+	if stores.has(set_id):
+		var result: Variant = (stores[set_id] as Callable).call(set_id, _values(sets[set_id]))
+		error = result if result is int else ERR_INVALID_DATA
+		if not result is int:
+			last_message = "The save function for %s did not report a result." % set_id
+	else:
+		var path: String = paths.get(set_id, "")
+		if path.is_empty():
+			last_message = "%s has no file to save to." % set_id
+			return ERR_FILE_BAD_PATH
+		error = ResourceSaver.save(sets[set_id], path)
 	if error == OK:
 		_original[set_id] = _values(sets[set_id])
+		applied.emit(set_id)
+	elif last_message.is_empty():
+		last_message = "Could not save %s: %s." % [set_id, error_string(error)]
 	return error
 
 func discard(set_id: StringName) -> void:

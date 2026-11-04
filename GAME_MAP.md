@@ -58,6 +58,9 @@ Generated from declarations. Change the source resource and regenerate this map.
   | tick_rate | 30.0 | Hz | 1.0 to 120.0 | Simulation ticks each second. Restart needed. |
   | log_capacity | 512 | records | 32.0 to 8192.0 | Recent operations and events kept during play. |
   | flash_decay | 2.5 | opacity/s | 0.1 to 20.0 | How quickly the screen flash fades; no rule effects. |
+  | tuning_panel_width | 0.4 | of window width | 0.25 to 0.7 | Width of the tuning panel when it is docked to the side, as a share of the window width. It never gets narrower than its contents need. |
+  | tuning_panel_faded_opacity | 0.35 | opacity | 0.1 to 1.0 | How visible the side panel stays after you click back into the game. Clicking the panel restores it. |
+  | tuning_panel_fade_time | 0.15 | s | 0.0 to 1.0 | How long the side panel takes to fade back or return. 0 switches instantly. |
 
 - **feel_cargo_clipped_0** — Cargo full warning presentation. [game/feel/stages/cargo_clipped_0.tres](game/feel/stages/cargo_clipped_0.tres)
 
@@ -251,15 +254,15 @@ Generated from declarations. Change the source resource and regenerate this map.
   | Knob | Value | Unit | Range | Help |
   |---|---:|---|---|---|
   | energy_cost | 4.0 | energy | 0.0 to 20.0 | Energy paid for each successful mining hit. |
-  | range | 4.0 | m | 1.0 to 30.0 | Reach from the ship's centre to the rock's centre. About 2 m puts the drill against the rock face. |
-  | cooldown | 0.299997 | s | 0.033333 to 3.0 | Rule time between hits, independent of animation. |
-  | tool_power | 2.0 | power | 0.25 to 10.0 | Tool strength compared with the rock's hardness. |
-  | iron_yield | 3.0 | ore | 0.0 to 20.0 | Iron collected when an iron rock breaks. |
+  | range | 4.25 | m | 1.0 to 30.0 | Reach from the ship's centre to the rock's centre. About 2 m puts the drill against the rock face. |
+  | cooldown | 0.33333 | s | 0.033333 to 3.0 | Rule time between hits, independent of animation. |
+  | tool_power | 2.5 | power | 0.25 to 10.0 | Tool strength compared with the rock's hardness. |
+  | iron_yield | 2.75 | ore | 0.0 to 20.0 | Iron collected when an iron rock breaks. |
   | gold_yield | 1.0 | ore | 0.0 to 20.0 | Gold collected when a gold rock breaks. |
   | stone_yield | 2.0 | ore | 0.0 to 20.0 | Stone collected when a stone rock breaks. |
   | soft_threshold | 1.0 | hardness | 0.25 to 10.0 | Hardness of soft rocks. Restart needed. |
   | medium_threshold | 2.0 | hardness | 0.25 to 10.0 | Hardness of medium rocks. Restart needed. |
-  | hard_threshold | 4.0 | hardness | 0.25 to 10.0 | Hardness of hard rocks. Restart needed. |
+  | hard_threshold | 3.75 | hardness | 0.25 to 10.0 | Hardness of hard rocks. Restart needed. |
   | rock_health | 4.0 | health | 1.0 to 40.0 | Initial health of each rock block. Restart needed. |
   | charge_on_attempt | 0 | policy | 0.0 to 1.0 | 0: charge successful hits only. 1: also charge attempts against hard rocks. |
 
@@ -325,6 +328,7 @@ Generated from declarations. Change the source resource and regenerate this map.
 - **play_flight_and_dock** — Drive camera orbit and WASD through physical input; Numpad Enter and Enter both trade at the dock. [scenarios/play_flight_and_dock.gd](scenarios/play_flight_and_dock.gd)
 - **play_overlay_defaults** — Inspect every default F1 tab and empty-search F2 before filling panels; explain an input-driven refusal. [scenarios/play_overlay_defaults.gd](scenarios/play_overlay_defaults.gd)
 - **play_targeting** — Physical clicks select and face once; Space alone drills, clears broken targets and explains hard gold. [scenarios/play_targeting.gd](scenarios/play_targeting.gd)
+- **play_tuning_side_panel** — Dock the tuning panel to the side with a real click; fly and drag a slider with it open; typing borrows the keyboard until Esc or a click on the game; the panel fades while you play and narrows to its width knob. [scenarios/play_tuning_side_panel.gd](scenarios/play_tuning_side_panel.gd)
 - **rng_two_streams** — Audit two rule RNG streams in alphabetical order, even when drawn in reverse order. [scenarios/rng_two_streams.gd](scenarios/rng_two_streams.gd)
 - **scenario_tuning_pins** — Scenario pins validate together, preserve resources and files, and establish the Discard baseline. [scenarios/scenario_tuning_pins.gd](scenarios/scenario_tuning_pins.gd)
 - **shipped_default_balance** — Report changes to shipped mining, ship and economy defaults separately from rule fixtures. [scenarios/shipped_default_balance.gd](scenarios/shipped_default_balance.gd)
