@@ -17,6 +17,12 @@ function Invoke-Godot([string[]]$Arguments) {
     finally { $ErrorActionPreference = $previousPreference }
 }
 $testRoot = Join-Path $sourceRoot ("reports/install-smoke/" + [guid]::NewGuid().ToString('N'))
+# Windows PowerShell 5.1 'Set-Content -Encoding utf8' adds a byte-order mark, and Godot 4.7
+# refuses a .tscn that starts with one. Write the smoke project's files as plain UTF-8.
+function Write-PlainUtf8([string]$Path, [string]$Text) {
+    [System.IO.File]::WriteAllText($Path, $Text, (New-Object System.Text.UTF8Encoding($false)))
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "Could not write $Path." }
+}
 # The smoke project lives under reports/; keep the main project's importer out of it.
 $reportsIgnore = Join-Path $sourceRoot 'reports/.gdignore'
 if (-not (Test-Path -LiteralPath $reportsIgnore)) { New-Item -ItemType File -Path $reportsIgnore -Force | Out-Null }
@@ -29,7 +35,7 @@ run/main_scene="res://smoke.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 [rendering]
 renderer/rendering_method="gl_compatibility"
-'@ | Set-Content -LiteralPath (Join-Path $testRoot 'project.godot') -Encoding utf8
+'@ | ForEach-Object { Write-PlainUtf8 (Join-Path $testRoot 'project.godot') $_ }
 @'
 extends Node
 func _ready() -> void:
@@ -45,13 +51,13 @@ func _ready() -> void:
         return
     print("INSTALL PASS: Kit booted with all ten services and default kit controls and manual clock.")
     get_tree().quit(0)
-'@ | Set-Content -LiteralPath (Join-Path $testRoot 'smoke.gd') -Encoding utf8
+'@ | ForEach-Object { Write-PlainUtf8 (Join-Path $testRoot 'smoke.gd') $_ }
 @'
 [gd_scene load_steps=2 format=3]
 [ext_resource type="Script" path="res://smoke.gd" id="1"]
 [node name="Smoke" type="Node"]
 script = ExtResource("1")
-'@ | Set-Content -LiteralPath (Join-Path $testRoot 'smoke.tscn') -Encoding utf8
+'@ | ForEach-Object { Write-PlainUtf8 (Join-Path $testRoot 'smoke.tscn') $_ }
 & (Join-Path $PSScriptRoot 'install_kit.ps1') -Target $testRoot
 # A new game gets the starter AGENTS.md and KIT_REQUESTS.md, and the kit rules travel inside the kit.
 foreach ($name in @('AGENTS.md', 'KIT_REQUESTS.md', 'addons/agent_kit/KIT_RULES.md')) {

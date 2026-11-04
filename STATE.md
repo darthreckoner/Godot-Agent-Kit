@@ -264,6 +264,7 @@ Original build (2026-10-03):
 
 ## Next steps
 
+- 2026-11-04: tools/verify_install.ps1 was failing on main. It wrote its smoke project files with Windows PowerShell 5.1 `Set-Content -Encoding utf8`, which adds a byte-order mark, and Godot 4.7.2 rejected smoke.tscn ("Parse Error: Expected '['"). The script now writes those three files as plain UTF-8 and checks that each was written. Rerun: exit 0, reports/install-smoke/96044a1bc68149c498f72c32574f254f. tools/kit.ps1 test: exit 0, 16/16 scenarios. Kit and game files are unchanged. Unverified risk: install_kit.ps1 also rewrites a game's project.godot with `Set-Content -Encoding utf8` when it adds the autoload under an existing [autoload] section, which may add a BOM. Godot accepted a BOM in project.godot in earlier runs, but that path is not covered by the smoke test.
 0. Ticket 11 is merged through PR #5. Future scenarios pin assertion inputs before world creation, press named controls and use actual effect completion for idle checks. Investigate intermittent HUD capture text loss in a separate scoped task; preserve the recorded comparisons.
 
 1. Optional designer smoke check: change a mining knob in F2, Apply, then run tools/kit.ps1 test. Rule fixtures should stay green and shipped_default_balance should show the balance change. Update its reference only when accepting the new shipped defaults. Current player feel and the earlier overlap issue are outside ticket 11's changes.
