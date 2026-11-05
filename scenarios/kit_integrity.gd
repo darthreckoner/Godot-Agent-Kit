@@ -48,7 +48,7 @@ func execute_custom(command: Dictionary, _view: Node) -> bool:
 			condition.tuning_key = "mining.range"
 			var check: KitCheckResult = condition.check({"world": local_world, "actor": &"unit:a", "params": {"target": "unit:b"}, "tuning": Kit.tuning})
 			_checks.append(assertion("The reusable range condition works in 2D.", placed and check.passed))
-			var increment: KitResourceDelta = KitResourceDelta.make(&"unit:a", "quantity", 2.0, "rule/integer_resource")
+			var increment: KitChange = KitResourceDelta.make(&"unit:a", "quantity", 2.0, "rule/integer_resource")
 			_checks.append(assertion("Integer resource deltas retain the field type.", increment.apply(local_world) and local_world.field(&"unit:a", "quantity") == 3))
 			var ring: KitActionLog = KitActionLog.new()
 			ring.capacity = 2

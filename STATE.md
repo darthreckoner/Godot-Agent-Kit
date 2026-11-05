@@ -2,7 +2,17 @@
 
 ## Build version
 
-0.3.4 — installer keeps a game's project.godot intact (2026-11-04), branch claude/installer-project-godot-encoding. Verified on Windows with Godot 4.7.2. Save schema remains 1.
+0.3.5 — exit-time leak fix, K-8 (2026-11-04), branch claude/k8-exit-leak-0.3.5. Verified on Windows with Godot 4.7.2. Save schema remains 1.
+
+## Exit-time leak fix, 0.3.5 (2026-11-04)
+
+- Why: Backcountry Expedition's headless rule tests and scenarios ended with Godot exit errors ("N resources still in use at exit", "Leaked instance: GDScript", PagedAllocator pages) although every assertion passed, so its merge checks failed 49 of 56 rule files. This blocked its tuning panel (T-053). Request K-8.
+- Cause: the kit's change helpers were static functions typed as their own class (godotengine/godot#122022), which keeps the game's own scripts alive at exit. `check_result.gd` already avoided it. Fixed the same way (return `KitChange`, build with `load(<own path>).new()`) in `KitResourceDelta.make`, `KitSetField.make`, `KitRecordChange.add` and `KitRecordChange.remove_id`. No other static function in the addon is typed as, or builds, its own class. `scenarios/kit_integrity.gd` now types one stored result as `KitChange`.
+- New check `tools/verify_exit_leak.ps1` (README documents it). Assumption: the leak depends on load order. A probe that only loads the game's tuning script reproduces it. A probe that also calls the kit helpers itself did not on 0.3.4, so the check runs both. Log of the failing run on 0.3.4: `reports/k8/exit-leak-before-0.3.4.txt`; passing run on 0.3.5: `reports/k8/exit-leak-after-0.3.5.txt`.
+- Evidence: `tools/kit.ps1 test` exit 0 (log `reports/k8/kit-test.log`; 12/12 sim and 5/5 play scenarios, no ERROR/leak lines). `tools/verify_install.ps1` exit 0. `tools/verify_install_game.ps1 -Source "C:\Dev\Backcountry Expedition"` exit 0 (`reports/game-smoke/578b75d0b0434c5b99447e066eb86ad3`); in that copy `tests/test_crest_detector.gd` and `tests/test_input_map.gd` exit 0 with no leak lines. The same crest test on a kit 0.3.4 copy still prints the two leak lines.
+- Player-visible behaviour is unchanged, so no screenshots were inspected. GAME_MAP not regenerated: no actions, events, tuning or scenarios changed.
+- Not verified: Backcountry's own T-053 branch (`t3/handling-tuning-panel`) with 0.3.5 installed, or its full `run_all.py` merge tier. The check was not added to `tools/kit.ps1 test` because it needs the kit repo's installer, which games do not have.
+- Next: reinstall 0.3.5 in the T-053 worktree and rerun its merge tier. K-3 to K-7 stay open.
 
 ## Installer project.godot encoding, 0.3.4 (2026-11-04)
 

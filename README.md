@@ -93,6 +93,8 @@ Additional verification:
 
 This creates an empty Godot project under reports, checks clean and forced installs, unchanged reinstalls and edited-file refusal, imports it, and proves Kit boots with all ten services and default kit controls and a manual clock.
 
+To check that a headless `--script` run in a game with the Kit installed ends with no Godot exit errors ("resources still in use at exit", "leaked"), run `.	oolserify_exit_leak.ps1`. It builds a throwaway game with its own tuning script, runs two probes and fails on any such line. A game's test runner that counts exit errors as failures depends on this.
+
 tools/verify_ui.tscn exercises the actual overlay input and control callbacks. Run that scene windowed for screenshots in reports/ui-verification. It checks Why, trials, Apply, Discard, variants, and feel replay/skip. These checks do not establish whether the game feels good.
 
 ### Scenario tuning fixtures
