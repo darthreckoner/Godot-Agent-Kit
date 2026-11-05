@@ -2,8 +2,10 @@ class_name KitResourceDelta
 extends KitChange
 var amount: float
 
-static func make(id: StringName, path: String, delta: float, why: String, cost: bool = false) -> KitResourceDelta:
-	var change: KitResourceDelta = KitResourceDelta.new()
+static func make(id: StringName, path: String, delta: float, why: String, cost: bool = false) -> KitChange:
+	# Avoid a self-referencing static factory retaining this script at shutdown (see check_result.gd).
+	# Engine issue: https://github.com/godotengine/godot/issues/122022
+	var change: Variant = load("res://addons/agent_kit/actions/resource_delta.gd").new()
 	change.entity = id
 	change.field = path
 	change.amount = delta

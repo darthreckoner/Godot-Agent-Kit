@@ -2,8 +2,10 @@ class_name KitSetField
 extends KitChange
 var value: Variant
 
-static func make(id: StringName, path: String, next: Variant, why: String, cost: bool = false) -> KitSetField:
-	var change: KitSetField = KitSetField.new()
+static func make(id: StringName, path: String, next: Variant, why: String, cost: bool = false) -> KitChange:
+	# Avoid a self-referencing static factory retaining this script at shutdown (see check_result.gd).
+	# Engine issue: https://github.com/godotengine/godot/issues/122022
+	var change: Variant = load("res://addons/agent_kit/actions/set_field.gd").new()
 	change.entity = id
 	change.field = path
 	change.value = next

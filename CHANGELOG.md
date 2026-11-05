@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.3.5 — 2026-11-04
+
+- A game with the Kit installed no longer prints Godot exit errors ("resources still in use at exit", "Leaked instance: GDScript", "Pages in use exist at exit") at the end of a headless `--script` run (K-8). The game's own scripts were being held alive because the kit's change helpers were typed as their own class, the pattern `check_result.gd` already avoided (godotengine/godot#122022). A test runner that counts exit errors as failures no longer fails every rule test.
+- Changed, with the same fix as `KitCheckResult.make()` (return type `KitChange`, built with `load(<own path>).new()`):
+  - `KitResourceDelta.make()` in `actions/resource_delta.gd`
+  - `KitSetField.make()` in `actions/set_field.gd`
+  - `KitRecordChange.add()` and `KitRecordChange.remove_id()` in `actions/record_change.gd`
+- Nothing else in the addon has a static function that is typed as, or builds, its own class.
+- What this means for your game: these four helpers now return `KitChange` instead of their own class. Rules that pass the result to `result.add(...)` are unaffected. Code that stored the result in a variable typed `KitResourceDelta`, `KitSetField` or `KitRecordChange` must type it `KitChange` instead. `change is KitResourceDelta` still works.
+- New check `tools/verify_exit_leak.ps1`: builds a throwaway game with the Kit autoload and its own tuning script, runs two headless `--script` probes, and fails on any "still in use at exit", "leaked" or "Pages in use" line. It fails on 0.3.4 and passes on 0.3.5. Save schema remains 1; no migration is needed.
+
 ## 0.3.4 — 2026-11-04
 
 - `tools/install_kit.ps1` no longer damages a game's `project.godot` when it adds the Kit autoload. Under Windows PowerShell 5.1 it read the file in the system codepage and wrote it back with a byte-order mark, so any non-ASCII text, such as an accented game name, was corrupted ("Café" became "CafÃ©"). It now reads and writes plain UTF-8, keeps the game's own autoloads, and checks that the file was written. `tools/verify_install.ps1` now checks both an existing `[autoload]` section with non-ASCII text and a project with no `[autoload]` section. Save schema remains 1.
